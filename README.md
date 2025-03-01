@@ -14,3 +14,9 @@
 ## Step 04:
 "Always merge your changes with Dev branch. After that We can merge dev to the main at the end of the day"
 
+# Database Information
+
+Database URI = "mongodb+srv://<db_username>:<db_password>@deepminders.mnjvr.mongodb.net/?retryWrites=true&w=majority&appName=DeepMinders"
+
+<db_username> - Replace this with your username
+<db_password> - Replace this with your password
