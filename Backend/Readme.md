@@ -12,8 +12,9 @@ Don't do anything to Config folder. If you want you can edit Connection string b
 ## Step 04: 
 After you creating relavant Route, add it to the main.py file to execute your codes. 
 
-`Models - To define structure for the Mongo DB collection structure. <br/>
+<p>
+Models - To define structure for the Mongo DB collection structure. <br/>
 Routes - To define routers for each module. <br/>
 Schemas - To define schema for CRUD. <br/>
 Controllers - To controll the conectivity of Model and Schema.
-`
+</p>
