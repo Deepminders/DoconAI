@@ -5,11 +5,9 @@ def getIndividualUser(user)->dict:
         "id":str(user["_id"]),
         "firstname":user["firstname"],
         "lastname":user["lastname"],
-        "age":user["age"],
-        "username":user["username"],
-        "email":user["email"],
-        "phone":user["phone"]
+        "age":user["age"]
     }
 
-def getAllUsers(users)->list:
-    return [getIndividualUser(user) for user in users]
+async def getAllUsers(users_cursor)->list:
+    users_list = await users_cursor.to_list(length=None)
+    return [getIndividualUser(user) for user in users_list]
