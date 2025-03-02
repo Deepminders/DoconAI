@@ -3,9 +3,9 @@ from Config.db import user_collection
 from Models.UserModel import UserModel
 
 async def add_user(user:UserModel)->dict:
-    user = user.dict()
+    newuser = user.dict()
     try:
-        result = await user_collection.insert_one(user)
+        result = await user_collection.insert_one(newuser)
         return {
             "Message":"User Created",
             "Insereted_ID":str(result.inserted_id)
@@ -15,7 +15,7 @@ async def add_user(user:UserModel)->dict:
             "Error":"User not created"
         }
 
-async def get_users():
+async def get_users()->dict:
     try:
         result = await user_collection.find()
         return {
