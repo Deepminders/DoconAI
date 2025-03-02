@@ -6,3 +6,11 @@ app = FastAPI()
 app.add_middleware(CORSMiddleware)
 
 app.include_router(UserRouter)
+
+@app.get("/")
+async def root():
+    return {"message":"Hello World"}
+
+@app.get("/test")
+async def test():
+    return {"message":"Hello World Test API"}
