@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 
-URI = "mongodb+srv://Sehara:Sehara2002@deepminders.mnjvr.mongodb.net/?retryWrites=true&w=majority&appName=DeepMinders"
+URI = "mongodb+srv://Sehara:Sehara1234@deepminders.mnjvr.mongodb.net/?retryWrites=true&w=majority&appName=DeepMinders"
 
 client = AsyncIOMotorClient(URI)
 if(client):
@@ -10,3 +10,4 @@ else:
     
 db = client.DeepMinders
 user_collection = db.get_collection("users")
+document_collection = db.get_collection("documents")
