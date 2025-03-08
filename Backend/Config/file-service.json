@@ -1,0 +1,13 @@
+{
+    "type": "service_account",
+    "project_id": "file-upload-project-452707",
+    "private_key_id": "2735fe15c7537939328e415ce90570b4f29a2dfa",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDtwfz6rAW+NXoo\nsS9l4Ft8y1laE0c0WIRYnVG82bjSS3BnfjuvZqCLW96PkWseYCwBiBF6SsOa+alc\nwmJY5/p7W1NVsCGAjzDFC4Ta7awRMK2oBzHb0CpRIyVCTLvXww3sM37rsj6sVrX8\nnyy21J6dPWlJean/zHb4TmFJfRB/USn6aqQEa+tov6OuCjNJc04Hk7I6dhp+Kaek\nCm2FoyIawrw/xQWkTe70/t8EblE+q1BdHomZri8BLhi8fKY0M2Symm/57Q3dYEJj\nc9KbauEL7ai6uHJf3iVEXFqSR+WB+cIGx1CVxu7Bd95/Tz/8zbP3LsTF+G7GGJ9k\nkydyf931AgMBAAECggEAKD/DSlJNxJX8AKCCNB5njnhEP43s620itnenay92bM9N\nj4+cngRjIERkqGxHNIS2XmoA/3FhrL4gEC5uBLv8uN5MfMCM410aNflNu9wpWV2i\nwEO7iokyaLro51DjKdMA6+AJ1++8UWN6enId2TOkSF0pkkEw6Ldd2oo2SQENhmfN\nBtAHyd4aa1mDO8ePxvBB0MsaqMgjBvtxaR0f9PzcXA9KTrfhT3o9PMtFe0CP+QrI\nf+yjvOCZLGJ/fKY4I2YzaXfeRYzDO1pUKop1h9L5bAFtqAIgLfD5GRlU+KvHXL6c\n8II8A7epts/j1xvQvcmXa1Apd8G+3KrUHE0ZnMgC/wKBgQD7GPIafjeQJ47k2HiL\ndfC5XcUvHHys7b9WsIg0oxt5IQZLcJEppvJRSfgbWPmJeIfR/G0kqO859dJmiNBK\nhnTnZVDc+eS53IyA6N+ju2LJvRdHGkS29DUpmzTbMkIEHlGBTKuEQwvb4A+pKeQV\ntXBfw9MkLnlufFNySYEuavk2qwKBgQDyZl3540oe4Z4PF5b++oRISRpzkUhEM0mN\niyRUmEHf8NlVPyfcJJhL/sCE6wl0qEBTBBSKqrUCzBKKl1DTlSOMb1PNXnPcPnI7\nIW15V24zmQZ/3gr+Hac6fa79R/BfzWiBWxhn2KySsNJBVRqAC1cSKeJLjXceUlaH\nDwU81ie93wKBgQDceCfDOUWCDim6J5OYKAMoTvwehG23zLxu2muNhBVQQr3rKThc\nERi8ZS0ynenkWW8v4erXAHmkM4H8w23Xsb0dm2jnzYaV5t97JH2Qnqx7o8q3hIoG\n9d9j28IKIFO0mAZKeE40wEW+VjqJ9p0srnWvsBpIr4Gxj/oY5A9H+Wc+JwKBgQC0\ntqKbONs6eKPYxpJ415WlOnLw87/3sHDGiJR2SOjbpniwuBvkYJf2GB+5OGzdPs5t\n1Z3m32uBgVjVYAgPJaHSAfFtK1yfNyL8eGhgTVFIQG57B7QUTVEuJyM9itNm6QFf\nZuWkDgJiflbSBDt0eH/ad8VQ5E+JGIOPvx/9gf8w6wKBgAPC0QDOTjaPMxO/j8UJ\n0i7BqtSjbaLhxF4y2dFK2Y5+8PDvnbJltS5m1ei/H/BvcDXGWAhyQP8oEXPFPk3s\noYVWv1vLAldWvHqsHurOlCPpD8jhnYy1IrUamwqcXDUjmfTiTRa2dQdxu2c4NXvt\nnH+QXMfhX1G9kCJwN14UtdK9\n-----END PRIVATE KEY-----\n",
+    "client_email": "fastapi-drive-uploader@file-upload-project-452707.iam.gserviceaccount.com",
+    "client_id": "108163680410751507764",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/fastapi-drive-uploader%40file-upload-project-452707.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+  }
