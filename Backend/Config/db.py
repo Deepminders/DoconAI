@@ -12,4 +12,4 @@ db = client["DeepMinders"]
 user_collection = db.get_collection("users")
 staff_collection = db.get_collection("staff")
 document_collection = db.get_collection("documents")
-project_collection = db.get_collection("project")
+project_collection = db.get_collection("projects")
