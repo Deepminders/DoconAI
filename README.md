@@ -1,6 +1,6 @@
 # Steps to Follow
 
-`Hi laavanjan, Welcome all of you to the Docon AI Github Repository`
+`Hi Guys, Welcome all of you to the Docon AI Github Repository`
 
 ## Step 01: 
 "Always remember to pull cloud Github updates before starting your works."
