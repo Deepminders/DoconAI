@@ -8,6 +8,7 @@ if(client):
 else:
     print("Failed to connect to MongoDB")
     
-db = client.DeepMinders
+db = client["DeepMinders"]
 user_collection = db.get_collection("users")
+staff_collection = db.get_collection("staff")
 document_collection = db.get_collection("documents")
