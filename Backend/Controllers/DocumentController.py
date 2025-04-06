@@ -96,3 +96,5 @@ async def viewDocument(docid:str):
     
     viewable_link = f"https://drive.google.com/file/d/{file['file_id']}/view"
     return RedirectResponse(viewable_link)
+
+print("Hello World")
