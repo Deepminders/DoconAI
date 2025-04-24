@@ -21,6 +21,7 @@ async def add_staff(staff: StaffModel) -> dict:
 async def get_staff()->dict: 
     try:
         result = await getAllStaff(staff_collection.find())
+        print(result)
         return result
     
     except Exception as e:
