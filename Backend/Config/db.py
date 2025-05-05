@@ -13,19 +13,11 @@ try:
     client = AsyncIOMotorClient(URI)
     db = client["DeepMinders"]
     logger.info("Connected to MongoDB successfully")
-    
-<<<<<<< HEAD
-db = client["DeepMinders"]
-user_collection = db.get_collection("users")
-staff_collection = db.get_collection("staff")
-document_collection = db.get_collection("documents")
-project_collection = db.get_collection("projects")
-=======
-    # Collections
-    user_collection = db["users"]
-    staff_collection = db["staff"]
-    document_collection = db["documents"]
-    counters_collection = db["counters"]
+    user_collection = db.get_collection("users")
+    staff_collection = db.get_collection("staff")
+    document_collection = db.get_collection("documents")
+    project_collection = db.get_collection("projects")
+
     
 except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {str(e)}")
@@ -61,4 +53,3 @@ async def get_next_sequence_value(sequence_name: str):
             status_code=500,
             detail="Failed to generate document ID"
         )
->>>>>>> sehara
