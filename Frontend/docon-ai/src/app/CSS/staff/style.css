@@ -1,4 +1,4 @@
-.staff-list {
+/*.staff-list {
     font-family: Arial, sans-serif;
     max-width: 1000px;
     margin: 20px auto;
@@ -16,7 +16,7 @@
     border: 2px solid #ccc;
     border-radius: 4px;
     font-size: 16px;
-    box-sizing: border-box; /* Ensure padding doesn't affect width */
+    box-sizing: border-box; 
   }
   
   .search-bar:focus {
@@ -32,17 +32,17 @@
   
   .Add-staff {
     margin-left: 650;
-    padding: 8px; /* Add padding */
-    background-color: #007bff; /* Blue background */
-    color: white; /* White text */
-    border: none; /* Remove border */
-    border-radius: 4px; /* Rounded corners */
-    font-size: 13px; /* Font size */
-    cursor: pointer; /* Pointer cursor on hover */
+    padding: 8px; 
+    background-color: #007bff;
+    color: white; 
+    border: none; 
+    border-radius: 4px;
+    font-size: 13px; 
+    cursor: pointer; 
   }
   
   .add-Ataff:hover {
-    background-color: #0056b3; /* Darker blue on hover */
+    background-color: #0056b3; 
   }
   
   .staff-list h2 {
@@ -184,21 +184,21 @@
   }
   
   .update-button {
-    background-color: #28a745; /* Green color for update */
+    background-color: #28a745; 
     color: white;
   }
   
   .update-button:hover {
-    background-color: #218838; /* Darker green on hover */
+    background-color: #218838; 
   }
   
   .delete-button {
-    background-color: #dc3545; /* Red color for delete */
+    background-color: #dc3545; 
     color: white;
   }
   
   .delete-button:hover {
-    background-color: #c82333; /* Darker red on hover */
+    background-color: #c82333; 
   }
   
   .staff-list td.actions {
@@ -218,5 +218,5 @@
     
     .update_button:hover {
       background-color: #0056b3;
-    }
+    }*/
     

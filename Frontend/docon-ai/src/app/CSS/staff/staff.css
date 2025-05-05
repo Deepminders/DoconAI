@@ -67,7 +67,7 @@
   }
   
   .update-button,
-  .delete-button {
+  .delete-button, .assign-button{
     padding: 6px 12px;
     border: none;
     border-radius: 6px;
@@ -75,8 +75,8 @@
     cursor: pointer;
     font-weight: 500;
   }
-  
-  .update-button {
+ 
+  .update-button{
     background-color: rgb(4, 175, 4);
     color: white;
   }
@@ -94,17 +94,33 @@
     background-color: #bb2d3b;
   }
   
+  .assign-button {
+    background-color: #417eda;
+    color: white;
+  }
+  .assign-button:hover {
+    background-color: #0243c5;
+  }
+
   .staff-filters {
-    flex: 1;
-    padding: 20px;
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 0 12px;           
+      box-sizing: border-box;
   }
   
+  .staff-filters,.staff-search {
+    flex: 1 3 300px;  
+    max-width: 600px;
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
   .staff-search {
     width: 100%;
     padding: 10px;
@@ -115,16 +131,15 @@
   
   .checkbox-group {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 25px;
   }
   
   .checkbox-label {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 16px;
-    cursor: pointer;
+    gap: 6px;
+    font-size: 14px;
   }
   
   .checkbox-label input[type='checkbox'] {
@@ -132,76 +147,106 @@
     height: 18px;
   }
   
-  .add-staff-container {
-    max-width: 600px;
-    margin: 0 auto;
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-  
-  .add-staff-title {
-    font-size: 28px;
-    font-weight: bold;
-    color: #0d6efd;
-    margin-bottom: 20px;
-    text-align: center;
-  }
-  
-  .add-staff-form .form-group {
+  .staff-info {
     display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .staff-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  /*.add-staff-container {
+    max-width: 600px !important;
+    margin: 0 auto !important;
+    background-color: #ffffff !important;
+    padding: 30px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    
+  }*/
+  
+  .add-staff-title,.update-staff-title,.delete-staff-title {
+    font-size: 28px !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-weight: bold !important;
+    color: #0543a0 !important;
+  }
+  
+  /*.add-staff-form .form-group {
+    display: flex ;
     flex-direction: column;
     margin-bottom: 18px;
-  }
+  }*/
   
-  .form-group label {
+  /*.form-group label {
     font-weight: 600;
     margin-bottom: 6px;
     color: #333;
-  }
+  }*/
   
-  .form-input {
-    padding: 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 16px;
+  /*.form-input {
+    padding: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    font-size: 16px !important;
   }
-  
-  .button-group {
+  */
+  /*.button-group {
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
+    gap: 30px;
     margin-top: 20px;
+  }*/
+  
+  .submit-button,.clearbutton {
+    flex: 3 !important ;
   }
   
-  .submit-button, .clear-button {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+  .Update-button,.cancelbutton {
+    flex: 3 !important ;
+    padding: 6px 10px  !important;
+    border-radius: 6px !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
   }
-  
   .submit-button {
-    background-color: #198754;
-    color: white;
+    background-color: rgb(34, 34, 240) !important;
+    color: white !important;
   }
   
   .submit-button:hover {
-    background-color: #157347;
+    background-color:rgb(5, 5, 170) !important;
   }
   
-  .clear-button {
-    background-color: #6c757d;
-    color: white;
+  .clearbutton {
+    background-color: rgb(238, 15, 15) !important;
+    color: white !important;
   }
   
-  .clear-button:hover {
-    background-color: #5a6268;
+  .clearbutton:hover {
+    background-color: rgb(153, 4, 4) !important;
+  }
+
+  .cancelbutton {
+    background-color: rgb(109, 109, 109) !important;
+    color: white !important;
+    border: none !important;
+  }
+  .cancelbutton:hover {
+    background-color: rgb(75, 75, 75) !important;
+  }
+
+  .Update-button {
+    background-color: rgb(4, 175, 4) !important;
+    color: white !important;
+    border: none !important;
+  } 
+  .Update-button:hover {
+    background-color: rgb(2, 105, 2) !important;
   }
   .staff-list .avatar {
     width: 30px;
@@ -212,18 +257,9 @@
     margin-right: 10px;
     vertical-align: middle;
   }
-  .add-staff-container {
-    background-color: #343a40; 
-    color: white;
-    padding: 2rem;
-  }
-  
-  .add-staff-title {
-    color: white;
-  }
-  
+
   .form-control, .form-select {
-    background-color: #495057; /* Dark input field background */
+    background-color: #495057; 
     color: white;
     border: 1px solid #ced4da;
   }
@@ -252,4 +288,4 @@
     background-position: right calc(0.375em + 0.1875rem) center;
     background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
   }
-  
+ 

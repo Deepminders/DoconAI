@@ -1,4 +1,4 @@
-'use client';
+/*'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
@@ -143,4 +143,4 @@ const UpdateStaff = () => {
   );
 };
 
-export default UpdateStaff;
+export default UpdateStaff;*/
