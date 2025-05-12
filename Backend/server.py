@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from Routes.UserRoutes import router
 from Routes.ProjectRoutes import routerproject
 from Routes.DocumentRoutes import router as doc_router
@@ -6,6 +7,7 @@ from Routes import StaffRoutes
 from fastapi.middleware.cors import CORSMiddleware
 
 server = FastAPI()
+server.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name="uploaded_images")
 
 
 server.add_middleware(

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from bson import ObjectId
-from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project
+from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project,get_project
 from Models.StaffModel import StaffModel
 
 router = APIRouter(prefix="/staff",tags=["Staff_Member"])
@@ -28,3 +28,7 @@ async def update_staff_route(id:str,staff: StaffModel):
 @router.put("/assignProject/{s_id}/{p_id}")
 async def assign_project_route(s_id:str,p_id:str):
     return await assign_project(ObjectId(s_id),ObjectId(p_id))
+
+@router.get("/projects/")
+async def get_project_route():
+    return await get_project()

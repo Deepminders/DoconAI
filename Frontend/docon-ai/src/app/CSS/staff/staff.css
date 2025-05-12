@@ -154,53 +154,18 @@
   }
   
   .staff-avatar {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    object-fit: cover;
+    width: 35px !important;
+    height: 35px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
   }
-  /*.add-staff-container {
-    max-width: 600px !important;
-    margin: 0 auto !important;
-    background-color: #ffffff !important;
-    padding: 30px !important;
-    border-radius: 12px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-    
-  }*/
-  
-  .add-staff-title,.update-staff-title,.delete-staff-title {
+  .add-staff-title,.update-staff-title,.delete-staff-title,.assign-project-title {
     font-size: 28px !important;
     font-family: Arial, Helvetica, sans-serif !important;
     font-weight: bold !important;
     color: #0543a0 !important;
   }
-  
-  /*.add-staff-form .form-group {
-    display: flex ;
-    flex-direction: column;
-    margin-bottom: 18px;
-  }*/
-  
-  /*.form-group label {
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #333;
-  }*/
-  
-  /*.form-input {
-    padding: 10px !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
-    font-size: 16px !important;
-  }
-  */
-  /*.button-group {
-    display: flex;
-    gap: 30px;
-    margin-top: 20px;
-  }*/
-  
+    
   .submit-button,.clearbutton {
     flex: 3 !important ;
   }
@@ -270,7 +235,39 @@
     border-color: #80bdff;
     box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
   }
+
+  .staff-image {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto;
+  }
   
+  .staff-image-title {
+    display: block !important;
+    text-align: center !important;
+    color: #333 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    margin-top: 10px !important;
+  }
+  
+  .remove-image-button {
+    margin-top: 10px !important;
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+    padding: 6px 12px !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
   .was-validated .form-control:valid, .form-control.is-valid {
     border-color: #28a745;
     padding-right: calc(1.5em + 0.75rem);

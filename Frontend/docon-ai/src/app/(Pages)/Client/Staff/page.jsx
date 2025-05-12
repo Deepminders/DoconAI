@@ -7,6 +7,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import axios from 'axios';
 
 const BASE_URL = 'http://localhost:8000';
 
@@ -28,15 +29,21 @@ const Staff = () => {
   const [selectedStaffId, setSelectedStaffId] = useState(null);
   const [selectedProject, setSelectedProject] = useState('');
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [image, setImage] = useState(null);
+  const [selectedStaffProjects, setSelectedStaffProjects] = useState([]);
+
 
   const [updateData, setUpdateData] = useState({
-    staff_id: null,
+    id: '',
     staff_fname: '',
     staff_lname: '',
     staff_email: '',
     staff_age: '',
     staff_gender: '',
-    staff_role: ''
+    staff_role: '',
+    assigned_projects: [],
+    staff_image_url: ''
 });
   
   const [formData, setFormData] = useState({
@@ -45,7 +52,9 @@ const Staff = () => {
     staff_email: '',
     staff_age: '',
     staff_gender: '',
-    staff_role: ''
+    staff_role: '',
+    assigned_projects: [],
+    staff_image_url: ''
   });
   
   const clearForm = () => {
@@ -55,10 +64,13 @@ const Staff = () => {
       staff_email: '',
       staff_age: '',
       staff_gender: '',
-      staff_role: ''
+      staff_role: '',
+      assigned_projects: [],
+      staff_image_url: ''
     });
     setValidated(false);
   };
+
   const handleDelete = async (id) => {
     try {
       const res = await fetch(`${BASE_URL}/staff/delete/${id}`, {
@@ -69,8 +81,10 @@ const Staff = () => {
         throw new Error('Failed to delete staff');
       }
 
-      setStaffList(prevList => prevList.filter((staff) => staff.staff_id !== id));
+      setStaffList(prevList => prevList.filter((staff) => staff.id !== id));
+
       toast.success('Staff deleted successfully');
+      
     } catch (err) {
       console.error('Error deleting staff:', err);
       toast.error('Failed to delete staff. Please try again.');
@@ -98,27 +112,38 @@ const Staff = () => {
   };
 
   const openAssignModal = (staffId) => {
-    setSelectedStaffId(staffId);
-    setShowAssignModal(true);
+    const staff = staffList.find(s => s.id === staffId);
+    if (staff) {
+      setSelectedStaffId(staffId);
+      setSelectedProject(''); // or set initial project
+      setSelectedStaffProjects(staff.assigned_projects || []);
+      setShowAssignModal(true);
+    }
   };
 
   const closeAssignModal = () => {
     setShowAssignModal(false);
     setSelectedStaffId(null);
+    setSelectedProject('');
   };
   
   const openUpdateModal = async (id) => {
+    console.log("Update ID:", id);
     try {
+
       const res = await fetch(`${BASE_URL}/staff/findStaff/${id}`);
-      const { Staff } = await res.json();
+      const fetched_data = await res.json();
+      console.log("Fetched Data:", fetched_data);
       setUpdateData({
-        staff_id: id,
-        staff_fname: Staff.staff_fname,
-        staff_lname: Staff.staff_lname,
-        staff_email: Staff.staff_email,
-        staff_age: Staff.staff_age,
-        staff_gender: Staff.staff_gender,
-        staff_role: Staff.staff_role
+        id: id,
+        staff_fname: fetched_data.Staff.staff_fname,
+        staff_lname: fetched_data.Staff.staff_lname,
+        staff_email: fetched_data.Staff.staff_email,
+        staff_age: fetched_data.Staff.staff_age,
+        staff_gender: fetched_data.Staff.staff_gender,
+        staff_role: fetched_data.Staff.staff_role,
+        assigned_projects: fetched_data.Staff.assigned_projects,
+        staff_image_url: fetched_data.Staff.staff_image_url
       });
       setShowUpdateModal(true);
     } catch (err) { console.error(err) }
@@ -129,6 +154,10 @@ const Staff = () => {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleImageChange = (e) => {
+    setImage(e.target.files[0]);
+  };
+  
   useEffect(() => {
     const getAllStaff = async () => {
       try {
@@ -138,6 +167,7 @@ const Staff = () => {
         }
         const data = await res.json();
         setStaffList(data);
+        console.log("staffList", staffList);
       } catch (error) {
         console.error('Error fetching staff data:', error);
         setError('Failed to fetch staff data');
@@ -147,6 +177,16 @@ const Staff = () => {
     getAllStaff();
   }, []);
 
+
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -155,40 +195,72 @@ const Staff = () => {
       setValidated(true);
       return;
     }
-
+  
     try {
+      // Convert image to Base64
+      const base64Image = image ? await convertToBase64(image) : null;
+
+      // Always include assigned_projects as array
+      const payload = {
+        staff_fname: formData.staff_fname,
+        staff_lname: formData.staff_lname,
+        staff_email: formData.staff_email,
+        staff_role: formData.staff_role,
+        staff_age: formData.staff_age,
+        staff_gender: formData.staff_gender,
+        staff_image_url: base64Image,
+        assigned_projects: formData.assigned_projects || [], // Ensure array
+      };
+      
+      console.log("Payload:", payload);
       const res = await fetch(`${BASE_URL}/staff/addStaff`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
+      const data = await res.json();
+      const new_staff_id = data.staff_id;
+      const new_staff_image_url = data.staff_image_url;
+      const newStaff = {
+        id: new_staff_id,
+        staff_fname: formData.staff_fname,
+        staff_lname: formData.staff_lname,
+        staff_email: formData.staff_email,
+        staff_role: formData.staff_role,
+        staff_age: formData.staff_age,
+        staff_gender: formData.staff_gender,
+        assigned_projects: formData.assigned_projects,
+        staff_image_url: new_staff_image_url,
+      };
+      setStaffList(prevList => [...prevList, newStaff]);
       if (!res.ok) throw new Error('Failed to add staff');
-
+  
       toast.success("Staff added successfully!");
-      setTimeout(() => router.push(`/Client/Staff`), 1000);
-      setTimeout(() => {
-        setShowModal(false);
-        setFormData({
+      setShowAddModal(false);
+      setFormData({
           staff_fname: '',
           staff_lname: '',
           staff_email: '',
           staff_role: '',
           staff_age: '',
           staff_gender: '',
-        });
-      }, 1000);
-    
+          assigned_projects: [],
+          staff_image_url: '',  
+      });
+      setImage(null);
+  
     } catch (err) {
       console.error('Error adding staff:', err);
       toast.error('Failed to add staff. Please try again.');
     }
+  
     setValidated(true);
     setAgreed(false);
-    };
-
+  };
+  
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -197,41 +269,106 @@ const Staff = () => {
       setUpdateValidated(true);
       return;
     }
-    const { staff_id, ...body } = updateData;
-    const res = await fetch(`${BASE_URL}/staff/update/${staff_id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (res.ok) {
-      toast.success('Staff updated!');
-      setStaffList(prev =>
-        prev.map(s => s.staff_id === staff_id ? { staff_id, ...body } : s)
+  
+    const { id, ...body } = updateData;
+  
+    try {
+      // Convert image to Base64 if it's a new file
+      if (updateData.staff_image_url instanceof File) {
+        const base64Image = await convertToBase64(updateData.staff_image_url);
+        body.staff_image_url = base64Image;
+      }
+  
+      const res = await fetch(`${BASE_URL}/staff/update/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+  
+      if (res.ok) {
+        toast.success('Staff updated!');
+        setStaffList(prev =>
+          prev.map(s => s.id === id ? { id, ...body } : s)
+        );
+        setShowUpdateModal(false);
+      } else {
+        toast.error('Update failed');
+      }
+    } catch (err) {
+      console.error("Error updating staff:", err);
+      toast.error("Something went wrong while updating staff.");
+    }
+  };
+  
+
+useEffect(() => {
+  const fetchProjects = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/staff/projects`);
+      setProjects(res.data);
+    } catch (error) {
+      console.error("Failed to fetch projects", error);
+    }
+  };
+  fetchProjects();
+}, []);
+
+
+
+  const handleAssignProject = async (e) => {
+  e.preventDefault();
+  if (!selectedStaffId || !selectedProject) {
+    toast.error("Please select a project before assigning.");
+    return;
+  }
+
+  try {
+    const res = await axios.put(`${BASE_URL}/staff/assignProject/${selectedStaffId}/${selectedProject}`);
+    if (res.status === 200) {
+      toast.success("Project assigned successfully!");
+
+      setStaffList(prevList =>
+        prevList.map(staff =>
+          staff.id === selectedStaffId
+            ? {
+                ...staff,
+                assigned_projects: [...(staff.assigned_projects || []), selectedProject],
+              }
+            : staff
+        )
       );
-      setShowUpdateModal(false);
+      
+      setSelectedStaffProjects(prev => [...prev, selectedProject]);
+      closeAssignModal();
     } else {
-      toast.error('Update failed');
+      toast.error("Assignment failed. Try again.");
+    }
+  } catch (err) {
+    console.error("Error assigning project:", err);
+    toast.error("Server error while assigning project.");
+  }
+};
+
+
+useEffect(() => {
+  const filterStaff = () => {
+    if (staffList && staffList.length > 0) {
+      const filtered = staffList.filter(staff => {
+        const matchesSearch = `${staff.staff_fname} ${staff.staff_lname}`.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesRoles = selectedRoles.length === 0 || selectedRoles.includes(staff.staff_role);
+        return matchesSearch && matchesRoles;
+      });
+      setFilteredStaff(filtered);
+    } else {
+      setFilteredStaff([]);
     }
   };
 
-  const handleAssignProject = async (e) => {
-    e.preventDefault();
-    if (!selectedStaffId || !selectedProject) return;
-  
-    // Send to backend (adjust URL and body as needed)
-    await axios.post('/Staff/assignProject', {
-      staff_id: selectedStaffId}/
-      {project_id: selectedProject
-    });
-  
-    closeAssignModal();
-  };
+  filterStaff();
+}, [staffList, searchQuery, selectedRoles]);
 
-  const filteredStaff = staffList.filter(staff => {
-    const matchesSearch = `${staff.staff_fname} ${staff.staff_lname}`.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRoles = selectedRoles.length === 0 || selectedRoles.includes(staff.staff_role);
-    return matchesSearch && matchesRoles;
-  });
+const [filteredStaff, setFilteredStaff] = useState([]);
+console.log("Selected project IDs:", selectedStaffProjects);
 
   return (
     <div className='staff-container'>
@@ -276,11 +413,11 @@ const Staff = () => {
             <tbody>
   {filteredStaff.length > 0 ? (
     filteredStaff.map(staff => (
-      <tr key={staff.staff_id} className='staff-row'>
+      <tr key={staff.id} className='staff-row'>
         <td>
           <div className="staff-info">
             <img
-              src={staff.staff_image_url || '/images/default-avatar.png'}
+              src={`${BASE_URL}${staff.staff_image_url}` || '/images/default-avatar.png'}
               alt={`${staff.staff_fname}`}
               className="staff-avatar"
             />
@@ -291,9 +428,9 @@ const Staff = () => {
         <td>{staff.staff_role}</td>
         <td>{staff.staff_age}</td>
         <td>
-          <button className="update-button" onClick={() => openUpdateModal(staff.staff_id)}>Update</button>
-          <button className="delete-button" onClick={() => openDeleteModal(staff.staff_id)}>Delete</button>
-          <button className="assign-button" onClick={() => openAssignModal(staff.staff_id)}>Assign Project</button>
+          <button className="update-button" onClick={() => openUpdateModal(staff.id)}>Update</button>
+          <button className="delete-button" onClick={() => openDeleteModal(staff.id)}>Delete</button>
+          <button className="assign-button" onClick={() => openAssignModal(staff.id)}>Assign Project</button>
         </td>
       </tr>
     ))
@@ -333,6 +470,18 @@ const Staff = () => {
 
   <Modal.Body>
     <Form noValidate validated={validated} onSubmit={handleSubmit}>
+    <Form.Group as={Col} md="12" controlId="validationImage" className="mt-3">
+  <Form.Label>Upload Image</Form.Label>
+  <Form.Control
+    required
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+  />
+  <Form.Control.Feedback type="invalid">
+    Please upload an image.
+  </Form.Control.Feedback>
+</Form.Group>
       <Row className="mb-3">
         <Form.Group as={Col} md="6" controlId="validationFirstName">
           <Form.Label>First Name</Form.Label>
@@ -453,6 +602,46 @@ const Staff = () => {
       </Modal.Header>
 
       <Modal.Body>
+      <Row className="mb-3">
+      <Col md={12}>
+     <Form.Group controlId="updImage">
+    <Form.Label className='staff-image-title' >Staff Image</Form.Label>
+
+  {/* Show existing or newly uploaded image */}
+  {(updateData.staff_image_url && (
+    <div style={{ marginBottom: '10px' }}>
+      <img className='staff-image'
+        src={
+          typeof updateData.staff_image_url === "string"
+            ? `${BASE_URL}${updateData.staff_image_url}` 
+            : URL.createObjectURL(updateData.staff_image_url)
+        }
+        
+        alt="Profile"
+      />
+      <br />
+      <Button
+        variant="danger"
+        size="sm"
+        className="remove-image-button"
+        onClick={() => setUpdateData({ ...updateData, staff_image_url: null })}
+      >
+        Remove Image
+      </Button>
+    </div>
+  ))}
+
+  <Form.Control
+    type="file"
+    accept="image/*"
+    onChange={(e) =>
+      setUpdateData({ ...updateData, staff_image_url: e.target.files[0] })
+    }
+  />
+</Form.Group>
+
+        </Col>
+        </Row>
         <Row className="mb-3">
           <Col md={6}>
           <Form.Group controlId="updFirstName">
@@ -549,26 +738,61 @@ const Staff = () => {
 </Form>
 </Modal>
 
-<Modal show={showAssignModal} onHide={closeAssignModal}>
+<Modal show={showAssignModal} onHide={closeAssignModal} centered>
   <Modal.Header closeButton>
-    <Modal.Title>Assign Project</Modal.Title>
+    <Modal.Title className="assign-project-title fw-bold text-primary">
+      Assign Project
+    </Modal.Title>
   </Modal.Header>
   <Modal.Body>
+    <div className="mb-4">
+      <p className="fw-semibold mb-1">Assigned Projects:</p>
+      {selectedStaffProjects.length > 0 ? (
+        <ul className="ps-0 mb-2">
+          {selectedStaffProjects.map((projectId, index) => {
+            const project = projects.find(
+              (p) => String(p.projectid) === String(projectId)
+            );
+            return (
+              <li key={index}>
+                {project ? project.projectname : `Project ID ${projectId}`}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="text-muted ps-0">No projects assigned yet.</p>
+      )}
+    </div>
     <Form onSubmit={handleAssignProject}>
-      <Form.Group>
-        <Form.Label>Select Project</Form.Label>
-        <Form.Control as="select" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
-          <option value="">-- Select a Project --</option>
-          {projects.map(project => (
-            <option key={project.project_id} value={project.project_id}>
-              {project.project_name}
-            </option>
-          ))}
-        </Form.Control>
+      <Form.Group controlId="projectSelect" className="mb-3">
+        <Form.Label className="fw-semibold">Select a Project</Form.Label>
+        <Form.Select
+          value={selectedProject}
+          onChange={(e) => setSelectedProject(e.target.value)}
+          required
+        >
+  <option value="">-- Select Project --</option>
+  {projects.map((project) => (
+    <option key={project.projectid} value={project.projectid}>
+      {project.projectname}
+    </option>
+  ))}
+
+        </Form.Select>
       </Form.Group>
-      <Button variant="primary" type="submit">Assign</Button>
+      <div className="d-flex justify-content-end gap-2 mt-3">
+        <Button variant="primary" type="submit">
+          Assign
+        </Button>
+        <Button variant="secondary" onClick={closeAssignModal}>
+          Cancel
+        </Button>
+      </div>
     </Form>
   </Modal.Body>
 </Modal>
+
+
 <ToastContainer position="top-right" autoClose={1500} />
 </div>)};export default Staff;
