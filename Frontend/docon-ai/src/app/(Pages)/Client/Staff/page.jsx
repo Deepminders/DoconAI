@@ -128,12 +128,10 @@ const Staff = () => {
   };
   
   const openUpdateModal = async (id) => {
-    console.log("Update ID:", id);
     try {
 
       const res = await fetch(`${BASE_URL}/staff/findStaff/${id}`);
       const fetched_data = await res.json();
-      console.log("Fetched Data:", fetched_data);
       setUpdateData({
         id: id,
         staff_fname: fetched_data.Staff.staff_fname,
@@ -167,7 +165,7 @@ const Staff = () => {
         }
         const data = await res.json();
         setStaffList(data);
-        console.log("staffList", staffList);
+      
       } catch (error) {
         console.error('Error fetching staff data:', error);
         setError('Failed to fetch staff data');
@@ -212,7 +210,6 @@ const Staff = () => {
         assigned_projects: formData.assigned_projects || [], // Ensure array
       };
       
-      console.log("Payload:", payload);
       const res = await fetch(`${BASE_URL}/staff/addStaff`, {
         method: 'POST',
         headers: {
@@ -368,7 +365,7 @@ useEffect(() => {
 }, [staffList, searchQuery, selectedRoles]);
 
 const [filteredStaff, setFilteredStaff] = useState([]);
-console.log("Selected project IDs:", selectedStaffProjects);
+
 
   return (
     <div className='staff-container'>
@@ -610,10 +607,11 @@ console.log("Selected project IDs:", selectedStaffProjects);
   {/* Show existing or newly uploaded image */}
   {(updateData.staff_image_url && (
     <div style={{ marginBottom: '10px' }}>
+      {console.log("staff_image_url:", updateData.staff_image_url)}
       <img className='staff-image'
         src={
           typeof updateData.staff_image_url === "string"
-            ? `${BASE_URL}${updateData.staff_image_url}` 
+            ? `${BASE_URL}/uploaded_images${updateData.staff_image_url}` 
             : URL.createObjectURL(updateData.staff_image_url)
         }
         
