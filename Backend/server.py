@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from Routes.UserRoutes import router
 from Routes.ProjectRoutes import routerproject
 from Routes.DocumentRoutes import router as doc_router
+from fastapi.middleware.cors import CORSMiddleware
 from Routes import StaffRoutes
 from fastapi.middleware.cors import CORSMiddleware
 from Config.db import initialize_db
@@ -13,7 +14,7 @@ server.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name=
 
 server.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],  # Frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
