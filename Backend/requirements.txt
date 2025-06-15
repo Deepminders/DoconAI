@@ -8,3 +8,17 @@ google-auth-httplib2
 google-api-python-client 
 python-multipart
 fitz
+
+#laavanjan's libraries
+langchain==0.3.25
+langchain_community==0.3.25
+langchain_core==0.3.65
+langchain_groq==0.3.2
+langchain_huggingface==0.3.0
+pymongo
+python-dotenv
+Requests
+faiss-cpu
+sentence-transformers
+PyPDF2
+PyMuPDF==1.22.5

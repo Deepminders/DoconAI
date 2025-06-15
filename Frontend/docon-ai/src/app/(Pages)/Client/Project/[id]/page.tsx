@@ -1,5 +1,6 @@
 "use client";
 
+import { useParams } from 'next/navigation';
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import {
@@ -17,19 +18,20 @@ import {
     FileCheck2,
     Pencil,
 } from "lucide-react";
-import profile from "../Projects/profile.jpg";
-import Sidebar from '../../../Components/Project/Sidebar'
-import MobileMenuButton from "../../../Components/Project/MobileMenuButton"
-import ProjectHeader from '../../../Components/Project/ProjectHeader'
-import ProjectInfo from '../../../Components/Project/ProjectInfo'
-import DocumentManagement from "../../../Components/Project/DocumentManagement";
-import GroupDocumentsModal from "../../../Components/Project/GroupDocumentsModel";
-import DeleteDocumentsModal from "../../../Components/Project/DeleteDocumentsModal";
-import UserManagement from "../../../Components/Project/UserManagement";
-import DeleteUserModel from "../../../Components/Project/DeleteUserModel";
-import EditUserModel from "../../../Components/Project/EditUserModel";
-import ProjectActions from "../../../Components/Project/ProjectActions";
-import DeleteConfirmationModel from "../../../Components/Project/DeleteConfirmationModel";
+import profile from "../profile.jpg";
+import Sidebar from '../../../../Components/Project/Sidebar'
+import MobileMenuButton from "../../../../Components/Project/MobileMenuButton"
+import ProjectHeader from '../../../../Components/Project/ProjectHeader'
+import ProjectInfo from '../../../../Components/Project/ProjectInfo'
+import DocumentManagement from "../../../../Components/Project/DocumentManagement";
+import GroupDocumentsModal from "../../../../Components/Project/GroupDocumentsModel";
+import DeleteDocumentsModal from "../../../../Components/Project/DeleteDocumentsModel";
+import UserManagement from "../../../../Components/Project/UserManagement";
+import DeleteUserModel from "../../../../Components/Project/DeleteUserModel";
+import EditUserModel from "../../../../Components/Project/EditUserModel";
+import ProjectActions from "../../../../Components/Project/ProjectActions";
+import DeleteConfirmationModel from "../../../../Components/Project/DeleteConfirmationModel";
+import Summarizer from '../../../../Components/Project/summarizer'
 
 const categories = [
     {
@@ -174,6 +176,11 @@ const initialDocuments = [
 const ProjectPage = () => {
     // State declarations grouped by category
     // UI State
+    const { id } = useParams();
+    const router = useRouter();
+
+    const [projectData, setProjectData] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -194,7 +201,24 @@ const ProjectPage = () => {
     const [users, setUsers] = useState(myusers);
     const [userToDelete, setUserToDelete] = useState(null);
 
-    const router = useRouter();
+    // Summarizer state
+    const [showSummarizer, setShowSummarizer] = useState(false);
+
+    useEffect(() => {
+        async function fetchProject() {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/project/getproject/${id}`);
+                const data = await response.json();
+                setProjectData(data);
+            } catch (error) {
+                console.error("Error fetching project:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        if (id) fetchProject();
+    }, [id]);
 
     // Effect Hooks
     useEffect(() => {
@@ -227,7 +251,29 @@ const ProjectPage = () => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // UI Handlers
+    if (loading) {
+        return (
+            <div className="flex h-screen bg-gray-50">
+                {/* Your sidebar */}
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!projectData) {
+        return (
+            <div className="flex h-screen bg-gray-50">
+                {/* Your sidebar */}
+                <div className="flex-1 flex items-center justify-center">
+                    <p>Project not found</p>
+                </div>
+            </div>
+        );
+    }
+
+    // UI Handlers 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     // Document Handlers
@@ -264,36 +310,103 @@ const ProjectPage = () => {
         setShowDeleteDocumentsModal(false);
     };
 
+    const handleSummarizeClick = () => {
+        setShowSummarizer(true);
+    };
+
+    const closeModal = () => {
+        setShowSummarizer(false);
+    };
+
     // User Handlers
-    const handleAssignUser = (userId, role) => {
-        setUsers([
-            ...users,
-            {
-                id: userId,
-                name: "New User",
-                role,
-                email: `${userId}@example.com`,
-            },
-        ]);
+    const handleAssignUserToProject = async (userId, role) => {
+        try {
+            // Call your API to assign user to project
+            const response = await fetch(`/api/projects/${id}/assign-user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId, role }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to assign user');
+            }
+
+            // Refresh the user list or update state as needed
+            const updatedProject = await response.json();
+            setProjectData(updatedProject);
+        } catch (error) {
+            console.error('Error assigning user:', error);
+        }
     };
 
     const handleDeleteClick = (user) => {
-        setUserToDelete(user);
+        // Ensure we're using the correct ID field
+        const userToDelete = {
+            id: user.staff_id || user.id,
+            name: user.staff_fname ? `${user.staff_fname} ${user.staff_lname}` : user.name,
+        };
+        setUserToDelete(userToDelete);
     };
 
     const handleEditUser = (user) => {
-        setEditingUser(user);
+        // Convert to the editing format if needed
+        const userToEdit = {
+            id: user.staff_id || user.id,
+            name: user.staff_fname ? `${user.staff_fname} ${user.staff_lname}` : user.name,
+            role: user.staff_role || user.role,
+            email: user.staff_email || user.email,
+        };
+        setEditingUser(userToEdit);
     };
 
-    const handleSaveUser = (updatedUser) => {
-        setUsers(users.map((user) => (user.id === updatedUser.id ? updatedUser : user)));
+    const handleSaveUser = async (updatedUser) => {
+        try {
+            // Call your API to update the user
+            const response = await fetch(`/api/staff/${updatedUser.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedUser),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update user');
+            }
+
+            // Refresh user data
+            const data = await response.json();
+            // Update your state accordingly
+        } catch (error) {
+            console.error('Error updating user:', error);
+        }
         setEditingUser(null);
     };
 
-    const confirmDeleteUser = () => {
-        if (userToDelete) {
-            setUsers(users.filter((user) => user.id !== userToDelete.id));
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return;
+
+        try {
+            const response = await fetch(`/api/staff/${userToDelete.id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete user');
+            }
+
+            // Remove user from local state
+            setUsers((prevUsers) => prevUsers.filter(user =>
+                user.id !== userToDelete.id &&
+                user.staff_id !== userToDelete.id // to handle both possible ID types
+            ));
+
             setUserToDelete(null);
+        } catch (error) {
+            console.error('Error deleting user:', error);
         }
     };
 
@@ -325,12 +438,31 @@ const ProjectPage = () => {
             <main className="flex-1 overflow-auto p-4 lg:p-6">
                 <div className="max-w-6xl mx-auto p-6 border rounded-lg shadow-md bg-white">
                     <ProjectHeader
-                        projectName="Taj Hotel"
+                        projectId={id}
                         profileImage={profile}
-                        projectStatus="Active"
                     />
-                    <ProjectInfo />
-                    <ProjectActions onDeleteProject={handleDeleteProject} />
+                    <ProjectInfo
+                        projectId={id}
+                        className="my-custom-class"
+                    />
+                    <ProjectActions
+                        onDeleteProject={handleDeleteProject}
+                        onSummarize={handleSummarizeClick}
+                    />
+
+                    {showSummarizer && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                            <div className="bg-white rounded-lg p-6 w-full max-w-3xl relative">
+                                <button
+                                    onClick={closeModal}
+                                    className="absolute top-2 right-2 text-gray-600 hover:text-black text-xl"
+                                >
+                                    &times;
+                                </button>
+                                  <Summarizer onClose={() => setShowSummarizer(false)} />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Document Section */}
                     <DocumentManagement
@@ -345,10 +477,11 @@ const ProjectPage = () => {
 
                     {/* User Section */}
                     <UserManagement
-                        users={users}
+                        projectId={id}
+                        users={[]} // Will be overridden by project staff
                         onEditUser={handleEditUser}
                         onDeleteUser={handleDeleteClick}
-                        onAssignUser={handleAssignUser}
+                        onAssignUser={handleAssignUserToProject} // Use the new handler
                     />
 
                     {/* Modals */}
@@ -358,6 +491,7 @@ const ProjectPage = () => {
                         onConfirm={confirmDelete}
                         title="Delete Project?"
                         message="This action cannot be undone. All project data will be permanently removed."
+                        projectId={id}  // Make sure your modal component actually uses this if needed
                     />
 
                     <DeleteUserModel
@@ -382,6 +516,15 @@ const ProjectPage = () => {
                         onConfirm={confirmDeleteDocuments}
                         selectedCount={selectedDocs.length}
                     />
+
+
+
+                    <button
+                        onClick={() => router.push('/Client/Projects')}
+                        className="flex items-center gap-1 text-sky-600 hover:text-sky-800"
+                    >
+                        ← Back to Projects
+                    </button>
 
                     {editingUser && (
                         <EditUserModel
