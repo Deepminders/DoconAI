@@ -4,19 +4,9 @@ import { useParams } from 'next/navigation';
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import {
-    Menu,
-    X,
-    FolderKanban,
-    FileText,
-    Settings,
-    Trash2,
     Briefcase,
     ShieldCheck,
     Scale,
-    Search,
-    UploadCloud,
-    FileCheck2,
-    Pencil,
 } from "lucide-react";
 import profile from "../profile.jpg";
 import Sidebar from '../../../../Components/Project/Sidebar'
@@ -25,7 +15,7 @@ import ProjectHeader from '../../../../Components/Project/ProjectHeader'
 import ProjectInfo from '../../../../Components/Project/ProjectInfo'
 import DocumentManagement from "../../../../Components/Project/DocumentManagement";
 import GroupDocumentsModal from "../../../../Components/Project/GroupDocumentsModel";
-import DeleteDocumentsModal from "../../../../Components/Project/DeleteDocumentsModel";
+import DeleteDocumentsModal from "../../../../Components/Project/DeleteDocumentsModal";
 import UserManagement from "../../../../Components/Project/UserManagement";
 import DeleteUserModel from "../../../../Components/Project/DeleteUserModel";
 import EditUserModel from "../../../../Components/Project/EditUserModel";
@@ -48,33 +38,6 @@ const categories = [
         name: "Legal Documents",
         files: "4 Files | 123MB",
         icon: <Scale size={20} />,
-    },
-];
-
-const myusers = [
-    {
-        id: "1",
-        name: "Laavanjan",
-        role: "Project Lead",
-        email: "laavanjanlaa@gmail.com",
-    },
-    {
-        id: "2",
-        name: "Nive",
-        role: "Site Engineer",
-        email: "Nivelaa@gmail.com",
-    },
-    {
-        id: "3",
-        name: "Laavan",
-        role: "QS",
-        email: "laavanlaa@gmail.com",
-    },
-    {
-        id: "4",
-        name: "Mahesh",
-        role: "Site Engineer",
-        email: "laavanjalaa@gmail.com",
     },
 ];
 
@@ -198,9 +161,8 @@ const ProjectPage = () => {
 
     // User States
     const [editingUser, setEditingUser] = useState(null);
-    const [users, setUsers] = useState(myusers);
     const [userToDelete, setUserToDelete] = useState(null);
-
+    
     // Summarizer state
     const [showSummarizer, setShowSummarizer] = useState(false);
 
@@ -398,12 +360,6 @@ const ProjectPage = () => {
                 throw new Error('Failed to delete user');
             }
 
-            // Remove user from local state
-            setUsers((prevUsers) => prevUsers.filter(user =>
-                user.id !== userToDelete.id &&
-                user.staff_id !== userToDelete.id // to handle both possible ID types
-            ));
-
             setUserToDelete(null);
         } catch (error) {
             console.error('Error deleting user:', error);
@@ -459,7 +415,7 @@ const ProjectPage = () => {
                                 >
                                     &times;
                                 </button>
-                                  <Summarizer onClose={() => setShowSummarizer(false)} />
+                                <Summarizer onClose={() => setShowSummarizer(false)} projectId={id} />
                             </div>
                         </div>
                     )}
@@ -519,11 +475,20 @@ const ProjectPage = () => {
 
 
 
-                    <button
-                        onClick={() => router.push('/Client/Projects')}
-                        className="flex items-center gap-1 text-sky-600 hover:text-sky-800"
+                                        <button
+                      onClick={() => router.push('/Client/Projects')}
+                      className="group flex items-center gap-2 px-4 py-2 rounded-lg text-sky-600 hover:text-white hover:bg-sky-600 transition-all duration-300 shadow-sm hover:shadow-md border border-sky-200 hover:border-sky-500"
                     >
-                        ← Back to Projects
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform duration-300" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      </svg>
+                      <span className="font-medium">Back to Projects</span>
                     </button>
 
                     {editingUser && (
