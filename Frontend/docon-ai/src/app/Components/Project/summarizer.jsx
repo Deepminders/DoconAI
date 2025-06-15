@@ -55,7 +55,9 @@ const Summarizer = ({ onClose, projectId }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          project_id: projectId  // Add the project ID here
+        }),
       });
 
       if (!summaryRes.ok) {
