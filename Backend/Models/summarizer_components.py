@@ -160,8 +160,7 @@ class SummarizerComponents:
             cleaned_summary = self.clean_summary(raw_summary)
 
             return {"summary": cleaned_summary}
-        except HTTPException:
-            raise
+        
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Summary generation failed: {str(e)}"
