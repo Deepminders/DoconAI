@@ -1,11 +1,40 @@
 import React, { useEffect, useRef } from 'react';
+import { Filter, X, Check, ChevronRight, Sparkles, Globe, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const FilterPopup = ({ isVisible, onClose, onFilterChange, currentFilter }) => {
   const filters = [
-    { name: "All Projects", icon: "🌐", color: "bg-gray-100", hoverColor: "hover:bg-gray-200" },
-    { name: "In Progress", icon: "⏳", color: "bg-blue-50", hoverColor: "hover:bg-blue-100" },
-    { name: "Completed", icon: "✅", color: "bg-green-50", hoverColor: "hover:bg-green-100" },
-    { name: "Delayed", icon: "⚠️", color: "bg-amber-50", hoverColor: "hover:bg-amber-100" }
+    {
+      name: "All Projects",
+      icon: Globe,
+      color: "bg-slate-50",
+      hoverColor: "hover:bg-slate-100",
+      ringColor: "ring-slate-300",
+      iconColor: "text-slate-600"
+    },
+    {
+      name: "In Progress",
+      icon: Clock,
+      color: "bg-blue-50",
+      hoverColor: "hover:bg-blue-100",
+      ringColor: "ring-blue-300",
+      iconColor: "text-blue-600"
+    },
+    {
+      name: "Completed",
+      icon: CheckCircle,
+      color: "bg-emerald-50",
+      hoverColor: "hover:bg-emerald-100",
+      ringColor: "ring-emerald-300",
+      iconColor: "text-emerald-600"
+    },
+    {
+      name: "Delayed",
+      icon: AlertTriangle,
+      color: "bg-amber-50",
+      hoverColor: "hover:bg-amber-100",
+      ringColor: "ring-amber-300",
+      iconColor: "text-amber-600"
+    }
   ];
 
   const popupRef = useRef(null);
@@ -22,73 +51,96 @@ const FilterPopup = ({ isVisible, onClose, onFilterChange, currentFilter }) => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-black/30 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-black/30 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         ref={popupRef}
-        className="bg-white w-[95%] max-w-md rounded-xl shadow-2xl border border-sky-100/50 overflow-hidden animate-scaleIn"
+        className="bg-white w-[95%] max-w-md rounded-lg shadow-xl border border-gray-200 overflow-hidden animate-in slide-in-from-bottom-4 duration-300 relative"
       >
-        {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-sky-600 to-blue-600 p-5 text-white">
+        {/* Subtle top accent */}
+        <div className="absolute top-0 left-0 w-full h-0.5 bg-blue-500"></div>
+
+        {/* Header */}
+        <div className="relative bg-white p-5 border-b border-gray-100">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-              </svg>
-              <h3 className="text-xl font-bold">Filter Projects</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-md flex items-center justify-center">
+                <Filter className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Filter Projects
+                </h3>
+                <p className="text-sm text-gray-500">Select your preferred view</p>
+              </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
-              className="p-1 rounded-full hover:bg-white/20 transition"
+              className="w-8 h-8 rounded-md bg-gray-100 hover:bg-gray-200 transition-all duration-200 flex items-center justify-center"
               aria-label="Close"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeWidth="2" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
+              <X className="w-4 h-4 text-gray-600" />
             </button>
           </div>
-          <p className="text-sm opacity-90 mt-1">Select a project status to filter</p>
         </div>
 
         {/* Filter options */}
         <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
-          {filters.map((filter) => (
-            <button
-              key={filter.name}
-              onClick={() => onFilterChange(filter.name)}
-              className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 ${filter.color} ${filter.hoverColor} ${
-                currentFilter === filter.name ? 'ring-2 ring-sky-500' : ''
-              }`}
-            >
-              <span className="text-2xl">{filter.icon}</span>
-              <span className="font-medium text-gray-800">{filter.name}</span>
-              {currentFilter === filter.name ? (
-                <span className="ml-auto bg-sky-500 text-white p-1 rounded-full">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeWidth="3" d="M5 13l4 4L19 7"/>
-                  </svg>
-                </span>
-              ) : (
-                <span className="ml-auto text-gray-400 group-hover:text-sky-500 transition">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeWidth="2" d="M9 5l7 7-7 7"/>
-                  </svg>
-                </span>
-              )}
-            </button>
-          ))}
+          {filters.map((filter, index) => {
+            const IconComponent = filter.icon;
+            const isSelected = currentFilter === filter.name;
+
+            return (
+              <button
+                key={filter.name}
+                onClick={() => onFilterChange(filter.name)}
+                className={`w-full flex items-center gap-3 p-3 rounded-md transition-all duration-200 group ${filter.color} ${filter.hoverColor} ${isSelected ? `ring-1 ${filter.ringColor} shadow-sm` : ''
+                  }`}
+              >
+                <div className={`w-9 h-9 rounded-md flex items-center justify-center transition-all duration-200 ${isSelected ? 'bg-white shadow-sm' : 'bg-white/70'
+                  }`}>
+                  <IconComponent className={`w-4.5 h-4.5 ${filter.iconColor}`} />
+                </div>
+
+                <div className="flex-1 text-left">
+                  <span className={`font-medium ${isSelected ? 'text-gray-900' : 'text-gray-700'
+                    }`}>
+                    {filter.name}
+                  </span>
+                </div>
+
+                <div className="flex items-center">
+                  {isSelected ? (
+                    <div className="bg-blue-500 text-white p-1 rounded-full">
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    </div>
+                  ) : (
+                    <div className="text-gray-400">
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-          <button
-            onClick={onClose}
-            className="w-full py-3 px-4 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:shadow-md transition-all duration-300 hover:scale-[1.02] active:scale-95"
-          >
-            <svg className="w-5 h-5 animate-bounce-x" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeWidth="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            Apply Filters
-          </button>
+        <div className="p-4 border-t border-gray-100 bg-gray-50">
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 px-4 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-100 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 px-4 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <span>Apply</span>
+              <Check className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -96,4 +148,3 @@ const FilterPopup = ({ isVisible, onClose, onFilterChange, currentFilter }) => {
 };
 
 export default FilterPopup;
-
