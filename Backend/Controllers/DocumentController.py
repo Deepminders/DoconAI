@@ -122,7 +122,6 @@ async def addDocument(file: UploadFile = File(...),doc_name:str = Form(...)):
             status_code=500,
             detail=f"Database insertion failed: {str(e)}"
         )
-        
 async def downloadDocument(docid: str):
     file = await document_collection.find_one({"document_id": int(docid)})
     if not file:
