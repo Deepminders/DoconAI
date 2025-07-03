@@ -169,6 +169,6 @@ async def get_project():
     async for project in project_collection.find():
         projects.append({
             "projectid": str(project["_id"]),
-            "projectname": project.get("name")
+            "projectName": project.get("projectName")
         })
     return projects
