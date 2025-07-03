@@ -2,3 +2,24 @@ fastapi[all]
 motor
 pydantic
 uvicorn
+google-auth 
+google-auth-oauthlib 
+google-auth-httplib2 
+google-api-python-client 
+python-multipart
+fitz
+
+#laavanjan's libraries
+langchain==0.3.25
+langchain_community==0.3.25
+langchain_core==0.3.65
+langchain_groq==0.3.2
+langchain_huggingface==0.3.0
+pymongo
+python-dotenv
+Requests
+faiss-cpu
+sentence-transformers
+pypdf
+PyMuPDF==1.22.5
+jspdf
