@@ -26,6 +26,50 @@ else:
 
 print("Document Collection",document_collection)
 
+
+
+async def classify_document_by_title(content: bytes) -> str:
+
+
+    CLASSIFICATION_RULES = {
+        "invoice": "Finance",
+        "receipt": "Finance",
+        "statement": "Finance",
+        "agreement": "Legal",
+        "contract": "Legal",
+        "nda": "Legal",
+        "report": "Reports",
+        "specification": "Technical",
+        "blueprint": "Technical",
+        "proposal": "Business"
+    }
+    
+    default_category = "uncategorized"
+
+    try:
+        with fitz.open(stream=content, filetype="pdf") as doc:
+            if doc.page_count == 0:
+                return default_category
+
+            first_page = doc.load_page(0)
+            text = first_page.get_text("text")
+
+            text_to_scan = text[:100].lower() 
+            
+            for keyword, category in CLASSIFICATION_RULES.items():
+                if keyword in text_to_scan:
+                    return category
+
+        return default_category
+
+    except Exception as e:
+        return default_category
+
+
+
+
+
+
 async def addDocument(file: UploadFile = File(...),doc_name:str = Form(...)):
     """Upload a document to Google Drive and store metadata in MongoDB"""
     
@@ -155,6 +199,10 @@ async def viewDocument(docid:str):
     viewable_link = f"https://drive.google.com/file/d/{file['google_drive_id']}/view"
     return RedirectResponse(viewable_link)
 
+
+
+
+
 async def updateDocument(
     docid: str,
     new_name: Optional[str] = Form(None),
@@ -219,8 +267,7 @@ async def updateDocument(
                     body=drive_update_body
                 ).execute()
             except Exception as drive_error:
-                logger.error(f"Google Drive update failed: {str(drive_error)}")
-                # Rollback MongoDB update
+               
                 await document_collection.update_one(
                     {"document_id": document_id},
                     {"$set": {
@@ -259,6 +306,9 @@ async def updateDocument(
         )
         
         
+        
+        
+
 async def replaceDocument(
     docid: str,
     file: UploadFile = File(...),
@@ -284,7 +334,7 @@ async def replaceDocument(
                 with fitz.open(stream=content, filetype="pdf") as doc:
                     page_count = doc.page_count
             except Exception as e:
-                logger.warning(f"Could not get page count: {str(e)}")
+                raise e
 
         # Prepare file for Google Drive upload
         file_stream = io.BytesIO(content)
