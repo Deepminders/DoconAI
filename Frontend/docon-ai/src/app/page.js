@@ -1,5 +1,4 @@
 import Image from "next/image";
-import UploadDoc from "./Components/Docs/UploadDoc";
 
 export default function Home() {
   return (
