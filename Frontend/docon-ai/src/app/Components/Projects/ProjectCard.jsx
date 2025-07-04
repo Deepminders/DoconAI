@@ -1,117 +1,156 @@
 import React from 'react';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
-// Helper functions (could be moved to a utils file)
 const getStatusColor = (status) => {
-    const baseClasses = "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset";
-    
-    const statusClasses = {
-      'In Progress': 'bg-blue-50 text-blue-700 ring-blue-700/10',
-      'Completed': 'bg-green-50 text-green-700 ring-green-600/20',
-      'Delayed': 'bg-amber-50 text-amber-800 ring-amber-600/20',
-      'default': 'bg-gray-50 text-gray-600 ring-gray-500/10'
-    };
+  const baseClasses = "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset transition-all duration-200";
   
-    return statusClasses[status] || statusClasses.default;
+  const statusClasses = {
+    'In Progress': 'bg-blue-50 text-blue-700 ring-blue-700/10 hover:bg-blue-100 hover:ring-blue-700/20',
+    'Completed': 'bg-blue-50 text-blue-700 ring-blue-700/10 hover:bg-blue-100 hover:ring-blue-700/20',
+    'Delayed': 'bg-blue-50 text-blue-700 ring-blue-700/10 hover:bg-blue-100 hover:ring-blue-700/20',
+    'On Hold': 'bg-blue-50 text-blue-700 ring-blue-700/10 hover:bg-blue-100 hover:ring-blue-700/20',
+    'Cancelled': 'bg-blue-50 text-blue-700 ring-blue-700/10 hover:bg-blue-100 hover:ring-blue-700/20',
+    'default': 'bg-blue-50 text-blue-700 ring-blue-700/10 hover:bg-blue-100 hover:ring-blue-700/20'
   };
 
-const  formatProjectDate = (dateString) => {
-    // Handle both "DD/MM/YYYY" and already formatted dates
-    if (!dateString) return 'No date';
-    
-    // Check if already in correct format (like from API)
-    if (dateString.includes(',')) return dateString;
-  
-    // Parse DD/MM/YYYY format
-    const parts = dateString.split('/');
-    if (parts.length === 3) {
-      const [day, month, year] = parts;
-      const date = new Date(`${month}/${day}/${year}`);
-      
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    }
-  
-    // Fallback for other formats
-    return new Date(dateString).toLocaleDateString('en-US', {
+  return `${baseClasses} ${statusClasses[status] || statusClasses.default}`;
+};
+
+const formatProjectDate = (dateString) => {
+  if (!dateString) return 'No date';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid date';
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
-  };
+  } catch {
+    return 'Invalid date';
+  }
+};
 
 const ProjectCard = ({ project, isMobile }) => {
-    if (isMobile) {
-        return (
-            <div className="bg-gray-50 border border-sky-600 text-[16px] rounded-lg p-4 
-        hover:border-[1.5px] hover:border-sky-700 hover:bg-white 
-        hover:shadow-lg hover:shadow-sky-300/40 transition-all duration-100">
-                <div className="w-full flex justify-between items-center text-sm font-medium border-b pb-1">
-                    <span className="text-gray-600">📌 {project.name}</span>
-                    <span className={`text-xs px-2 py-1 rounded-md ${getStatusColor(project.status)} whitespace-nowrap`}>
-                        {project.status}
-                    </span>
-                </div>
+  const router = useRouter();
 
-                <div className="w-full flex justify-between text-sm border-b pb-1">
-                    <span className="text-gray-600">📄 {project.totalDocuments} Docs</span>
-                    <span className="text-gray-600">📂 {project.categories} Categories</span>
-                </div>
+  if (!project) return null;
 
-                <div className="w-full text-sm text-gray-500 border-b pb-1 flex items-center">
-                    <span className="text-gray-600">📅 Updated:</span>
-                    <span className="ml-1">{formatProjectDate(project.lastUpdated)}</span>
-                </div>
+  const handleClick = () => {
+    router.push(`/Client/Project/${project.projectId}`);
+  };
 
-                <div className="w-full flex flex-col items-start gap-1 pt-2">
-                    <span className="text-gray-600">👥 Team:</span>
-                    <div className="flex flex-wrap gap-2">
-                        {project.teamMembers.map((member, idx) => (
-                            <Image
-                                key={idx}
-                                src={member.profileImage}
-                                alt={member.name}
-                                width={32}
-                                height={32}
-                                className="w-8 h-8 rounded-full border-2 border-sky-500 hover:scale-110 transition-transform"
-                            />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
-    }
+  const {
+    projectName = 'Unnamed Project',
+    projectStatus = 'Unknown',
+    projectLead = 'Unassigned',
+    startDate = null,
+    endDate = null,
+    updatedAt = null,
+    createdAt = null
+  } = project;
 
+  if (isMobile) {
     return (
-        <div className="bg-gray-50 border border-sky-600 rounded-lg p-4 
-      hover:border-[1.5px] hover:border-sky-700 hover:bg-white 
-      hover:shadow-lg hover:shadow-sky-300/40 transition-all duration-100">
-            <div className="flex w-full">
-                <div className="flex-1 py-2 px-4 border-r border-gray-300">{project.name}</div>
-                <div className={`flex-1 py-2 px-4 border-r border-gray-300 ${getStatusColor(project.status)}`}>
-                    {project.status}
-                </div>
-                <div className="flex-1 py-2 px-4 border-r border-gray-300">{formatProjectDate(project.lastUpdated)}</div>
-                <div className="flex-1 py-2 px-4 border-r border-gray-300">{project.totalDocuments}</div>
-                <div className="flex-1 py-2 px-4 border-r border-gray-300">{project.categories}</div>
-                <div className="flex-1 flex items-center gap-2">
-                    {project.teamMembers.map((member, idx) => (
-                        <Image
-                            key={idx}
-                            src={member.profileImage}
-                            alt={member.name}
-                            width={40}
-                            height={40}
-                            className={`w-10 h-10 rounded-full border-2 border-sky-500 ${idx !== 0 ? '-ml-3' : ''} hover:scale-110 transition-transform`}
-                        />
-                    ))}
-                </div>
-            </div>
+      <div 
+        className="relative bg-white rounded-xl border border-blue-200 p-4 shadow-sm
+          hover:border-blue-300 hover:shadow-lg hover:bg-blue-50
+          transition-all duration-300 cursor-pointer group
+          before:absolute before:inset-0 before:bg-blue-100/20 before:opacity-0 
+          before:transition-opacity before:duration-300 hover:before:opacity-100"
+        onClick={handleClick}
+      >
+        {/* Project Name and Status */}
+        <div className="w-full flex justify-between items-center pb-2 mb-2 border-b border-blue-100 group-hover:border-blue-200 transition-colors">
+          <span className="text-blue-800 font-semibold truncate flex-1 mr-2 group-hover:text-blue-900 transition-colors">
+            📋 {projectName}
+          </span>
+          <span className={getStatusColor(projectStatus)}>
+            {projectStatus}
+          </span>
         </div>
+
+        {/* Project Lead */}
+        <div className="w-full text-sm pb-2 mb-2 border-b border-blue-100 group-hover:border-blue-200 transition-colors">
+          <span className="text-blue-600 group-hover:text-blue-800 transition-colors">
+            👤 <span className="font-medium">Lead:</span> {projectLead}
+          </span>
+        </div>
+
+        {/* Dates */}
+        <div className="w-full flex justify-between text-sm pb-2 mb-2 border-b border-blue-100 group-hover:border-blue-200 transition-colors">
+          <span className="text-green-600 group-hover:text-green-700 transition-colors">
+            📅 <span className="font-medium">Start:</span> {formatProjectDate(startDate)}
+          </span>
+          <span className="text-red-600 group-hover:text-red-700 transition-colors">
+            🏁 <span className="font-medium">End:</span> {formatProjectDate(endDate)}
+          </span>
+        </div>
+
+        {/* Last Updated */}
+        <div className="w-full text-sm flex justify-between items-center">
+          <span className="text-blue-600 group-hover:text-blue-800 transition-colors">
+            🔄 <span className="font-medium">Updated:</span> {formatProjectDate(updatedAt || createdAt)}
+          </span>
+          <span className="text-blue-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all">
+            →
+          </span>
+        </div>
+      </div>
     );
+  }
+
+  // Desktop view
+  return (
+    <div 
+      className="relative bg-white rounded-lg border border-blue-200 p-4 shadow-sm
+        hover:border-blue-300 hover:shadow-lg hover:bg-blue-50
+        transition-all duration-300 cursor-pointer group
+        before:absolute before:inset-0 before:bg-blue-100/20 
+        before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100"
+      onClick={handleClick}
+    >
+      <div className="grid grid-cols-6 gap-4 items-center relative z-10">
+        {/* Project Name */}
+        <div className="py-2 px-2 truncate font-medium text-blue-800 group-hover:text-blue-900 transition-colors flex items-center">
+          <span className="mr-2">📋</span>
+          {projectName}
+        </div>
+        
+        {/* Status */}
+        <div className="py-2 px-2">
+          <span className={getStatusColor(projectStatus)}>
+            {projectStatus}
+          </span>
+        </div>
+        
+        {/* Project Lead */}
+        <div className="py-2 px-2 truncate text-blue-600 group-hover:text-blue-800 transition-colors">
+          {projectLead}
+        </div>
+        
+        {/* Start Date */}
+        <div className="py-2 px-2 text-green-600 text-sm group-hover:text-green-700 transition-colors">
+          {formatProjectDate(startDate)}
+        </div>
+        
+        {/* End Date */}
+        <div className="py-2 px-2 text-red-600 text-sm group-hover:text-red-700 transition-colors">
+          {formatProjectDate(endDate)}
+        </div>
+        
+        {/* Last Updated */}
+        <div className="py-2 px-2 flex items-center justify-between">
+          <span className="text-blue-600 text-sm group-hover:text-blue-800 transition-colors">
+            {formatProjectDate(updatedAt || createdAt)}
+          </span>
+          <span className="text-blue-400 group-hover:text-blue-600 group-hover:translate-x-2 transition-all">
+            →
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default ProjectCard;

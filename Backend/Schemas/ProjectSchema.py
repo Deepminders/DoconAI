@@ -1,26 +1,31 @@
+from Models.ProjectModel import ProjectModel
+from typing import Dict, Any, List
 
-async def getAllProject(projects_list):
-    projects_list = await projects_list.to_list(length=None)
-
-    # Debugging: Print the project and its keys for inspection
-    for project in projects_list:
-        print(f"Project: {project}")
-        print(f"Keys: {project.keys()}")
-
-    # Process each project using getIndividualProject and return the result
+async def getAllProject(projects_cursor) -> List[Dict[str, Any]]:
+    """Convert a MongoDB cursor to a list of formatted project dictionaries"""
+    projects_list = await projects_cursor.to_list(length=None)
     return [getIndividualProject(project) for project in projects_list]
 
-
-def getIndividualProject(project):
-    # Check for missing 'project_name' key and log an error
-    if "project_name" not in project:
-        print(f"Error: 'project_name' key is missing in project: {project}")
-
-    # Extract and return project details, handling missing keys with .get()
-    return {
-        "projectid": str(project.get("_id", "Unknown")),
-        "projectname": str(project.get("project_name", "Unknown")),
-        "start_date": str(project.get("started_date", "Unknown")),
-        "end_date": str(project.get("end_date", "Unknown")),
-        "progress": str(project.get("progress", "Unknown")),
-    }
+def getIndividualProject(project: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert a single MongoDB project document to API response format"""
+    try:
+        # Convert MongoDB document to ProjectModel
+        project_model = ProjectModel.from_mongo_dict(project)
+        
+        # Return only the fields present in the example structure
+        return {
+            "projectId": str(project.get("_id", "")),
+            "projectName": project_model.projectName,
+            "projectLead": project_model.projectLead,
+            "projectStatus": project_model.projectStatus.value,
+            "startDate": project_model.startDate.isoformat(),
+            "endDate": project_model.endDate.isoformat(),
+            "updatedAt": project_model.updatedAt.isoformat(),
+            "Client":project_model.Client
+        }
+        
+    except Exception as e:
+        return {
+            "projectId": str(project.get("_id", "")),
+            "error": f"Error processing project: {str(e)}"
+        }

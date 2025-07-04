@@ -4,7 +4,7 @@ import React from "react";
 import Button from "./Button";
 import { Trash2, FileCheck2 } from "lucide-react";
 
-const ProjectActions = ({ onDeleteProject }) => (
+const ProjectActions = ({ onDeleteProject, onSummarize }) => (
   <div className="mt-4 flex gap-3">
     <Button
       label="Delete Project"
@@ -16,6 +16,7 @@ const ProjectActions = ({ onDeleteProject }) => (
       label="Summarize"
       color="blue"
       icon={<FileCheck2 size={18} />}
+      onClick={onSummarize}
     />
   </div>
 );
