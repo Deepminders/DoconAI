@@ -26,6 +26,12 @@ else:
 
 print("Document Collection",document_collection)
 
+
+async def uploadDocument(file: UploadFile = File(...), doc_name: str = Form(...)):
+    docname = doc_name
+
+
+
 async def addDocument(file: UploadFile = File(...),doc_name:str = Form(...)):
     """Upload a document to Google Drive and store metadata in MongoDB"""
     

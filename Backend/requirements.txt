@@ -7,7 +7,6 @@ google-auth-oauthlib
 google-auth-httplib2 
 google-api-python-client 
 python-multipart
-fitz
 
 #laavanjan's libraries
 langchain==0.3.25
@@ -21,5 +20,5 @@ Requests
 faiss-cpu
 sentence-transformers
 pypdf
-PyMuPDF==1.22.5
-jspdf
+python-jose[cryptography]
+PyMuPDF==1.23.8

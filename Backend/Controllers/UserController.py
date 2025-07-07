@@ -6,11 +6,9 @@ from pymongo import ReturnDocument
 from fastapi import HTTPException
 import random
 import string 
-from jose import jwt, JWTError
+from jose import JWTError,jwt
 from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
-
-
 
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
