@@ -22,6 +22,7 @@ import EditUserModel from "../../../../Components/Project/EditUserModel";
 import ProjectActions from "../../../../Components/Project/ProjectActions";
 import DeleteConfirmationModel from "../../../../Components/Project/DeleteConfirmationModel";
 import Summarizer from '../../../../Components/Project/summarizer'
+import CostEstimation from '../../../../Components/Project/CostEstimation';
 
 const categories = [
     {
@@ -137,11 +138,16 @@ const initialDocuments = [
 
 
 const ProjectPage = () => {
-    // State declarations grouped by category
-    // UI State
     const { id } = useParams();
     const router = useRouter();
 
+    // Add debugging for the project ID
+    console.log('🔍 ProjectPage DEBUG: id from useParams:', id);
+    console.log('🔍 ProjectPage DEBUG: id type:', typeof id);
+
+
+    // State declarations grouped by category
+    // UI State
     const [projectData, setProjectData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -162,7 +168,7 @@ const ProjectPage = () => {
     // User States
     const [editingUser, setEditingUser] = useState(null);
     const [userToDelete, setUserToDelete] = useState(null);
-    
+
     // Summarizer state
     const [showSummarizer, setShowSummarizer] = useState(false);
 
@@ -473,23 +479,23 @@ const ProjectPage = () => {
                         selectedCount={selectedDocs.length}
                     />
 
-
-
-                                        <button
-                      onClick={() => router.push('/Client/Projects')}
-                      className="group flex items-center gap-2 px-4 py-2 rounded-lg text-sky-600 hover:text-white hover:bg-sky-600 transition-all duration-300 shadow-sm hover:shadow-md border border-sky-200 hover:border-sky-500"
+                    <button
+                        onClick={() => router.push('/Client/Projects')}
+                        className="group flex items-center gap-2 px-4 py-2 rounded-lg text-sky-600 hover:text-white hover:bg-sky-600 transition-all duration-300 shadow-sm hover:shadow-md border border-sky-200 hover:border-sky-500"
                     >
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform duration-300" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                      </svg>
-                      <span className="font-medium">Back to Projects</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform duration-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        <span className="font-medium">Back to Projects</span>
                     </button>
+
+                    
 
                     {editingUser && (
                         <EditUserModel

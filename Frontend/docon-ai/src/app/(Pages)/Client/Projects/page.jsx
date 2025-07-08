@@ -40,7 +40,6 @@ export default function ProjectsDashboard() {
   const [isFilterPopupVisible, setIsFilterPopupVisible] = useState(false);
   const [isProjectPopupVisible, setIsProjectPopupVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-    
 
   const fetchProjects = async () => {
     try {
@@ -76,6 +75,23 @@ export default function ProjectsDashboard() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Add missing handler functions
+  const handleFilterClick = () => {
+    setIsFilterPopupVisible(true);
+  };
+
+  const handleSortClick = () => {
+    setIsReversed(!isReversed);
+  };
+
+  const handleNewProjectClick = () => {
+    setIsProjectPopupVisible(true);
+  };
+
+  const handleSearch = (searchValue) => {
+    setSearchTerm(searchValue);
+  };
 
   const handleNewProjectSubmit = async (projectData) => {
     try {
@@ -117,6 +133,14 @@ export default function ProjectsDashboard() {
       return isReversed ? dateA - dateB : dateB - dateA;
     });
   }, [filteredProjects, isReversed]);
+
+  // Filter projects based on search term
+  const searchFilteredProjects = useMemo(() => {
+    return sortedProjects.filter(project =>
+      project.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.projectLead?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [sortedProjects, searchTerm]);
 
   if (loading) return (
     <div className="flex h-screen">
@@ -168,18 +192,16 @@ export default function ProjectsDashboard() {
         )}
 
         <Header
-          onFilterClick={() => setIsFilterPopupVisible(true)}
-          onSortClick={() => setIsReversed(!isReversed)}
+          onFilterClick={handleFilterClick}
+          onSortClick={handleSortClick}
           isReversed={isReversed}
-          onNewProjectClick={() => setIsProjectPopupVisible(true)}
-          onSearch={setSearchTerm}
+          onNewProjectClick={handleNewProjectClick}
+          onSearch={handleSearch}
+          projects={allProjects} // Pass actual projects data
         />
 
         <ProjectList
-          projects={sortedProjects.filter(project =>
-            project.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            project.projectLead?.toLowerCase().includes(searchTerm.toLowerCase())
-          )}
+          projects={searchFilteredProjects}
           filter={filter}
           isMobile={isMobile}
         />
