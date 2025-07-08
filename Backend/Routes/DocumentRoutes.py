@@ -1,10 +1,10 @@
 from fastapi import APIRouter, UploadFile, File, Form
-from Controllers.DocumentController import addDocument, downloadDocument, viewDocument, updateDocument, replaceDocument, deleteDocument, fetchRecents
+from Controllers.DocumentController import addDocument, downloadDocument, viewDocument, updateDocument, replaceDocument, deleteDocument, fetchRecents,getDocInfo, getDocsfromProject
 router = APIRouter(prefix="/api/doc", tags=["Document"])
 
 @router.post("/upload")
-async def addDoc(file: UploadFile = File(...), doc_name: str = Form(...)):
-    return await addDocument(file, doc_name)
+async def addDoc(file: UploadFile = File(...), doc_name: str = Form(...),proj_id:str = Form(...)):
+    return await addDocument(file, doc_name, proj_id)
 
 @router.get("/download/{doc_id}")
 async def downloadDoc(doc_id:str):
@@ -30,3 +30,11 @@ async def deleteDoc(doc_id:str):
 @router.get("/fetchall")
 async def getAll():
     return await fetchRecents()
+
+@router.get("/info/{docid}")
+async def fetchDocInfo(docid:int):
+    return await getDocInfo(docid)
+
+@router.get("/ProjectDocs/{proj_id}")
+async def getProjectDocs(proj_id: str):
+    return await getDocsfromProject(proj_id)

@@ -32,7 +32,7 @@ async def uploadDocument(file: UploadFile = File(...), doc_name: str = Form(...)
 
 
 
-async def addDocument(file: UploadFile = File(...),doc_name:str = Form(...)):
+async def addDocument(file: UploadFile = File(...),doc_name:str = Form(...), proj_id:str = Form(...)):
     """Upload a document to Google Drive and store metadata in MongoDB"""
     
     # Read file content once and reuse
@@ -83,6 +83,7 @@ async def addDocument(file: UploadFile = File(...),doc_name:str = Form(...)):
     current_time = datetime.now().isoformat()
     file_info = {
         "document_id": document_id,
+        "project_id":proj_id,
         "document_name": docname,
         "document_category": "uncategorized",  # Default, can be parameter
         "document_size": file_size,
@@ -439,4 +440,36 @@ async def fetchRecents():
         raise HTTPException(
             status_code=500,
             detail=f"Failed to fetch recent documents: {str(e)}"
+        )
+
+async def getDocInfo(docid:int):
+    cursor = document_collection.find({"document_id":docid})
+    doc = await cursor.to_list(length=1)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    doc[0]["id"] = str(doc[0]["_id"])
+    del doc[0]["_id"]
+    return JSONResponse({
+        "status": "success",
+        "message": "Document information retrieved successfully",
+        "document":doc[0]
+    })
+    
+    
+async def getDocsfromProject(proj_id: str):
+    try:
+        cursor = document_collection.find({"project_id": proj_id})
+        project_docs = await cursor.to_list()  # Adjust length as needed
+        for doc in project_docs:
+            doc["id"] = str(doc["_id"])
+            del doc["_id"]  
+        return JSONResponse({
+            "status": "success",
+            "message": f"Documents for project {proj_id} retrieved successfully",
+            "documents": project_docs
+        })
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch documents for project {proj_id}: {str(e)}"
         )
