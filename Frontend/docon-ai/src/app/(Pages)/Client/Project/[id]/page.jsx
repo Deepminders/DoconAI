@@ -7,12 +7,13 @@ import {
     Briefcase,
     ShieldCheck,
     Scale,
+    ArrowLeft,
 } from "lucide-react";
 import profile from "../profile.jpg";
-import Sidebar from '../../../../Components/Project/Sidebar'
-import MobileMenuButton from "../../../../Components/Project/MobileMenuButton"
-import ProjectHeader from '../../../../Components/Project/ProjectHeader'
-import ProjectInfo from '../../../../Components/Project/ProjectInfo'
+import Sidebar from '../../../../Components/Project/Sidebar';
+import MobileMenuButton from "../../../../Components/Project/MobileMenuButton";
+import ProjectHeader from '../../../../Components/Project/ProjectHeader';
+import ProjectInfo from '../../../../Components/Project/ProjectInfo';
 import DocumentManagement from "../../../../Components/Project/DocumentManagement";
 import GroupDocumentsModal from "../../../../Components/Project/GroupDocumentsModel";
 import DeleteDocumentsModal from "../../../../Components/Project/DeleteDocumentsModal";
@@ -21,7 +22,7 @@ import DeleteUserModel from "../../../../Components/Project/DeleteUserModel";
 import EditUserModel from "../../../../Components/Project/EditUserModel";
 import ProjectActions from "../../../../Components/Project/ProjectActions";
 import DeleteConfirmationModel from "../../../../Components/Project/DeleteConfirmationModel";
-import Summarizer from '../../../../Components/Project/summarizer'
+import Summarizer from '../../../../Components/Project/summarizer';
 import CostEstimation from '../../../../Components/Project/CostEstimation';
 
 const categories = [
@@ -135,18 +136,14 @@ const initialDocuments = [
     }
 ];
 
-
-
 const ProjectPage = () => {
     const { id } = useParams();
     const router = useRouter();
 
-    // Add debugging for the project ID
+    // Debugging for the project ID
     console.log('🔍 ProjectPage DEBUG: id from useParams:', id);
     console.log('🔍 ProjectPage DEBUG: id type:', typeof id);
 
-
-    // State declarations grouped by category
     // UI State
     const [projectData, setProjectData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -188,7 +185,30 @@ const ProjectPage = () => {
         if (id) fetchProject();
     }, [id]);
 
-    // Effect Hooks
+    // Add this useEffect to fetch documents when projectId changes
+    useEffect(() => {
+        if (!id) return;
+        setLoading(true);
+        fetch(`http://localhost:8000/api/doc/project_docs/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                // Map API fields to frontend fields
+                const mappedDocs = (data.documents || []).map(doc => ({
+                    ...doc,
+                    name: doc.document_name,
+                    category: doc.document_category,
+                    size: doc.document_size,
+                    modified: doc.last_modified_date,
+                    uploaded: doc.upload_date,
+                    modifiedBy: doc.uploaded_by,
+                    uploadedBy: doc.uploaded_by,
+                }));
+                setDocuments(mappedDocs);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [id]);
+
     useEffect(() => {
         // Search filter effect
         if (searchQuery.trim() === "") {
@@ -245,9 +265,9 @@ const ProjectPage = () => {
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
     // Document Handlers
-    const handleToggleSelect = (docName) => {
+    const handleToggleSelect = (docId) => {
         setSelectedDocs((prev) =>
-            prev.includes(docName) ? prev.filter((name) => name !== docName) : [...prev, docName]
+            prev.includes(docId) ? prev.filter((id) => id !== docId) : [...prev, docId]
         );
     };
 
@@ -255,9 +275,23 @@ const ProjectPage = () => {
         setShowGroupModal(true);
     };
 
-    const handleDeleteDocuments = () => {
+    const handleDeleteDocuments = async () => {
         if (selectedDocs.length === 0) return;
-        setShowDeleteDocumentsModal(true);
+
+        // Delete each selected document by document_id (integer)
+        await Promise.all(
+            selectedDocs.map(async (docId) => {
+                await fetch(`http://localhost:8000/api/doc/delete/${docId}`, {
+                    method: "DELETE",
+                });
+            })
+        );
+
+        // Remove deleted documents from state
+        setDocuments(prevDocs =>
+            prevDocs.filter(doc => !selectedDocs.includes(doc.document_id))
+        );
+        setSelectedDocs([]);
     };
 
     const confirmGroupDocuments = () => {
@@ -289,7 +323,6 @@ const ProjectPage = () => {
     // User Handlers
     const handleAssignUserToProject = async (userId, role) => {
         try {
-            // Call your API to assign user to project
             const response = await fetch(`/api/projects/${id}/assign-user`, {
                 method: 'POST',
                 headers: {
@@ -302,7 +335,6 @@ const ProjectPage = () => {
                 throw new Error('Failed to assign user');
             }
 
-            // Refresh the user list or update state as needed
             const updatedProject = await response.json();
             setProjectData(updatedProject);
         } catch (error) {
@@ -311,7 +343,6 @@ const ProjectPage = () => {
     };
 
     const handleDeleteClick = (user) => {
-        // Ensure we're using the correct ID field
         const userToDelete = {
             id: user.staff_id || user.id,
             name: user.staff_fname ? `${user.staff_fname} ${user.staff_lname}` : user.name,
@@ -320,7 +351,6 @@ const ProjectPage = () => {
     };
 
     const handleEditUser = (user) => {
-        // Convert to the editing format if needed
         const userToEdit = {
             id: user.staff_id || user.id,
             name: user.staff_fname ? `${user.staff_fname} ${user.staff_lname}` : user.name,
@@ -332,7 +362,6 @@ const ProjectPage = () => {
 
     const handleSaveUser = async (updatedUser) => {
         try {
-            // Call your API to update the user
             const response = await fetch(`/api/staff/${updatedUser.id}`, {
                 method: 'PUT',
                 headers: {
@@ -345,7 +374,6 @@ const ProjectPage = () => {
                 throw new Error('Failed to update user');
             }
 
-            // Refresh user data
             const data = await response.json();
             // Update your state accordingly
         } catch (error) {
@@ -435,6 +463,7 @@ const ProjectPage = () => {
                         onToggleSelect={handleToggleSelect}
                         onGroupClick={handleGroupDocuments}
                         onDeleteClick={handleDeleteDocuments}
+                        projectId={id}
                     />
 
                     {/* User Section */}
@@ -443,7 +472,7 @@ const ProjectPage = () => {
                         users={[]} // Will be overridden by project staff
                         onEditUser={handleEditUser}
                         onDeleteUser={handleDeleteClick}
-                        onAssignUser={handleAssignUserToProject} // Use the new handler
+                        onAssignUser={handleAssignUserToProject}
                     />
 
                     {/* Modals */}
@@ -453,7 +482,7 @@ const ProjectPage = () => {
                         onConfirm={confirmDelete}
                         title="Delete Project?"
                         message="This action cannot be undone. All project data will be permanently removed."
-                        projectId={id}  // Make sure your modal component actually uses this if needed
+                        projectId={id}
                     />
 
                     <DeleteUserModel
@@ -481,21 +510,11 @@ const ProjectPage = () => {
 
                     <button
                         onClick={() => router.push('/Client/Projects')}
-                        className="group flex items-center gap-2 px-4 py-2 rounded-lg text-sky-600 hover:text-white hover:bg-sky-600 transition-all duration-300 shadow-sm hover:shadow-md border border-sky-200 hover:border-sky-500"
+                        className="group mt-8 inline-flex items-center gap-2 rounded-lg border-2 border-sky-600 px-4 py-2 text-sm font-semibold text-sky-600 shadow-sm transition-all duration-200 hover:bg-sky-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 transform group-hover:-translate-x-1 transition-transform duration-300"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
+                        <ArrowLeft className="h-5 w-5" />
                         <span className="font-medium">Back to Projects</span>
                     </button>
-
-                    
 
                     {editingUser && (
                         <EditUserModel

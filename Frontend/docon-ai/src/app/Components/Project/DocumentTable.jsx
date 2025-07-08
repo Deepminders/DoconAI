@@ -3,7 +3,7 @@
 import React from "react";
 import DocumentRow from "./DocumentRow";
 
-const DocumentsTable = ({ documents, selectedDocs, onToggleSelect }) => {
+const DocumentsTable = ({ documents, selectedDocs, onToggleSelect, projectId }) => {
   if (documents.length === 0) {
     return (
       <div className="mt-6 text-center py-8 bg-gray-50 rounded-lg">
@@ -13,11 +13,11 @@ const DocumentsTable = ({ documents, selectedDocs, onToggleSelect }) => {
   }
 
   return (
-    <div className="mt-6 overflow-x-auto">
+    <div className="mt-6 overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
       <table className="min-w-full border-collapse border border-gray-200">
         <thead>
-          <tr className="bg-gray-200 text-gray-700 text-left text-[13px]">
-            <th className="p-3 border border-gray-300"></th>
+          <tr className="bg-gray-200 text-gray-800 text-left text-md">
+            <th className="p-3 border border-gray-300 font-semibold"></th>
             <th className="p-3 border border-gray-300 font-semibold">Document</th>
             <th className="p-3 border border-gray-300 font-semibold">Category</th>
             <th className="p-3 border border-gray-300 font-semibold">Size</th>
@@ -25,13 +25,14 @@ const DocumentsTable = ({ documents, selectedDocs, onToggleSelect }) => {
             <th className="p-3 border border-gray-300 font-semibold">Date Uploaded</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="bg-white divide-y divide-gray-200">
           {documents.map((doc) => (
             <DocumentRow
-              key={doc.name}
+              key={doc._id || doc.document_id || doc.name}
               document={doc}
-              isSelected={selectedDocs.includes(doc.name)}
+              isSelected={selectedDocs.includes(doc.document_id)}
               onToggleSelect={onToggleSelect}
+              projectId={projectId}
             />
           ))}
         </tbody>

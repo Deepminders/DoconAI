@@ -35,6 +35,6 @@ async def getAll():
 async def fetchDocInfo(docid:int):
     return await getDocInfo(docid)
 
-@router.get("/ProjectDocs/{proj_id}")
+@router.get("/project_docs/{proj_id}")
 async def getProjectDocs(proj_id: str):
     return await getDocsfromProject(proj_id)
