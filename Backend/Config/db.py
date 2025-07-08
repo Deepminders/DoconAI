@@ -16,6 +16,7 @@ try:
     user_collection = db.get_collection("users")
     staff_collection = db.get_collection("staff")
     document_collection = db.get_collection("documents")
+    counters_collection = db.get_collection("counters")
     project_collection = db.get_collection("projects")
 
     

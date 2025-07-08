@@ -43,7 +43,6 @@ export default function LoginForm() {
         alert('Login successful!');
         router.push('http://localhost:3000/Pages/Dashboard ');
         
-       
       } else {
         alert(data.detail || 'Login failed');
       }

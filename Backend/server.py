@@ -12,7 +12,6 @@ from Config.db import initialize_db
 server = FastAPI()
 server.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name="uploaded_images")
 
-
 server.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Frontend origin

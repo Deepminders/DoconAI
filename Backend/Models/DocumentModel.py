@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 class DocumentModel(BaseModel):
     document_id: int
+    project_id:str
     document_name: str
     document_category: str
     document_size: int
