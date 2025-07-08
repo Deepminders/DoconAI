@@ -270,7 +270,6 @@ async def replaceDocument(
     file: UploadFile = File(...),
     update_name: Optional[bool] = Form(False)
 ):
-    
     try:
         # Convert docid to integer
         document_id = int(docid)
@@ -305,7 +304,7 @@ async def replaceDocument(
             "media_body": media,
             "fields": "id,size,modifiedTime,webViewLink,webContentLink"
         }
-        
+
         # Optionally update the name if requested
         if update_name:
             drive_update_body["body"] = {"name": file.filename}
@@ -417,4 +416,27 @@ async def deleteDocument(docid: str):
         raise HTTPException(
             status_code=500,
             detail=f"Document deletion failed: {str(e)}"
+        )
+
+async def fetchRecents():
+    try:
+        cursor = document_collection.find().sort("last_modified_date", -1).limit(5)
+        recent_docs = await cursor.to_list(length=5)
+        
+        
+        for doc in recent_docs:
+            doc["id"] = str(doc["_id"])
+            del doc["_id"]
+        if not recent_docs:
+            return JSONResponse({"status": "success", "message": "No recent documents found"})
+
+        return JSONResponse({
+            "status": "success",
+            "recent_documents": recent_docs
+        })
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch recent documents: {str(e)}"
         )
