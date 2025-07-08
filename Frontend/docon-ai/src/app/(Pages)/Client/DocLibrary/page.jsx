@@ -1,35 +1,43 @@
 "use client";
 import { useState } from 'react';
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
-
+import DocHeader from '../../../Components/DocumentComponents/DocHeader';
+import SectionTitle from '../../../Components/DocumentComponents/SectionTitle';
+import AllDocuments from '../../../Components/DocumentComponents/AllDocuments';
+import UploadDocument from '../../../Components/DocumentComponents/UploadDocument';
+import "../../../CSS/Docs/style.css";
+import { Section } from 'lucide-react';
 const page = () => {
-    const [width,setWidth] = useState(1/3);
+    const [width, setWidth] = useState(1 / 3);
     const [isOpen, setIsOpen] = useState(true);
 
 
-    const onClick= () =>{
+    const onClick = () => {
         setIsOpen(!isOpen);
-        if(isOpen){
-            console.log("Open"+isOpen);
-        }else{
-            console.log("Closed"+isOpen);  
+        if (isOpen) {
+            console.log("Open" + isOpen);
+        } else {
+            console.log("Closed" + isOpen);
         }
     }
     return (
-        <div className="flex flex-col md:flex-row gap-6 p-1">
-            
-            <div className={`w-full ${isOpen ? 'md:w-1/4' : 'md:w-1/2'} bg-amber-950 transition-all duration-300 ease-in-out`}>
-                <DocumentSidebar isOpen={true} onToggle={() => {}} isMobile={false} />
+        <>
+            <div className="flex md:flex-row gap-6 p-1">
+
+                <div className={`md:w-1/7 transition-all duration-300 ease-in-out`}>
+                    <DocumentSidebar isOpen={true} onToggle={() => { }} isMobile={false} />
+                </div>
+
+                <div className="md:w-4/5 transition-all duration-300 ease-in-out ml-5">
+                    <DocHeader />
+                    <SectionTitle title={"New Document"} />
+                    <UploadDocument />
+                    <SectionTitle title={"Recent Documents"} />
+                    <AllDocuments />
+                    <SectionTitle title={"Upload Summary"} />
+                </div>
             </div>
-            <div className={`w-full ${isOpen ? 'md:w-1/4' : 'md:w-1/2'} bg-amber-950 transition-all duration-300 ease-in-out`}>
-                <h1 className="text-2xl font-bold mb-4 text-center">Document Library</h1>
-            </div>
-
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-200"
-                onClick={onClick}> Click to Toggle </button> 
-
-
-        </div>
+        </>
     )
 }
 

@@ -1,3 +1,5 @@
+import { Book, BoxIcon, Home, LayoutDashboardIcon, Library } from 'lucide-react';
+
 export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
     return (
         <div className={`
@@ -20,11 +22,24 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
             )}
 
             {/* Sidebar content */}
-            <h2 className="text-xl font-bold">Docon. AI</h2>
-            <ul className="mt-4 space-y-2">
-                <li className="hover:underline cursor-pointer">  Dashboard</li>
-                <li className="hover:underline cursor-pointer">Projects</li>
-                <li className="hover:underline cursor-pointer">Settings</li>
+            <div className="row flex mt-0 items-center">
+                <BoxIcon width={50} height={50}/>
+                <h2 className="text-xl font-bold items-center ml-0">Docon. AI</h2>
+            </div>
+
+            <ul className="mt-1 space-y-2">
+                    <li className="sidebar-item flex items-center hover:underline cursor-pointer">
+                        <Home className=" text-white" width={45} height={45} />
+                        <h3 className="hover:underline cursor-pointer mt-0"> Home</h3>
+                    </li>
+                    <li className="sidebar-item flex items-center hover:underline cursor-pointer">
+                        <LayoutDashboardIcon className=" text-white" width={45} height={45} />
+                        <h3 className="hover:underline cursor-pointer mt-0 text-1xl">  Dashboard</h3>
+                    </li>
+                    <li className="sidebar-item flex items-center hover:underline cursor-pointer">
+                        <LayoutDashboardIcon className=" text-white" width={45} height={45} />
+                        <h3 className="hover:underline cursor-pointer">  Dashboard</h3>
+                    </li>
             </ul>
         </div>
 
