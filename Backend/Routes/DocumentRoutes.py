@@ -1,6 +1,4 @@
 from fastapi import APIRouter, UploadFile, File, Form
-    return await getDocsfromProject(proj_id)
-    return await getDocsfromProject(proj_id)
 from Controllers.DocumentController import addDocument, downloadDocument, viewDocument, updateDocument, replaceDocument, deleteDocument, fetchRecents,getDocInfo, getDocsfromProject
 router = APIRouter(prefix="/api/doc", tags=["Document"])
 
