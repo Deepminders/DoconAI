@@ -16,51 +16,6 @@ class BOQResponse(BaseModel):
     prediction_status: str
 
 
-@cost_routes.post("/boq/upload-and-predict", response_model=BOQResponse)
-async def upload_boq_and_predict(
-    files: List[UploadFile] = File(...), project_id: str = None
-):
-    """Upload BOQ PDF → Create Vector DB → Extract Features → Predict Cost"""
-    try:
-        if not files:
-            raise HTTPException(status_code=400, detail="No files provided")
-
-        # Validate files
-        for file in files:
-            if not file.filename.lower().endswith(".pdf"):
-                raise HTTPException(status_code=400, detail="Only PDF files supported")
-
-        # Process BOQ
-        result = await process_boq_and_predict_complete(files, project_id)
-
-        # Ensure predicted_cost is never None
-        if result.get("predicted_cost") is None:
-            result["predicted_cost"] = 0.0
-
-        return BOQResponse(**result)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        # Return error response with valid structure
-        return BOQResponse(
-            status="error",
-            message=f"BOQ processing failed: {str(e)}",
-            vector_store_path=None,
-            extracted_features={
-                "building_type": "residential",
-                "area_sqm": 150.0,
-                "foundation_type": "concrete",
-                "has_parking": 1,
-                "floors": 2,
-                "labor_rate": 25.0,
-                "has_basement": 0,
-                "roof_type": "tile",
-                "location": "urban",
-            },
-            predicted_cost=0.0,
-            prediction_status="error",
-        )
 
 
 # ADD THIS NEW ENDPOINT for your frontend

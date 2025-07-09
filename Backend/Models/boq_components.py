@@ -88,6 +88,7 @@ class BOQComponents:
                 "Models/cost-model.pkl",
                 "ml_models/cost_model.pkl",
                 "Models/cost_model.pkl",
+                "D:\\NOTES\\SEMI-4\\software project\\DoconAI\\Backend\\ml_models\\cost-model.pkl"
             ]
 
             model_loaded = False

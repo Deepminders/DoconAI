@@ -23,7 +23,7 @@ import EditUserModel from "../../../../Components/Project/EditUserModel";
 import ProjectActions from "../../../../Components/Project/ProjectActions";
 import DeleteConfirmationModel from "../../../../Components/Project/DeleteConfirmationModel";
 import Summarizer from '../../../../Components/Project/summarizer';
-import CostEstimation from '../../../../Components/Project/CostEstimation';
+import FinanceBOQCostPredictor from "../../../../Components/Project/FinanceBOQCostPredictor";
 
 const categories = [
     {
@@ -168,7 +168,7 @@ const ProjectPage = () => {
 
     // Summarizer state
     const [showSummarizer, setShowSummarizer] = useState(false);
-
+    
     useEffect(() => {
         async function fetchProject() {
             try {
@@ -192,7 +192,6 @@ const ProjectPage = () => {
         fetch(`http://localhost:8000/api/doc/project_docs/${id}`)
             .then(res => res.json())
             .then(data => {
-                // Map API fields to frontend fields
                 const mappedDocs = (data.documents || []).map(doc => ({
                     ...doc,
                     name: doc.document_name,
@@ -413,6 +412,7 @@ const ProjectPage = () => {
         setShowDeleteConfirm(false);
     };
 
+
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Sidebar */}
@@ -453,6 +453,9 @@ const ProjectPage = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* Finance BOQ Cost Predictor */}
+                    <FinanceBOQCostPredictor projectId={id} />
 
                     {/* Document Section */}
                     <DocumentManagement
