@@ -7,7 +7,9 @@ google-auth-oauthlib
 google-auth-httplib2 
 google-api-python-client 
 python-multipart
-
+google-generativeai 
+python-dotenv 
+python-docx
 #laavanjan's libraries
 langchain==0.3.25
 langchain_community==0.3.25
