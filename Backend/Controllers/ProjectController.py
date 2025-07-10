@@ -46,7 +46,7 @@ async def find_project(id: ObjectId) -> dict:
         }
     else:
         return {
-            "Error": "Project not found",
+            "Message": "Project not found",
         }
 
 async def update_project(project_id: str, project_update: ProjectUpdateModel) -> dict:
