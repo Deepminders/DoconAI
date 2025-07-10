@@ -1,4 +1,77 @@
-*{
-    box-sizing: border-box;
-    padding: 5px 10px;
+/* Add these styles to your existing CSS file or create a new one */
+
+/* Fade-in animation for success/error messages */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Pulse animation for loading states */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Slide-in animation for sidebar */
+.slide-in-right {
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.slide-in-right.active {
+  transform: translateX(0);
+}
+
+/* Hover effects for buttons */
+.btn-hover-effect {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-hover-effect:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Form focus effects */
+.form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Smooth transitions for all interactive elements */
+.transition-smooth {
+  transition: all 0.2s ease-in-out;
 }
