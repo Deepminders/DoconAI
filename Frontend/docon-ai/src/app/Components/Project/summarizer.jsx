@@ -211,8 +211,56 @@ const Summarizer = ({ onClose, projectId }) => {
                   </button>
                 </div>
               </div>
-              <div className="max-h-96 overflow-y-auto bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-800 whitespace-pre-wrap">
-                {summary}
+              <div className="max-h-96 overflow-y-auto bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-800">
+                {(() => {
+                  // Split summary into sections by --- or numbered headings
+                  const sections = summary
+                    .split(/\n\s*---+\s*\n/) // split by --- lines
+                    .map(section => section.trim())
+                    .filter(Boolean);
+
+                  return (
+                    <div className="space-y-6">
+                      {sections.map((section, idx) => {
+                        // Try to extract a heading (e.g., "1. Project Scope & Objectives ...")
+                        const headingMatch = section.match(/^(\d+\.\s+)?([^\n]+)\n/);
+                        let heading = '';
+                        let content = section;
+                        if (headingMatch) {
+                          heading = headingMatch[2].trim();
+                          content = section.slice(headingMatch[0].length).trim();
+                        }
+
+                        // Format content as bullet points if it looks like a list, else as paragraphs
+                        const bulletLines = content.split('\n').filter(line => /^[-*•]/.test(line.trim()));
+                        const isList = bulletLines.length > 1;
+
+                        return (
+                          <div key={idx}>
+                            {heading && (
+                              <h4 className="text-lg font-semibold text-blue-700 mb-2">{heading}</h4>
+                            )}
+                            {isList ? (
+                              <ul className="list-disc list-inside space-y-1">
+                                {content.split('\n').map((line, i) =>
+                                  /^[-*•]/.test(line.trim()) ? (
+                                    <li key={i}>{line.replace(/^[-*•]\s*/, '')}</li>
+                                  ) : null
+                                )}
+                              </ul>
+                            ) : (
+                              content.split('\n').map((para, i) =>
+                                para.trim() ? (
+                                  <p className="mb-2" key={i}>{para.trim()}</p>
+                                ) : null
+                              )
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
