@@ -189,7 +189,7 @@ const ProjectPage = () => {
     useEffect(() => {
         if (!id) return;
         setLoading(true);
-        fetch(`http://localhost:8000/api/doc/project_docs/${id}`)
+        fetch(`http://127.0.0.1:8000/api/doc/ProjectDocs/${id}`)
             .then(res => res.json())
             .then(data => {
                 const mappedDocs = (data.documents || []).map(doc => ({

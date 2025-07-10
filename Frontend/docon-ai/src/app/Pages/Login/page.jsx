@@ -1,8 +1,8 @@
 
 import Head from 'next/head';
-import ConstructionImage from '@/app/Components/Login/ConstructionImage';
-import LoginForm from '@/app/Components/Login/LoginForm';
-import '@/app/globals.css'
+import ConstructionImage from '../../Components/Login/ConstructionImage';
+import LoginForm from '../..//Components/Login/LoginForm';
+import '../../globals.css'
 
 export default function Login() {
     return (

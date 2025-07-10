@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { useNotifications } from '../common/NotificationSystem';
 
 export default function UploadDocument({ onUpload }) {
-  const [projectId] = useState("6839bfcb9163c6c6020656cf");
+  const [projectId] = useState("687000c9df820986d0a5ba42");
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
