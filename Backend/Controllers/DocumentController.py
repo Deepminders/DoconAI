@@ -10,6 +10,7 @@ from datetime import datetime
 import httpx
 import fitz  # PyMuPDF
 import io
+import requests
 import os
 import tempfile
 import logging
@@ -663,3 +664,32 @@ async def getDocsfromProject(proj_id: str):
     cursor = document_collection.find({"project_id": proj_id}, {"_id": 0})
     project_docs = await cursor.to_list(length=None)
     return JSONResponse({"status": "success", "documents": project_docs})
+
+
+
+#---- laavanjan's document route for direct download ----
+
+async def proxy_download_document(docid: str, version: Optional[int] = None):
+    doc = await document_collection.find_one({"document_id": int(docid)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Find the correct version, defaulting to the latest
+    version_to_download = doc["versions"][-1] if version is None else next(
+        (v for v in doc["versions"] if v["version"] == version), None
+    )
+
+    if not version_to_download or "download_link" not in version_to_download:
+        raise HTTPException(status_code=404, detail=f"Download link for version {version or 'latest'} not found.")
+
+    # Proxy the file from Google Drive
+    download_url = version_to_download["download_link"]
+    r = requests.get(download_url, stream=True)
+    if r.status_code != 200:
+        raise HTTPException(status_code=502, detail="Failed to fetch file from Google Drive.")
+
+    return StreamingResponse(
+        r.iter_content(chunk_size=8192),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{doc["document_name"]}.pdf"'}
+    )

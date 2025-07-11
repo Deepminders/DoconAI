@@ -24,3 +24,8 @@ sentence-transformers
 pypdf
 python-jose[cryptography]
 PyMuPDF==1.23.8
+jspdf
+scikit-learn>=1.0.0
+pandas>=1.3.0
+numpy>=1.21.0
+pickle-mixin>=1.0.2
