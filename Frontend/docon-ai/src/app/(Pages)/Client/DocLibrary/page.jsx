@@ -111,7 +111,7 @@ const Page = () => {
               isOpen={isSidebarOpen} 
               onToggle={toggleSidebar} 
               isMobile={isMobile} 
-              active={'chat'}
+              active={'documents'}
             />
             
             {/* Main Content Area */}

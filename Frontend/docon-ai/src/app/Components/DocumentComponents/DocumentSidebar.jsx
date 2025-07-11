@@ -1,8 +1,8 @@
-import { Book, BoxIcon, Home, LayoutDashboardIcon, Library, LibraryBig, MessageCircle, Menu, X } from 'lucide-react';
+import { Book, BoxIcon, Home, LayoutDashboardIcon, Library, LibraryBig, MessageCircle, Menu, X, Currency, CurrencyIcon, DollarSign, User2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) {
-    
+
     // Close sidebar when clicking outside on mobile
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -17,7 +17,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) 
         }
     }, [isMobile, isOpen, onToggle]);
 
-    const [activeStatus,setActiveStatus] = useState(active);
+    const [activeStatus, setActiveStatus] = useState(active);
     // Prevent body scroll when mobile sidebar is open
     useEffect(() => {
         if (isMobile && isOpen) {
@@ -35,7 +35,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) 
         <>
             {/* Mobile Overlay */}
             {isMobile && isOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden transition-opacity duration-300"
                     onClick={onToggle}
                 />
@@ -66,14 +66,14 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) 
                 ${isMobile && isOpen ? 'z-50' : 'z-30'}
                 overflow-y-auto flex-shrink-0 h-full
             `}>
-                
+
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center">
                         <BoxIcon width={40} height={40} className="text-white" />
                         <h2 className="text-xl font-bold ml-3">Docon. AI</h2>
                     </div>
-                    
+
                     {/* Close button for mobile (inside sidebar) */}
                     <button
                         onClick={onToggle}
@@ -86,28 +86,42 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) 
 
                 {/* Navigation Menu */}
                 <nav className="space-y-2">
-                    <SidebarItem 
-                        icon={<Home size={24} />} 
-                        label="Home" 
-                        isActive={activeStatus === 'home'?true:false}
+                    <SidebarItem
+                        icon={<LayoutDashboardIcon size={24} />}
+                        label="Dashboard"
+                        isActive={activeStatus === 'dashboard' ? true : false}
                         onClick={onToggle}
                     />
-                    <SidebarItem 
-                        icon={<LayoutDashboardIcon size={24} />} 
-                        label="Dashboard" 
-                        isActive={activeStatus === 'dashboard'?true:false}
+                    <SidebarItem
+                        icon={<BoxIcon size={24} />}
+                        label="Projects"
+                        isActive={activeStatus === 'project' ? true : false}
                         onClick={onToggle}
                     />
-                    <SidebarItem 
-                        icon={<LibraryBig size={24} />} 
-                        label="Library" 
-                        isActive={activeStatus === 'library'?true:false}
+                    <SidebarItem
+                        icon={<LibraryBig size={24} />}
+                        label="Documents"
+                        isActive={activeStatus === 'documents' ? true : false}
                         onClick={onToggle}
                     />
-                    <SidebarItem 
-                        icon={<MessageCircle size={24} />} 
-                        label="Chat" 
-                        isActive={activeStatus === 'chat'?true:false}
+                    <SidebarItem
+                        icon={<User2 size={24} />}
+                        label="Staff"
+                        isActive={activeStatus === 'staff' ? true : false}
+                        onClick={onToggle}
+                    />
+                    <SidebarItem
+                        icon={<DollarSign size={24} />}
+                        label="Cost Predictor"
+                        isActive={activeStatus === 'cost' ? true : false}
+                        onClick={onToggle}
+                    />
+
+
+                    <SidebarItem
+                        icon={<MessageCircle size={24} />}
+                        label="Chat"
+                        isActive={activeStatus === 'chat' ? true : false}
                         onClick={onToggle}
                     />
                 </nav>
@@ -127,12 +141,12 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) 
 // Sidebar Item Component
 function SidebarItem({ icon, label, isActive, onClick }) {
     return (
-        <li 
+        <li
             className={`
                 flex items-center px-4 py-3 rounded-lg cursor-pointer
                 transition-all duration-200 group
-                ${isActive 
-                    ? 'bg-sky-800 text-white shadow-md' 
+                ${isActive
+                    ? 'bg-sky-800 text-white shadow-md'
                     : 'text-sky-100 hover:bg-sky-800 hover:text-white'
                 }
             `}
@@ -152,7 +166,7 @@ function SidebarItem({ icon, label, isActive, onClick }) {
                 {icon}
             </span>
             <span className="ml-3 font-medium">{label}</span>
-            
+
             {/* Active indicator */}
             {isActive && (
                 <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
