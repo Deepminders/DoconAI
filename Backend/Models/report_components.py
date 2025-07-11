@@ -63,19 +63,30 @@ class SummarizerComponents:
         )
 
         self.prompt_template = """
-        You are an expert assistant specializing in construction projects.
-        Summarize the following context from construction-related documents.
-        Focus on:
-        - Project scope and objectives
-        - Timelines and milestones
-        - Budget and cost estimations
-        - Responsibilities of stakeholders
-        - Key technical or engineering insights
+You are an expert project analyst for construction projects.
 
-        <context>
-        {context}
-        </context>
-        """
+Given the following context from project documents, generate a concise report with two clearly labeled sections:
+
+1. **What has happened until now?**
+   - Summarize all progress, completed milestones, and finished tasks up to the present based on the provided context.
+   - Use bullet points or short paragraphs for clarity.
+
+2. **What needs to happen from here on?**
+   - List all pending tasks, upcoming milestones, next steps, and recommendations for project completion.
+   - Be specific and actionable.
+
+**Context:**
+{context}
+
+**Instructions:**
+- Do not repeat information between sections.
+- Only use information found in the context.
+- Be clear, factual, and concise.
+- If dates are provided, use them to determine what is completed and what is pending.
+- If the current date is not specified, assume the report is being generated at the latest milestone mentioned in the context.
+
+Return only the report with the two sections, properly labeled.
+"""
 
     async def generate_vector_store(
         self, files: list[UploadFile], project_id: str = None
@@ -160,7 +171,7 @@ class SummarizerComponents:
             cleaned_summary = self.clean_summary(raw_summary)
 
             return {"summary": cleaned_summary}
-        
+
         except Exception as e:
             raise HTTPException(
                 status_code=500, detail=f"Summary generation failed: {str(e)}"
