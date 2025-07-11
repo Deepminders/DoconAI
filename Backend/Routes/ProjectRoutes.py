@@ -72,3 +72,5 @@ async def generate_summary_route(request: SummaryRequest):
         return await summarizer_generate_summary(request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
