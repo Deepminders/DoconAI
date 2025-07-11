@@ -12,7 +12,8 @@ from Controllers.DocumentController import (
     deleteDocument,
     fetchRecents,
     getDocInfo,
-    getDocsfromProject
+    getDocsfromProject,
+    proxy_download_document
 )
 
 router = APIRouter(prefix="/api/doc", tags=["Document"])
@@ -113,3 +114,12 @@ async def get_project_docs(proj_id: str):
     Get all documents for a specific project ID.
     """
     return await getDocsfromProject(proj_id)
+
+# ---- laavanjan's direct download route ----
+
+@router.get("/download_direct/{docid}")
+async def download_doc(docid: str, version: Optional[int] = Query(None, description="Optional version number to download")):
+    """
+    Download a document. Fetches the latest version if no version is specified.
+    """
+    return await proxy_download_document(docid, version)

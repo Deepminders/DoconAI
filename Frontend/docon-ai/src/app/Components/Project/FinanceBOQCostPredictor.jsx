@@ -28,12 +28,15 @@ const FinanceBOQCostPredictor = ({ projectId }) => {
     const [financeBOQDocs, setFinanceBOQDocs] = useState([]);
     const [boqPredictions, setBoqPredictions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [debugMappedDocs, setDebugMappedDocs] = useState([]);
+    const [debugFinanceBOQ, setDebugFinanceBOQ] = useState([]);
+
 
     // 1. Fetch and filter Finance BOQ documents
     useEffect(() => {
         if (!projectId) return;
         setLoading(true);
-        fetch(`http://localhost:8000/api/doc/project_docs/${projectId}`)
+        fetch(`http://localhost:8000/api/doc/ProjectDocs/${projectId}`)
             .then((res) => res.json())
             .then((data) => {
                 const mappedDocs = (data.documents || []).map((doc) => ({
@@ -42,14 +45,19 @@ const FinanceBOQCostPredictor = ({ projectId }) => {
                     category: doc.document_category,
                     document_id: doc.document_id,
                 }));
+                setDebugMappedDocs(mappedDocs);
+
                 const financeBOQ = mappedDocs.filter(
                     (doc) =>
                         doc.category &&
                         doc.name &&
-                        doc.category.toLowerCase() === "finance" &&
+                        doc.category.toLowerCase().includes("boq") &&
                         doc.name.toLowerCase().includes("boq")
                 );
+                setDebugFinanceBOQ(financeBOQ);
+
                 setFinanceBOQDocs(financeBOQ);
+
             })
             .catch(() => {
                 // You can add error handling for the fetch itself here
@@ -65,7 +73,7 @@ const FinanceBOQCostPredictor = ({ projectId }) => {
             const predictionPromises = financeBOQDocs.map(async (doc) => {
                 try {
                     const res = await fetch(
-                        `http://127.0.0.1:8000/api/doc/download/${doc.document_id}`
+                        `http://127.0.0.1:8000/api/doc/download_direct/${doc.document_id}`
                     );
                     if (!res.ok) throw new Error("Download failed");
                     const blob = await res.blob();
@@ -165,7 +173,8 @@ const FinanceBOQCostPredictor = ({ projectId }) => {
                                 ) : (
                                     <span className="flex items-center gap-2 text-green-700">
                                         <span className="font-extrabold text-2xl text-blue-700 tracking-wide">
-                                            ${prediction.predicted_cost?.toLocaleString(
+                                            LKR&nbsp;
+                                            {prediction.predicted_cost?.toLocaleString(
                                                 "en-US",
                                                 {
                                                     minimumFractionDigits: 2,
