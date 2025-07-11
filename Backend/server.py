@@ -5,6 +5,7 @@ from Routes.ProjectRoutes import routerproject
 from Routes.DocumentRoutes import router as doc_router
 from fastapi.middleware.cors import CORSMiddleware
 from Routes import StaffRoutes
+from Routes.ChatRoutes import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
 from Config.db import initialize_db
 
@@ -24,7 +25,7 @@ server.include_router(router)
 server.include_router(doc_router)
 server.include_router(routerproject)
 server.include_router(StaffRoutes.router)
-
+server.include_router(chat_router)
 @server.get("/home")
 def home():
     return {"Message":"Hello World"}

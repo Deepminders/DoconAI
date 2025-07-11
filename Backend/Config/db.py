@@ -17,6 +17,9 @@ try:
     staff_collection = db.get_collection("staff")
     document_collection = db.get_collection("documents")
     project_collection = db.get_collection("projects")
+    chat_collection = db.get_collection("chat_history")
+    counters_collection = db.get_collection("counters")
+    session_collection = db.get_collection("chat_sessions")
 
     
 except Exception as e:

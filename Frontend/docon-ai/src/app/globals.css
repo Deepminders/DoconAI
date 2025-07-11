@@ -24,3 +24,28 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Custom scrollbar styles */
+.scrollbar-thin {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #17304c transparent; /* thumb and track colors */
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 30px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #e0e0e0;
+  border-radius: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #4a90e2;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0; /* adds padding around thumb */
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #357ABD;
+}

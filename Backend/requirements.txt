@@ -21,5 +21,4 @@ Requests
 faiss-cpu
 sentence-transformers
 pypdf
-PyMuPDF==1.22.5
-jspdf
+PyMuPDF==1.26.1
