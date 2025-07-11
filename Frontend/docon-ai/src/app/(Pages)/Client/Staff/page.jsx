@@ -303,6 +303,7 @@ useEffect(() => {
     try {
       const res = await axios.get(`${BASE_URL}/staff/projects`);
       setProjects(res.data);
+      console.log("Fetched projects:", res.data);
     } catch (error) {
       console.error("Failed to fetch projects", error);
     }
@@ -748,12 +749,12 @@ const [filteredStaff, setFilteredStaff] = useState([]);
       {selectedStaffProjects.length > 0 ? (
         <ul className="ps-0 mb-2">
           {selectedStaffProjects.map((projectId, index) => {
-            const project = projects.find(
+            const foundProject = projects.find(
               (p) => String(p.projectid) === String(projectId)
             );
             return (
               <li key={index}>
-                {project ? project.projectname : `Project ID ${projectId}`}
+                {foundProject ? foundProject.projectName : ''}
               </li>
             );
           })}
@@ -773,7 +774,7 @@ const [filteredStaff, setFilteredStaff] = useState([]);
   <option value="">-- Select Project --</option>
   {projects.map((project) => (
     <option key={project.projectid} value={project.projectid}>
-      {project.projectname}
+      {project.projectName}
     </option>
   ))}
 

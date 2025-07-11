@@ -1,0 +1,34 @@
+.update-document-container{
+    height:100vh;
+    width: 30%;
+    transform: translate(773px,-307px);
+    position: absolute;
+    display: none;
+    padding: 20px;
+    animation: revealer 1s ease-in-out;
+    border:0;
+    border-right: 1px solid #ccc;
+    background-color: white;
+    color:black;
+}
+
+
+.update-document-container .update-document-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #ccc;
+}
+
+@keyframes revealer {
+    0%{
+        height:0;
+        display:none;
+    }
+    100%{
+        height:100vh;
+        display:block;
+    }
+}

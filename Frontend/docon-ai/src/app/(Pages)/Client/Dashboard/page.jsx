@@ -10,7 +10,7 @@ export default function Dashboard() {
     const token = localStorage.getItem('token');
     if (!token) {
       alert('Please login first!');
-      router.push('/');
+      router.push('/Pages/Login');
     }
   }, [router]);
 

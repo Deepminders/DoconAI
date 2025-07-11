@@ -7,8 +7,9 @@ google-auth-oauthlib
 google-auth-httplib2 
 google-api-python-client 
 python-multipart
-fitz
-
+google-generativeai 
+python-dotenv 
+python-docx
 #laavanjan's libraries
 langchain==0.3.25
 langchain_community==0.3.25
@@ -21,4 +22,13 @@ Requests
 faiss-cpu
 sentence-transformers
 pypdf
+
 PyMuPDF==1.26.1
+
+python-jose[cryptography]
+
+jspdf
+scikit-learn>=1.0.0
+pandas>=1.3.0
+numpy>=1.21.0
+pickle-mixin>=1.0.2
