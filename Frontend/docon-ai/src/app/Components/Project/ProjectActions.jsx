@@ -14,7 +14,7 @@ const ProjectActions = ({ onDeleteProject, onSummarize }) => {
                 onClick={onDeleteProject}
             />
             <Button
-                label="Summarize"
+                label="Generate Report"
                 color="blue"
                 icon={<FileCheck2 size={18} />}
                 onClick={onSummarize}
