@@ -10,12 +10,11 @@ from Controllers.ProjectController import (
 from Models.ProjectModel import ProjectModel, ProjectUpdateModel, RemoveProjectRequest
 from bson import ObjectId
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
-from Models.summarizer_components import (
+from Models.report_components import (
     generate_vector_store as summarizer_generate_vector_store,
     generate_summary as summarizer_generate_summary,
     SummaryRequest,
 )
-
 
 routerproject = APIRouter(prefix="/project", tags=["Project"])
 
@@ -72,3 +71,5 @@ async def generate_summary_route(request: SummaryRequest):
         return await summarizer_generate_summary(request)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+

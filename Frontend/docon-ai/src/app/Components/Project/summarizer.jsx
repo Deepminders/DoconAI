@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { jsPDF } from 'jspdf';
 
 const Summarizer = ({ onClose, projectId }) => {
@@ -6,6 +6,19 @@ const Summarizer = ({ onClose, projectId }) => {
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [availableDocs, setAvailableDocs] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
+  const [checkedDocs, setCheckedDocs] = useState([]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    setLoadingDocs(true);
+    fetch(`http://localhost:8000/api/doc/ProjectDocs/${projectId}`)
+      .then(res => res.json())
+      .then(data => setAvailableDocs(data.documents || []))
+      .catch(() => setAvailableDocs([]))
+      .finally(() => setLoadingDocs(false));
+  }, [projectId]);
 
   const handleFileChange = (e) => {
     setFiles(Array.from(e.target.files));
@@ -22,16 +35,37 @@ const Summarizer = ({ onClose, projectId }) => {
   };
 
   const generateEverything = async () => {
-    if (files.length === 0) {
-      setError('Please select at least one file');
+    if (files.length === 0 && checkedDocs.length === 0) {
+      setError('Please select at least one file or document');
       return;
     }
 
     setLoading(true);
     setError('');
     const formData = new FormData();
+
+    // Add uploaded files
     files.forEach(file => formData.append('files', file));
-    if (projectId) {  // Assuming projectId is available in your component
+
+    // Download checked docs and append to formData
+    for (const docId of checkedDocs) {
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/doc/download_direct/${docId}`);
+        if (!res.ok) throw new Error('Failed to download document');
+        const blob = await res.blob();
+        // Find the doc name for filename
+        const docInfo = availableDocs.find(d => d.document_id === docId);
+        let filename = docInfo?.document_name || `document_${docId}.pdf`;
+        if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf';
+        formData.append('files', blob, filename);
+      } catch (err) {
+        setError(`Failed to fetch document ${docId}`);
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (projectId) {
       formData.append('project_id', projectId);
     }
 
@@ -102,6 +136,14 @@ const Summarizer = ({ onClose, projectId }) => {
 
     // Save the PDF
     doc.save('document_summary.pdf');
+  };
+
+  const handleCheckboxChange = (docId) => {
+    setCheckedDocs(prev =>
+      prev.includes(docId)
+        ? prev.filter(id => id !== docId)
+        : [...prev, docId]
+    );
   };
 
   return (
@@ -177,7 +219,7 @@ const Summarizer = ({ onClose, projectId }) => {
             </button>
             <button
               onClick={generateEverything}
-              disabled={files.length === 0 || loading}
+              disabled={(files.length === 0 && checkedDocs.length === 0) || loading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-150 flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -264,6 +306,33 @@ const Summarizer = ({ onClose, projectId }) => {
               </div>
             </div>
           )}
+
+          {/* --- Available documents section --- */}
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Available Project Documents</h3>
+            {loadingDocs ? (
+              <p className="text-gray-500">Loading documents...</p>
+            ) : availableDocs.length === 0 ? (
+              <p className="text-gray-500">No documents found for this project.</p>
+            ) : (
+              <ul className="divide-y divide-gray-200">
+                {availableDocs.map(doc => (
+                  <li key={doc.document_id} className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={checkedDocs.includes(doc.document_id)}
+                        onChange={() => handleCheckboxChange(doc.document_id)}
+                      />
+                      <span className="font-medium text-gray-800">{doc.document_name}</span>
+                    </label>
+                    <span className="text-xs text-gray-500">{doc.document_category}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {/* --- End available docs section --- */}
         </div>
       </div>
     </div>

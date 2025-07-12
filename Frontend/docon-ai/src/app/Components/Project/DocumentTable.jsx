@@ -20,9 +20,9 @@ const DocumentsTable = ({ documents, selectedDocs, onToggleSelect, projectId }) 
             <th className="p-3 border border-gray-300 font-semibold"></th>
             <th className="p-3 border border-gray-300 font-semibold">Document</th>
             <th className="p-3 border border-gray-300 font-semibold">Category</th>
-            <th className="p-3 border border-gray-300 font-semibold">Size</th>
+            <th className="p-3 border border-gray-300 font-semibold">Doc ID</th>
             <th className="p-3 border border-gray-300 font-semibold">Date Modified</th>
-            <th className="p-3 border border-gray-300 font-semibold">Date Uploaded</th>
+            <th className="p-3 border border-gray-300 font-semibold">Doc Version</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">

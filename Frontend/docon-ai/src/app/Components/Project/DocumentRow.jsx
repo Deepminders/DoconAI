@@ -8,10 +8,6 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString("en-CA"); 
 };
 
-const formatSize = (bytes) => {
-  if (!bytes || isNaN(bytes)) return "";
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-};
 
 const DocumentRow = ({ document, isSelected, onToggleSelect, projectId }) => {
   return (
@@ -30,13 +26,13 @@ const DocumentRow = ({ document, isSelected, onToggleSelect, projectId }) => {
         {document.document_category}
       </td>
       <td className="p-3 border border-gray-300">
-        {formatSize(document.document_size)}
+        {(document.document_id)}
       </td>
       <td className="p-3 border border-gray-300">
         {formatDate(document.last_modified_date)}
       </td>
       <td className="p-3 border border-gray-300">
-        {formatDate(document.upload_date)}
+        Version {(document.current_version)}
         <br />
         <span className="text-gray-500 text-xs">{document.uploadedBy}</span>
       </td>
