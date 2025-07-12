@@ -7,6 +7,7 @@ from google.oauth2 import service_account
 from Config.db import document_collection, get_next_sequence_value
 from pathlib import Path
 from datetime import datetime
+import httpx
 import fitz  # PyMuPDF
 import io
 import requests
@@ -512,19 +513,38 @@ async def replaceDocument(docid: str, file: UploadFile, new_name: str = None, co
         )
 
 async def downloadDocument(docid: str, version: Optional[int] = None):
-    """Redirects to the download link for a specific document version."""
-    doc = await document_collection.find_one({"document_id": int(docid)})
-    if not doc: raise HTTPException(status_code=404, detail="Document not found")
+    """Download a document by streaming it through the API."""
     
-    # Find the correct version, defaulting to the latest
-    version_to_download = doc["versions"][-1] if version is None else next((v for v in doc["versions"] if v["version"] == version), None)
+    doc = await document_collection.find_one({"document_id": int(docid)})
+    if not doc: 
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Find the correct version
+    version_to_download = (doc["versions"][-1] if version is None 
+                          else next((v for v in doc["versions"] if v["version"] == version), None))
     
     if not version_to_download or "download_link" not in version_to_download:
         raise HTTPException(status_code=404, detail=f"Download link for version {version or 'latest'} not found.")
     
-    return RedirectResponse(url=version_to_download["download_link"])
-
-
+    # Stream the file with redirect following
+    async with httpx.AsyncClient(follow_redirects=True) as client:  # Enable redirects
+        try:
+            response = await client.get(version_to_download["download_link"])
+            response.raise_for_status()
+            
+            # Get filename from document or create default
+            filename = version_to_download.get("filename", f"document_{docid}.pdf")
+            
+            return StreamingResponse(
+                io.BytesIO(response.content),
+                media_type="application/octet-stream",
+                headers={"Content-Disposition": f"attachment; filename={filename}"}
+            )
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=500, detail=f"Failed to download file: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Download error: {str(e)}")
+        
 async def viewDocument(docid: str, version: Optional[int] = None):
     """Redirects to the viewable link for a specific document version."""
     doc = await document_collection.find_one({"document_id": int(docid)})

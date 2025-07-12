@@ -15,7 +15,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ChatMessageHistory
 from langchain_core.prompts import PromptTemplate
 from langchain.docstore import InMemoryDocstore
-
+from langchain_core.runnables import RunnableConfig
 from Config.db import chat_collection, session_collection
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join("Controllers", ".env"))
@@ -69,24 +69,30 @@ def is_meaningful_message(msg: str) -> bool:
     )
 
 # ---------------- Chat Handler ----------------
+from langchain_core.runnables import RunnableConfig
+
 async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
     greetings = ["hi", "hello", "hey", "how are you", "good morning", "good afternoon", "good evening"]
 
-    if user_message.lower().strip() in greetings:
+    normalized_msg = user_message.lower().strip()
+
+    # Handle greeting responses
+    if normalized_msg in greetings:
         reply = "Hello! How can I assist you with your construction project today?"
         await store_chat_messages(chat_collection, user_id, session_id, user_message, reply)
         return reply
 
-    # Fetch chat history
+    # Fetch chat history from MongoDB (last 10 messages)
     history = await chat_collection.find(
         {"user_id": user_id, "session_id": session_id}
     ).sort("created_time", -1).to_list(length=10)
 
+    # Build LangChain-compatible chat history
     message_history = ChatMessageHistory()
     for item in reversed(history):
         message_history.add_message({"role": item["role"], "content": item["content"]})
 
-    # Generate session title if it's the first meaningful message
+    # Auto-generate session title if it's a meaningful first message
     total_messages = await chat_collection.count_documents({"session_id": session_id})
     if total_messages <= 2 and is_meaningful_message(user_message):
         try:
@@ -103,20 +109,33 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
         except Exception as e:
             print("Title generation failed:", e)
 
-    # Run Gemini QA chain
+    # ---------------- RAG Retrieval + Fallback ----------------
     try:
-        result = await asyncio.to_thread(qa_chain.invoke, {
-            "question": user_message,
-            "chat_history": [(msg["role"], msg["content"]) for msg in history[::-1]]
-        })
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+        docs = await asyncio.to_thread(retriever.get_relevant_documents, user_message)
 
-        reply = result["answer"].strip() or "Sorry, I couldn't understand that. Could you rephrase?"
+        if not docs:
+            # ❌ No relevant docs → fallback to general LLM response
+            fallback_prompt = f"You are a helpful assistant. Answer the following question using general knowledge:\n\n{user_message}"
+            reply = await asyncio.to_thread(llm.invoke, fallback_prompt)
+            reply = reply.strip()
+        else:
+            # ✅ Documents found → use ConversationalRetrievalChain
+            result = await asyncio.to_thread(qa_chain.invoke, {
+                "question": user_message,
+                "chat_history": [(msg["role"], msg["content"]) for msg in history[::-1]]
+            })
+            reply = result["answer"].strip()
+
+        if not reply:
+            reply = "Sorry, I couldn't find an answer. Please try rephrasing your question."
 
         await store_chat_messages(chat_collection, user_id, session_id, user_message, reply)
         return reply
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # ---------------- MongoDB History Helper ----------------
 async def store_chat_messages(
