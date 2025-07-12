@@ -41,8 +41,8 @@ export default function LoginForm() {
         console.log('Login successful:', data);
         localStorage.setItem('token', data.access_token);
         alert('Login successful!');
-        router.push('http://localhost:3000/Pages/Dashboard ');
-        
+        router.push('http://localhost:3000/Client/Dashboard');
+
       } else {
         alert(data.detail || 'Login failed');
       }

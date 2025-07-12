@@ -1,5 +1,5 @@
-import Description from '../../Components/SignUp/Description';
-import SignupForm from '../../Components/SignUp/SignupForm';
+import Description from '../../../Components/SignUp/Description';
+import SignupForm from '../../../Components/SignUp/SignupForm';
 
 export default function SignupPage() {
   return (

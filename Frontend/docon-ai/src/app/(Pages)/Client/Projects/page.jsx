@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Sidebar from '../../../Components/Projects/Sidebar';
+import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 import Header from '../../../Components/Projects/Header';
 import FilterPopup from '../../../Components/Projects/FilterPopup';
 import ProjectDetailsPopup from '../../../Components/Projects/ProjectDetailsPopup';
@@ -144,7 +144,7 @@ export default function ProjectsDashboard() {
 
   if (loading) return (
     <div className="flex h-screen">
-      <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} isMobile={isMobile} />
+      <DocumentSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} isMobile={isMobile} />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-sky-700 mx-auto"></div>
@@ -156,7 +156,7 @@ export default function ProjectsDashboard() {
 
   if (error) return (
     <div className="flex h-screen">
-      <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} isMobile={isMobile} />
+      <DocumentSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} isMobile={isMobile} />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
@@ -175,21 +175,14 @@ export default function ProjectsDashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar 
+      <DocumentSidebar 
         isOpen={isSidebarOpen} 
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
         isMobile={isMobile} 
       />
 
       <div className="flex-1 overflow-y-auto pt-[150px] max-[600px]:pt-[150px] max-[765px]:pt-[10px] md:pt-[50px] lg:pt-[20px]">
-        {isMobile && !isSidebarOpen && (
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="fixed top-1 left-4 z-50 bg-sky-700 text-white p-2 rounded-lg lg:hidden"
-          >
-            📂 Menu
-          </button>
-        )}
+       
 
         <Header
           onFilterClick={handleFilterClick}

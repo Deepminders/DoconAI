@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Download, Edit, Eye, Search, Grid3X3, List, Calendar, User, FileText, FolderOpen, X, Trash2 } from 'lucide-react';
-import { useNotifications } from '../common/NotificationSystem';
+import { useNotifications } from '../Common/NotificationSystem';
 import { useUser } from '../auth/UserContext';
 import UploadDocument from './UploadDocument';
 import UpdateDocument from './UpdateDocument';

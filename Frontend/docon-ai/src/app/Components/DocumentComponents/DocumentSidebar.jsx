@@ -1,8 +1,22 @@
-import { Book, BoxIcon, Home, LayoutDashboardIcon, Library, LibraryBig, MessageCircle, Menu, X } from 'lucide-react';
+import { Book, BoxIcon, Home, LayoutDashboardIcon, Library, LibraryBig, MessageCircle, Menu, FileText,X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
-export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) {
-    
+export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
+
+    const pathname = usePathname();
+    const router = useRouter();
+
+    // Get current active section based on path
+    const getActiveSidebarItem = () => {
+    if (pathname.includes('/DocLibrary')) return 'library';
+    if (pathname.includes('/Dashboard')) return 'dashboard';
+    if (pathname.includes('/Chatbot')) return 'chat';
+    if (pathname.includes('/Projects')) return 'projects';
+    return 'home';
+    };
+
+    const activeStatus = getActiveSidebarItem();
     // Close sidebar when clicking outside on mobile
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -17,7 +31,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) 
         }
     }, [isMobile, isOpen, onToggle]);
 
-    const [activeStatus,setActiveStatus] = useState(active);
+    
     // Prevent body scroll when mobile sidebar is open
     useEffect(() => {
         if (isMobile && isOpen) {
@@ -86,28 +100,33 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) 
 
                 {/* Navigation Menu */}
                 <nav className="space-y-2">
-                    <SidebarItem 
-                        icon={<Home size={24} />} 
-                        label="Home" 
-                        isActive={activeStatus === 'home'?true:false}
-                        onClick={onToggle}
-                    />
+                  
                     <SidebarItem 
                         icon={<LayoutDashboardIcon size={24} />} 
                         label="Dashboard" 
                         isActive={activeStatus === 'dashboard'?true:false}
+                        route="/Client/Dashboard"
                         onClick={onToggle}
                     />
                     <SidebarItem 
                         icon={<LibraryBig size={24} />} 
                         label="Library" 
                         isActive={activeStatus === 'library'?true:false}
+                        route="/Client/DocLibrary"
+                        onClick={onToggle}
+                    />
+                    <SidebarItem 
+                        icon={<FileText size={24} />} 
+                        label="Projects" 
+                        isActive={activeStatus === 'projects'?true:false}
+                        route="/Client/Projects"
                         onClick={onToggle}
                     />
                     <SidebarItem 
                         icon={<MessageCircle size={24} />} 
-                        label="Chat" 
+                        label="Docon ChatBot" 
                         isActive={activeStatus === 'chat'?true:false}
+                        route="/Client/Chatbot"
                         onClick={onToggle}
                     />
                 </nav>
@@ -125,7 +144,8 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile, active }) 
 }
 
 // Sidebar Item Component
-function SidebarItem({ icon, label, isActive, onClick }) {
+function SidebarItem({ icon, label, isActive, route, onClick }) {
+    const router = useRouter();
     return (
         <li 
             className={`
@@ -138,7 +158,7 @@ function SidebarItem({ icon, label, isActive, onClick }) {
             `}
             onClick={() => {
                 // Handle navigation here
-                console.log(`Navigating to ${label}`);
+                 router.push(route);
                 // Close sidebar on mobile after navigation
                 if (window.innerWidth < 1024) {
                     onClick();
