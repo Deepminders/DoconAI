@@ -22,11 +22,6 @@ router = APIRouter(prefix="/api/doc", tags=["Document"])
 
 @router.post("/classify", summary="Step 1: Classify a document")
 async def classify_doc(file: UploadFile = File(...)):
-    """
-    Upload a file to get a predicted category. This is the first step.
-    The response will contain a `temp_file_path` which you must send
-    to the `/upload` endpoint in the second step.
-    """
     return await classify_and_stage_document(file)
 
 @router.post("/upload", summary="Step 2: Confirm and Save Document")
@@ -37,10 +32,6 @@ async def add_doc(
     temp_file_path: str = Form(...),
     original_filename: str = Form(...)
 ):
-    """
-    This is the second step after classification. Provide the details
-    from the classification step to finalize the upload.
-    """
     return await addDocument(
         proj_id=proj_id,
         doc_name=doc_name,
