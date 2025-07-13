@@ -51,8 +51,7 @@ const FinanceBOQCostPredictor = ({ projectId }) => {
                     (doc) =>
                         doc.category &&
                         doc.name &&
-                        doc.category.toLowerCase().includes("boq") &&
-                        doc.name.toLowerCase().includes("boq")
+                        doc.category.toLowerCase().includes("boq")  
                 );
                 setDebugFinanceBOQ(financeBOQ);
 
