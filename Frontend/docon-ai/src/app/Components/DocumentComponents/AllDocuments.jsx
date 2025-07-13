@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Download, Edit, Eye, Search, Grid3X3, List, Calendar, User, FileText, FolderOpen, X, Trash2, LogOut, ChevronDown } from 'lucide-react';
+import { BookOpen, Download, Edit, Eye, Search, Grid3X3, List, Calendar, User, FileText, FolderOpen, X, Trash2, LogOut, ChevronDown, Users, Folder } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '../Common/NotificationSystem';
 import UploadDocument from './UploadDocument';
@@ -22,6 +22,7 @@ export default function AllDocuments() {
   const [documentToDelete, setDocumentToDelete] = useState(null);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [documentView, setDocumentView] = useState('project'); // 'project' or 'own'
 
   // Initialize hooks
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function AllDocuments() {
   });
   const [isUserLoading, setIsUserLoading] = useState(true);
 
-  // Logout functions - moved after hooks initialization
+  // Logout functions
   const handleLogout = () => {
     console.log('🔒 User initiated logout, opening confirmation modal');
     setIsLogoutModalOpen(true);
@@ -53,11 +54,7 @@ export default function AllDocuments() {
       duration: 2000
     });
     console.log('🚪 User logged out, token removed from localStorage');
-
-    // Close modal
     setIsLogoutModalOpen(false);
-
-    // Navigate to home page
     router.push('/');
   };
 
@@ -139,40 +136,96 @@ export default function AllDocuments() {
     return true;
   }, []);
 
-  const fetchRecentDocuments = useCallback(async () => {
+  // Updated fetch functions using new endpoints
+  const fetchProjectDocuments = useCallback(async () => {
+    if (!user.user_id) return;
+
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/doc/fetchall?limit=10');
+      console.log('📡 Fetching project documents for user:', user.user_id);
+      const response = await fetch(`http://127.0.0.1:8000/api/doc/user/${user.user_id}/project-documents`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data = await response.json();
+      console.log('✅ Project documents data:', data);
       setRecentDocs(data.recent_documents || []);
+
+      // Show info about access level
+      if (data.access_level === 'project_manager') {
+        notify.info(`You have access to ${data.count} documents across ${data.assigned_projects?.length || 0} projects`, {
+          title: 'Project Manager Access',
+          duration: 3000
+        });
+      }
     } catch (error) {
-      console.error('Error fetching recent documents:', error);
-      setError('Failed to load documents. Please try again.');
-      notify.error('Failed to load documents. Please check your connection.', {
+      console.error('Error fetching project documents:', error);
+      setError('Failed to load project documents. Please try again.');
+      notify.error('Failed to load project documents. Please check your connection.', {
         title: 'Loading Error',
         action: {
           label: 'Retry',
-          onClick: () => fetchRecentDocuments()
+          onClick: () => fetchProjectDocuments()
         }
       });
     } finally {
       setIsLoading(false);
     }
-  }, [notify]);
+  }, [user.user_id, notify]);
+
+  const fetchOwnDocuments = useCallback(async () => {
+    if (!user.user_id) return;
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      console.log('📡 Fetching own documents for user:', user.user_id);
+      const response = await fetch(`http://127.0.0.1:8000/api/doc/user/${user.user_id}/documents`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('✅ Own documents data:', data);
+      setRecentDocs(data.recent_documents || []);
+
+      notify.info(`Showing ${data.count} documents you uploaded`, {
+        title: 'Your Documents',
+        duration: 2000
+      });
+    } catch (error) {
+      console.error('Error fetching own documents:', error);
+      setError('Failed to load your documents. Please try again.');
+      notify.error('Failed to load your documents. Please check your connection.', {
+        title: 'Loading Error',
+        action: {
+          label: 'Retry',
+          onClick: () => fetchOwnDocuments()
+        }
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user.user_id, notify]);
+
+  // Main fetch function that chooses which endpoint to use
+  const fetchRecentDocuments = useCallback(async () => {
+    if (documentView === 'project') {
+      await fetchProjectDocuments();
+    } else {
+      await fetchOwnDocuments();
+    }
+  }, [documentView, fetchProjectDocuments, fetchOwnDocuments]);
 
   useEffect(() => {
     fetchUserFromToken();
   }, [fetchUserFromToken]);
 
   useEffect(() => {
-    if (!isUserLoading) {
+    if (!isUserLoading && user.user_id) {
       fetchRecentDocuments();
     }
-  }, [fetchRecentDocuments, isUserLoading]);
+  }, [fetchRecentDocuments, isUserLoading, user.user_id]);
 
   useEffect(() => {
     let filtered = [...recentDocs];
@@ -269,6 +322,12 @@ export default function AllDocuments() {
 
     await fetchRecentDocuments();
   }, [fetchRecentDocuments, selectedDocument, notify]);
+
+  // Handle view switching
+  const handleViewChange = (newView) => {
+    setDocumentView(newView);
+    console.log('📋 Switching to view:', newView);
+  };
 
   const getFileIcon = (fileName) => {
     if (!fileName) return <FileText className="h-10 w-10 text-gray-500" />;
@@ -425,7 +484,7 @@ export default function AllDocuments() {
       {isSidebarOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={closeEditSidebar} />}
 
       {/* Header with Profile Section */}
-      <div className="sticky top-0 z-30">
+      <div className="border-gray-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Left side - Logo/Title */}
@@ -433,6 +492,7 @@ export default function AllDocuments() {
               <h1 className="text-2xl font-bold text-gray-900">My Documents</h1>
               <p className="text-gray-600 mt-1">Manage and organize your documents efficiently</p>
             </div>
+
             {/* Right side - Profile Section */}
             <div className="relative">
               <button
@@ -543,11 +603,39 @@ export default function AllDocuments() {
         )}
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          {/* Document View Switcher */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
-              Recent Documents
-            </h2>
+            <div className="flex items-center space-x-4">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
+                Documents
+              </h2>
+
+              {/* View Toggle Buttons */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => handleViewChange('project')}
+                  className={`flex items-center px-3 py-1 rounded-md text-sm font-medium transition-colors ${documentView === 'project'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  <Users className="h-4 w-4 mr-1" />
+                  Project Access
+                </button>
+                <button
+                  onClick={() => handleViewChange('own')}
+                  className={`flex items-center px-3 py-1 rounded-md text-sm font-medium transition-colors ${documentView === 'own'
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  <Folder className="h-4 w-4 mr-1" />
+                  My Uploads
+                </button>
+              </div>
+            </div>
+
             <div className="flex items-center space-x-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -563,22 +651,42 @@ export default function AllDocuments() {
             </div>
           </div>
 
+          {/* Document View Description */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              {documentView === 'project' ? (
+                <>
+                  <strong>Project Access:</strong> {user.user_role === 'Project Owner' || user.user_role === 'Project Manager'
+                    ? 'Showing all documents from your assigned projects'
+                    : 'Showing only documents you uploaded'}
+                </>
+              ) : (
+                <>
+                  <strong>My Uploads:</strong> Showing only documents you have uploaded
+                </>
+              )}
+            </p>
+          </div>
+
           {isLoading ? (
             <div className="text-center py-16">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-4"></div>
               <p>Loading documents...</p>
-            </div>
-          ) : error ? (
-            <div className="text-center py-16 text-red-500">{error}</div>
-          ) : filteredDocs.length > 0 ? (
-            <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3"}>
-              {filteredDocs.map((doc) => viewMode === 'grid' ? <DocumentCard key={doc.document_id} doc={doc} /> : <DocumentListItem key={doc.document_id} doc={doc} />)}
-            </div>
-          ) : (
+            </div>) : error ? (
+              <div className="text-center py-16 text-red-500">{error}</div>
+            ) : filteredDocs.length > 0 ? (
+              <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-3"}>
+                {filteredDocs.map((doc) => viewMode === 'grid' ? <DocumentCard key={doc.document_id} doc={doc} /> : <DocumentListItem key={doc.document_id} doc={doc} />)}
+              </div>
+            ) : (
             <div className="text-center py-16">
               <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">No documents found</h3>
-              <p className="mt-1 text-sm text-gray-500">{searchTerm ? 'Try adjusting your search terms.' : 'Upload a document to get started.'}</p>
+              <p className="mt-1 text-sm text-gray-500">
+                {searchTerm ? 'Try adjusting your search terms.' :
+                  documentView === 'project' ? 'No documents available in your assigned projects.' :
+                    'You haven\'t uploaded any documents yet. Upload a document to get started.'}
+              </p>
             </div>
           )}
         </div>

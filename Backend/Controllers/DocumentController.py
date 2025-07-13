@@ -1,10 +1,11 @@
+from bson import ObjectId
 from fastapi import File, UploadFile, HTTPException, Form
 from typing import Optional, List
 from fastapi.responses import StreamingResponse, RedirectResponse, JSONResponse
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload, MediaIoBaseDownload
 from google.oauth2 import service_account
-from Config.db import document_collection, get_next_sequence_value
+from Config.db import document_collection, get_next_sequence_value, staff_collection, user_collection
 from pathlib import Path
 from datetime import datetime
 import httpx
@@ -304,10 +305,12 @@ async def addDocument(
     doc_name: str,
     confirmed_category: str,
     temp_file_path: str,
-    original_filename: str
+    original_filename: str,
+    user_id: str  # Added user_id parameter
 ):
     """
     Step 2 of the upload process. Confirms the category and saves the document.
+    Now includes user_id for tracking who uploaded the document.
     """
     if not os.path.exists(temp_file_path):
         raise HTTPException(status_code=404, detail="Temporary file not found. The session may have expired. Please upload again.")
@@ -349,25 +352,42 @@ async def addDocument(
     current_time = datetime.now().isoformat()
     
     version_info = {
-        "version": 1, "google_drive_id": file_id, "original_filename": original_filename,
-        "document_size": int(drive_response.get("size", len(content))), "upload_date": current_time,
-        "last_modified_date": drive_response.get("modifiedTime", current_time), "page_count": page_count,
-        "file_type": file_content_type, "uploaded_by": CURRENT_USER,
-        "document_link": document_link, "download_link": download_link
+        "version": 1, 
+        "google_drive_id": file_id, 
+        "original_filename": original_filename,
+        "document_size": int(drive_response.get("size", len(content))), 
+        "upload_date": current_time,
+        "last_modified_date": drive_response.get("modifiedTime", current_time), 
+        "page_count": page_count,
+        "file_type": file_content_type, 
+        "uploaded_by": user_id,  # Store user_id instead of CURRENT_USER
+        "document_link": document_link, 
+        "download_link": download_link
     }
     
     file_info = {
-        "document_id": document_id, "project_id": proj_id, "document_name": doc_name,
-        "document_category": confirmed_category, "current_version": 1, "last_modified_date": current_time,
-        "document_link": document_link, "download_link": download_link, "versions": [version_info]
+        "document_id": document_id, 
+        "project_id": proj_id, 
+        "document_name": doc_name,
+        "document_category": confirmed_category, 
+        "current_version": 1, 
+        "last_modified_date": current_time,
+        "document_link": document_link, 
+        "download_link": download_link, 
+        "created_by": user_id,  # Add who created the document
+        "versions": [version_info]
     }
 
     try:
         await document_collection.insert_one(file_info)
         os.remove(temp_file_path)
         return JSONResponse({
-            "status": "success", "message": "Document added successfully",
-            "document_id": file_info["document_id"], "drive_id": file_id, "version": 1,
+            "status": "success", 
+            "message": "Document added successfully",
+            "document_id": file_info["document_id"], 
+            "drive_id": file_id, 
+            "version": 1,
+            "created_by": user_id,  # Return user_id in response
             "links": {"view": document_link, "download": download_link}
         })
     except Exception as e:
@@ -376,8 +396,11 @@ async def addDocument(
         raise HTTPException(status_code=500, detail=f"Database insertion failed: {str(e)}")
 
 
-async def replaceDocument(docid: str, file: UploadFile, new_name: str = None, confirmed_category: str = None):
-    """Replaces an existing document, creating a new version in Drive and the database."""
+async def replaceDocument(docid: str, file: UploadFile, new_name: str = None, confirmed_category: str = None, user_id: str = None):
+    """
+    Replaces an existing document, creating a new version in Drive and the database.
+    Now includes user_id to track who made the replacement.
+    """
     try:
         document_id = int(docid)
         existing_doc = await document_collection.find_one({"document_id": document_id})
@@ -449,11 +472,17 @@ async def replaceDocument(docid: str, file: UploadFile, new_name: str = None, co
         # Prepare the new version's metadata for MongoDB
         current_time = datetime.now().isoformat()
         new_version_data = {
-            "version": new_version_number, "google_drive_id": file_id, "original_filename": file.filename,
-            "document_size": int(drive_response.get("size", len(content))), "upload_date": current_time,
-            "last_modified_date": drive_response.get("modifiedTime", current_time), "page_count": page_count,
-            "file_type": file.content_type, "uploaded_by": CURRENT_USER,
-            "document_link": document_link, "download_link": download_link
+            "version": new_version_number, 
+            "google_drive_id": file_id, 
+            "original_filename": file.filename,
+            "document_size": int(drive_response.get("size", len(content))), 
+            "upload_date": current_time,
+            "last_modified_date": drive_response.get("modifiedTime", current_time), 
+            "page_count": page_count,
+            "file_type": file.content_type, 
+            "uploaded_by": user_id if user_id else "Unknown User",  # Store user_id
+            "document_link": document_link, 
+            "download_link": download_link
         }
 
         # Update the document in MongoDB with all fields that need updating
@@ -463,7 +492,8 @@ async def replaceDocument(docid: str, file: UploadFile, new_name: str = None, co
                 "last_modified_date": new_version_data["last_modified_date"],
                 "document_link": document_link, 
                 "download_link": download_link,
-                "document_category": confirmed_category  # Update category
+                "document_category": confirmed_category,  # Update category
+                "last_modified_by": user_id if user_id else "Unknown User"  # Track who modified
             },
             "$push": {"versions": new_version_data}
         }
@@ -491,6 +521,7 @@ async def replaceDocument(docid: str, file: UploadFile, new_name: str = None, co
             "document_id": document_id, 
             "new_version": new_version_number, 
             "drive_id": file_id,
+            "modified_by": user_id,  # Return who modified it
             "updated_document": updated_doc,  # Return full updated document for frontend refresh
             "updated_fields": {
                 "document_name": new_name if new_name else existing_doc["document_name"],
@@ -498,7 +529,8 @@ async def replaceDocument(docid: str, file: UploadFile, new_name: str = None, co
                 "version": new_version_number,
                 "document_link": document_link,
                 "download_link": download_link,
-                "last_modified_date": new_version_data["last_modified_date"]
+                "last_modified_date": new_version_data["last_modified_date"],
+                "last_modified_by": user_id
             }
         })
 
@@ -511,7 +543,7 @@ async def replaceDocument(docid: str, file: UploadFile, new_name: str = None, co
             status_code=500, 
             detail=f"An unexpected error occurred while replacing the document: {str(e)}"
         )
-
+        
 async def downloadDocument(docid: str, version: Optional[int] = None):
     """Download a document by streaming it through the API."""
     
@@ -693,3 +725,103 @@ async def proxy_download_document(docid: str, version: Optional[int] = None):
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{doc["document_name"]}.pdf"'}
     )
+
+async def fetchUserDocuments(user_id: str):
+    """Fetches ALL documents uploaded by a specific user."""
+    try:
+        cursor = document_collection.find({"created_by": user_id}, {"_id": 0}).sort("last_modified_date", -1)
+        user_docs = await cursor.to_list(length=None)
+        
+        logger.info(f"Found {len(user_docs)} documents for user {user_id}")
+        return JSONResponse({
+            "status": "success", 
+            "recent_documents": user_docs,
+            "user_id": user_id,
+            "count": len(user_docs)
+        })
+    except Exception as e:
+        logger.error(f"Error fetching documents for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user documents: {str(e)}")
+    
+async def fetchProjectDocumentsByUser(user_id: str):
+    """
+    Fetches ALL documents from projects assigned to a user if they are Project Manager or Project Owner.
+    For other roles, returns only their own documents.
+    """
+    try:
+        # First, find the user in staff collection
+        staff_member = await staff_collection.find_one({"_id": ObjectId(user_id)})
+        
+        if not staff_member:
+            # raise HTTPException(status_code=404, detail="Staff member not found")
+            staff_member = await user_collection.find_one({"_id": ObjectId(user_id)})
+        
+        user_role = staff_member.get("staff_role", "").strip() or staff_member.get("user_role", "").strip()
+        assigned_projects = staff_member.get("assigned_projects", []) or  []
+        
+        logger.info(f"User {user_id} has role: {user_role} and assigned projects: {assigned_projects}")
+        
+        # Check if user is Project Manager or Project Owner
+        if user_role in ["Project Manager", "Project owner"]:
+            # Get all project IDs as strings (convert ObjectId to string for comparison)
+            project_ids = [str(project_id) for project_id in assigned_projects]
+            
+            if not project_ids:
+                logger.info(f"No projects assigned to user {user_id}")
+                return JSONResponse({
+                    "status": "success",
+                    "recent_documents": [],
+                    "user_id": user_id,
+                    "user_role": user_role,
+                    "assigned_projects": [],
+                    "count": 0,
+                    "message": "No projects assigned to this user"
+                })
+            
+            # Fetch all documents from assigned projects
+            cursor = document_collection.find(
+                {"project_id": {"$in": project_ids}}, 
+                {"_id": 0}
+            ).sort("last_modified_date", -1)
+            
+            project_docs = await cursor.to_list(length=None)
+            
+            logger.info(f"Found {len(project_docs)} documents across {len(project_ids)} projects for {user_role} {user_id}")
+            
+            return JSONResponse({
+                "status": "success",
+                "recent_documents": project_docs,
+                "user_id": user_id,
+                "user_role": user_role,
+                "assigned_projects": project_ids,
+                "count": len(project_docs),
+                "access_level": "project_manager"
+            })
+        
+        else:
+            # For other roles, return only their own documents
+            logger.info(f"User {user_id} has role {user_role}, returning only own documents")
+            
+            cursor = document_collection.find(
+                {"created_by": user_id}, 
+                {"_id": 0}
+            ).sort("last_modified_date", -1)
+            
+            user_docs = await cursor.to_list(length=None)
+            
+            return JSONResponse({
+                "status": "success",
+                "recent_documents": user_docs,
+                "user_id": user_id,
+                "user_role": user_role,
+                "assigned_projects": [],
+                "count": len(user_docs),
+                "access_level": "own_documents_only"
+            })
+            
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching project documents for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch project documents: {str(e)}")
