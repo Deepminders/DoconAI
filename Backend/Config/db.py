@@ -21,8 +21,8 @@ try:
     chat_collection = db.get_collection("chat_history")
     counters_collection = db.get_collection("counters")
     session_collection = db.get_collection("chat_sessions")
+    search_cache_collection = db.get_collection("search_cache")
 
-    
 except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {str(e)}")
     raise HTTPException(

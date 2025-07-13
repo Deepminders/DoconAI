@@ -88,10 +88,10 @@ export default function SignupForm() {
 
 
     return (
-        <div className="w-1/2 bg-[#ECF6FF] p-8 overflow-y-auto h-full">
+        <div className="w-1/2 bg-[#ECF6FF] p-8 overflow-y-auto h-full text-black scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-blue-100">
         <form className="space-y-4 pr-2" onSubmit={handleSubmit}>
           <div>
-            <label className="block text-sm font-medium">Company name</label>
+            <label className="block text-sm font-medium ">Company name</label>
             <input
               name="company"
               type="text"
@@ -126,17 +126,7 @@ export default function SignupForm() {
               />
             </div>
           </div>
-          <div>
-          <label className="block text-sm font-medium">Username</label>
-          <input
-            name="username"
-            type="text"
-            value={formData.username}
-            onChange={handleChange}
-            className="mt-1 w-full p-2 border rounded shadow"
-            placeholder="user123"
-          />
-        </div>
+          
         <div ></div>
         <div className="flex gap-4">
         <div className="w-1/2">
@@ -189,17 +179,7 @@ export default function SignupForm() {
             />
           </div>
   
-          <div>
-            <label className="block text-sm font-medium">Phone Number</label>
-            <input
-              name="phone"
-              type="text"
-              value={formData.phone}
-              onChange={handleChange}
-              className="mt-1 w-full p-2 border rounded shadow"
-              placeholder="+94775458724"
-            />
-          </div>
+          
   
           <div>
             <label className="block text-sm font-medium">Password</label>
