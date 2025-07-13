@@ -2,5 +2,7 @@ __pycache__/
 *.pyc
 venv/
 .uploaded_images/
+vector_store/
+Backend/vector_store/
 Mobile/
 .gitignore

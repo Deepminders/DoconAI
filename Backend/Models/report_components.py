@@ -170,7 +170,8 @@ Return only the report with the two sections, properly labeled.
             # Clean the summary before returning
             cleaned_summary = self.clean_summary(raw_summary)
 
-            return {"summary": cleaned_summary}
+            # Change this line:
+            return {"report": cleaned_summary}  # Changed from "summary" to "report"
 
         except Exception as e:
             raise HTTPException(
