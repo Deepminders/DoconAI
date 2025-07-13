@@ -3,3 +3,4 @@ __pycache__/
 venv/
 .uploaded_images/
 vector_store/
+Backend/vector_store/

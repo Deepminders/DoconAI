@@ -231,18 +231,6 @@ const ProjectPage = () => {
     }, [searchQuery, documents]);
 
     useEffect(() => {
-        const filtered = documents.filter(doc => {
-            // Add null/undefined checks before calling toLowerCase()
-            const docName = doc.document_name || doc.name || '';
-            const docCategory = doc.document_category || doc.category || '';
-
-            return docName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                docCategory.toLowerCase().includes(searchQuery.toLowerCase());
-        });
-        setFilteredDocuments(filtered);
-    }, [documents, searchQuery]);
-
-    useEffect(() => {
         // Responsive layout effect
         const handleResize = () => {
             const mobile = window.innerWidth < 1024;
