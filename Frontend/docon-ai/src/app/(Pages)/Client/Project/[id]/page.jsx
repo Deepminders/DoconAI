@@ -24,6 +24,7 @@ import ProjectActions from "../../../../Components/Project/ProjectActions";
 import DeleteConfirmationModel from "../../../../Components/Project/DeleteConfirmationModel";
 import Summarizer from '../../../../Components/Project/summarizer';
 import FinanceBOQCostPredictor from "../../../../Components/Project/FinanceBOQCostPredictor";
+import DocumentSidebar from '../../../../Components/DocumentComponents/DocumentSidebar';
 
 const categories = [
     {
@@ -421,11 +422,12 @@ const ProjectPage = () => {
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Sidebar */}
-            <Sidebar
-                isOpen={isSidebarOpen}
-                isMobile={isMobile}
-                toggleSidebar={toggleSidebar}
-            />
+            <DocumentSidebar
+                      isOpen={isSidebarOpen}
+                      onToggle={toggleSidebar}
+                      isMobile={isMobile}
+                      active={'documents'}
+                    />
 
             {isMobile && !isSidebarOpen && <MobileMenuButton toggleSidebar={toggleSidebar} />}
 

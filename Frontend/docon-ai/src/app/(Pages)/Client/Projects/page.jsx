@@ -220,7 +220,7 @@ export default function ProjectsDashboard() {
                                 flex-1 flex flex-col
                                 transition-all duration-300 ease-in-out
                                 ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}
-                                lg:-ml-50
+                                lg:-ml-75
                                 min-h-screen
                               `}>
 
