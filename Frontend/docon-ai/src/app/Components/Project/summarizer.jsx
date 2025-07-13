@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { jsPDF } from 'jspdf';
 
-const Summarizer = ({ onClose, projectId }) => {
+const ReportGenerator = ({ onClose, projectId }) => {
   const [files, setFiles] = useState([]);
-  const [summary, setSummary] = useState('');
+  const [report, setReport] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [availableDocs, setAvailableDocs] = useState([]);
@@ -28,13 +28,13 @@ const Summarizer = ({ onClose, projectId }) => {
   const handleClose = () => {
     // Reset all states when closing
     setFiles([]);
-    setSummary('');
+    setReport('');
     setLoading(false);
     setError('');
     onClose(); // Call the parent's close handler
   };
 
-  const generateEverything = async () => {
+  const generateReport = async () => {
     if (files.length === 0 && checkedDocs.length === 0) {
       setError('Please select at least one file or document');
       return;
@@ -83,8 +83,8 @@ const Summarizer = ({ onClose, projectId }) => {
         throw new Error(errorData.detail || 'Vector store creation failed.');
       }
 
-      // Step 2: Generate summary
-      const summaryRes = await fetch(`${API_BASE}/generate-summary`, {
+      // Step 2: Generate report
+      const reportRes = await fetch(`${API_BASE}/generate-report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,13 +94,13 @@ const Summarizer = ({ onClose, projectId }) => {
         }),
       });
 
-      if (!summaryRes.ok) {
-        const errorData = await summaryRes.json();
-        throw new Error(errorData.detail || 'Summary generation failed.');
+      if (!reportRes.ok) {
+        const errorData = await reportRes.json();
+        throw new Error(errorData.detail || 'Report generation failed.');
       }
 
-      const summaryData = await summaryRes.json();
-      setSummary(summaryData.summary);
+      const reportData = await reportRes.json();
+      setReport(reportData.report);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -109,33 +109,157 @@ const Summarizer = ({ onClose, projectId }) => {
   };
 
   const downloadAsPDF = () => {
-    // Create new PDF document
     const doc = new jsPDF();
 
-    // Set title
-    doc.setFontSize(16);
+    // Professional header
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('Document Summary', 20, 20);
+    doc.text('PROJECT STATUS REPORT', 20, 20);
 
-    // Add generation date
+    // Date and project info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 30);
+    doc.text(`Project ID: ${projectId}`, 20, 35);
 
-    // Add a line separator
-    doc.setDrawColor(220, 220, 220);
-    doc.line(20, 35, 190, 35);
+    // Header line
+    doc.setDrawColor(0, 0, 0);
+    doc.line(20, 40, 190, 40);
 
-    // Add the summary content with word wrapping
-    doc.setFontSize(12);
+    // Report content with much better formatting
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
 
-    // Split the text to handle line breaks properly
-    const textLines = doc.splitTextToSize(summary, 170);
-    doc.text(textLines, 20, 45);
+    // Clean and format the report text - remove tables and complex formatting
+    let cleanedReport = report.replace(/={60,}/g, '').trim();
 
-    // Save the PDF
-    doc.save('document_summary.pdf');
+    // Remove table formatting (convert tables to simple text)
+    cleanedReport = cleanedReport.replace(/\|[^|\n]*\|/g, ''); // Remove table rows
+    cleanedReport = cleanedReport.replace(/\|[-:\s]+\|/g, ''); // Remove table separators
+
+    // Split into sections
+    const sections = cleanedReport.split(/\n\s*\n/);
+
+    let currentY = 50;
+    const pageHeight = doc.internal.pageSize.height;
+    const lineHeight = 6;
+    const margin = 20;
+    const maxWidth = 170;
+
+    sections.forEach((section) => {
+      if (!section.trim()) return;
+
+      const lines = section.split('\n');
+
+      lines.forEach((line, index) => {
+        // Check if we need a new page
+        if (currentY + lineHeight > pageHeight - 30) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        // Skip empty lines
+        if (!line.trim()) {
+          currentY += lineHeight / 2;
+          return;
+        }
+
+        // Format different types of content
+        if (line.match(/^[A-Z\s\d\.\-]+$/) && line.length < 50) {
+          // Section headers (all caps, short lines)
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          currentY += 4; // Extra space before headers
+        } else if (line.match(/^\d+\.\s+[A-Z]/) || line.includes('SUMMARY') || line.includes('STATUS')) {
+          // Numbered sections or key terms
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(11);
+        } else if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+          // Bullet points
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          line = '  ' + line; // Indent bullet points
+        } else if (line.includes(':') && line.split(':')[0].length < 30) {
+          // Key-value pairs (like "Budget Status: ...")
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          // Make the key part bold
+          const [key, ...valueParts] = line.split(':');
+          const value = valueParts.join(':');
+
+          // Check if we need a new page
+          if (currentY + lineHeight > pageHeight - 30) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          // Print key in bold
+          doc.setFont('helvetica', 'bold');
+          doc.text(key + ':', margin, currentY);
+
+          // Print value in normal font
+          doc.setFont('helvetica', 'normal');
+          const keyWidth = doc.getTextWidth(key + ': ');
+
+          if (value.trim()) {
+            const valueLines = doc.splitTextToSize(value.trim(), maxWidth - keyWidth);
+            valueLines.forEach((valueLine, i) => {
+              if (i === 0) {
+                doc.text(valueLine, margin + keyWidth, currentY);
+              } else {
+                currentY += lineHeight;
+                if (currentY + lineHeight > pageHeight - 30) {
+                  doc.addPage();
+                  currentY = 20;
+                }
+                doc.text(valueLine, margin + 15, currentY); // Indent continuation
+              }
+            });
+          }
+
+          currentY += lineHeight + 2;
+          return; // Skip the normal processing for this line
+        } else {
+          // Regular text
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+        }
+
+        // Split long lines and add them
+        const wrappedLines = doc.splitTextToSize(line, maxWidth);
+
+        wrappedLines.forEach((wrappedLine) => {
+          if (currentY + lineHeight > pageHeight - 30) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          doc.text(wrappedLine, margin, currentY);
+          currentY += lineHeight;
+        });
+
+        // Add extra spacing after headers
+        if (line.match(/^[A-Z\s\d\.\-]+$/) && line.length < 50) {
+          currentY += 3;
+        } else {
+          currentY += 1;
+        }
+      });
+
+      currentY += 4; // Extra space between sections
+    });
+
+    // Add page numbers and footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Page ${i} of ${pageCount}`, 180, pageHeight - 10, { align: 'right' });
+      doc.text('Generated by DoconAI Project Management System', 20, pageHeight - 10);
+    }
+
+    doc.save(`project_${projectId}_status_report.pdf`);
   };
 
   const handleCheckboxChange = (docId) => {
@@ -163,14 +287,14 @@ const Summarizer = ({ onClose, projectId }) => {
             onClick={handleClose}
             className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             disabled={loading}
-            aria-label="Close summarizer"
+            aria-label="Close report generator"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
-          <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">📄 Document Summarizer</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">📄 Project Report Generator</h2>
 
           {/* File upload section */}
           <div className="mb-6">
@@ -203,7 +327,7 @@ const Summarizer = ({ onClose, projectId }) => {
                 />
               </label>
             </div>
-            {error && !summary && (
+            {error && !report && (
               <p className="mt-2 text-sm text-red-600">{error}</p>
             )}
           </div>
@@ -218,7 +342,7 @@ const Summarizer = ({ onClose, projectId }) => {
               Cancel
             </button>
             <button
-              onClick={generateEverything}
+              onClick={generateReport}
               disabled={(files.length === 0 && checkedDocs.length === 0) || loading}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-150 flex items-center justify-center gap-2"
             >
@@ -231,16 +355,16 @@ const Summarizer = ({ onClose, projectId }) => {
                   Processing...
                 </>
               ) : (
-                'Generate Summary'
+                'Generate Report'
               )}
             </button>
           </div>
 
-          {/* Summary section */}
-          {summary && (
+          {/* Report section */}
+          {report && (
             <div className="mt-8 border-t pt-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">📝 Generated Summary</h3>
+                <h3 className="text-lg font-semibold text-gray-800">📝 Generated Report</h3>
                 <div className="flex gap-2">
                   <button
                     onClick={downloadAsPDF}
@@ -255,8 +379,8 @@ const Summarizer = ({ onClose, projectId }) => {
               </div>
               <div className="max-h-96 overflow-y-auto bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-800">
                 {(() => {
-                  // Split summary into sections by --- or numbered headings
-                  const sections = summary
+                  // Split report into sections by --- or numbered headings
+                  const sections = report
                     .split(/\n\s*---+\s*\n/) // split by --- lines
                     .map(section => section.trim())
                     .filter(Boolean);
@@ -279,24 +403,26 @@ const Summarizer = ({ onClose, projectId }) => {
 
                         return (
                           <div key={idx}>
-                            {heading && (
-                              <h4 className="text-lg font-semibold text-blue-700 mb-2">{heading}</h4>
-                            )}
-                            {isList ? (
-                              <ul className="list-disc list-inside space-y-1">
-                                {content.split('\n').map((line, i) =>
-                                  /^[-*•]/.test(line.trim()) ? (
-                                    <li key={i}>{line.replace(/^[-*•]\s*/, '')}</li>
-                                  ) : null
-                                )}
-                              </ul>
-                            ) : (
-                              content.split('\n').map((para, i) =>
-                                para.trim() ? (
-                                  <p className="mb-2" key={i}>{para.trim()}</p>
-                                ) : null
-                              )
-                            )}
+                          {heading && (
+                            <h4 className="text-lg font-semibold text-blue-700 mb-2">{heading}</h4>
+                          )}
+                          {isList ? (
+                            <ul className="list-disc list-inside space-y-1">
+                            {content.split('\n').map((line, i) => {
+                              if (/^[-*•]/.test(line.trim())) {
+                              return <li key={i}>{line.replace(/^[-*•]\s*/, '')}</li>;
+                              }
+                              return null;
+                            })}
+                            </ul>
+                          ) : (
+                            content.split('\n').map((para, i) => {
+                            if (para.trim()) {
+                              return <p className="mb-2" key={i}>{para.trim()}</p>;
+                            }
+                            return null;
+                            })
+                          )}
                           </div>
                         );
                       })}
@@ -339,4 +465,4 @@ const Summarizer = ({ onClose, projectId }) => {
   );
 };
 
-export default Summarizer;
+export default ReportGenerator;

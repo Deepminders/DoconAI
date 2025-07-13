@@ -100,6 +100,7 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
         {"user_id": user_id, "session_id": session_id}
     ).sort("created_time", -1).to_list(length=10)
 
+    # Build LangChain-compatible chat history
     message_history = ChatMessageHistory()
     for item in reversed(history):
         message_history.add_message({"role": item["role"], "content": item["content"]})
@@ -212,7 +213,6 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 async def store_chat_messages(

@@ -59,33 +59,80 @@ class SummarizerComponents:
             api_key=groq_api_key,
             model_name=self.llm_name,
             temperature=0.7,
-            max_tokens=4000,
+            max_tokens=8000,  # Increased from 4000 to 8000
         )
 
         self.prompt_template = """
-You are an expert project analyst for construction projects.
+You are a senior project management consultant specializing in construction and infrastructure projects. 
 
-Given the following context from project documents, generate a concise report with two clearly labeled sections:
+Generate a comprehensive PROJECT STATUS REPORT based on the provided context. Structure the report with the following sections:
 
-1. **What has happened until now?**
-   - Summarize all progress, completed milestones, and finished tasks up to the present based on the provided context.
-   - Use bullet points or short paragraphs for clarity.
+## 1. EXECUTIVE SUMMARY
+- Project name, timeline, and current status
+- Key achievements and critical milestones reached
+- Overall project health (On Track/At Risk/Delayed)
+- Budget status and resource utilization
 
-2. **What needs to happen from here on?**
-   - List all pending tasks, upcoming milestones, next steps, and recommendations for project completion.
-   - Be specific and actionable.
+## 2. COMPLETED MILESTONES & DELIVERABLES
+- List all completed tasks with specific dates and outcomes
+- Quantify achievements where possible (e.g., "20 garden beds installed")
+- Highlight any early completions or efficiency gains
+- Include quality metrics and acceptance criteria met
+
+## 3. CURRENT PROJECT STATUS
+- Active work streams and ongoing activities
+- Resource allocation and team assignments
+- Recent progress since last reporting period
+- Any immediate concerns or blockers
+
+## 4. UPCOMING ACTIVITIES & CRITICAL PATH
+- Detailed breakdown of remaining tasks with target dates
+- Dependencies and sequencing requirements
+- Resource requirements and assignments
+- Risk mitigation strategies for upcoming phases
+
+## 5. FINANCIAL STATUS
+- Budget utilization (spent vs. allocated)
+- Cost performance index and variance analysis
+- Forecast to completion
+- Any budget adjustments or contingency usage
+
+## 6. RISKS & ISSUES
+- Active risks with probability and impact assessment
+- Mitigation strategies and owners
+- Escalated issues requiring attention
+- Lessons learned and process improvements
+
+## 7. STAKEHOLDER COMMUNICATION
+- Key stakeholder updates and feedback
+- Upcoming reviews or approvals required
+- Communication plan for next phase
+
+## 8. RECOMMENDATIONS & NEXT STEPS
+- Specific, actionable recommendations
+- Timeline for implementation
+- Success criteria and measurement methods
+- Resource requirements
 
 **Context:**
 {context}
 
-**Instructions:**
-- Do not repeat information between sections.
-- Only use information found in the context.
-- Be clear, factual, and concise.
-- If dates are provided, use them to determine what is completed and what is pending.
-- If the current date is not specified, assume the report is being generated at the latest milestone mentioned in the context.
+**Formatting Requirements:**
+- Use professional business language
+- Include specific dates, quantities, and metrics
+- Organize information in clear, scannable sections
+- Provide actionable insights and recommendations
+- Maintain consistency in terminology and formatting
+- Use bullet points and numbered lists for clarity
 
-Return only the report with the two sections, properly labeled.
+**Report Standards:**
+- Focus on facts and data from the provided context
+- Avoid speculation or assumptions not supported by evidence
+- Use past tense for completed items, present tense for ongoing work
+- Include percentage completion where applicable
+- Highlight critical success factors and key performance indicators
+
+Generate a report that would be suitable for senior management review and decision-making.
 """
 
     async def generate_vector_store(
@@ -139,7 +186,7 @@ Return only the report with the two sections, properly labeled.
             )
 
     async def generate_summary(self, request: SummaryRequest):
-        """Generate summary from vector store"""
+        """Generate enhanced professional summary"""
         try:
             vector_store_path = self._get_vector_store_path(request.project_id)
 
@@ -160,49 +207,73 @@ Return only the report with the two sections, properly labeled.
             prompt = ChatPromptTemplate.from_template(self.prompt_template)
             document_chain = create_stuff_documents_chain(self.llm, prompt)
 
-            # Search for relevant docs
-            search_query = request.text or "construction summary"
-            docs = vectors.similarity_search(search_query, k=5)
+            # Search for relevant docs with broader context
+            search_query = (
+                request.text or "project status milestones budget timeline deliverables"
+            )
+            docs = vectors.similarity_search(
+                search_query, k=8
+            )  # Increased for more context
 
             # Generate summary
             raw_summary = document_chain.invoke({"context": docs})
 
-            # Clean the summary before returning
+            # Clean and format the summary
             cleaned_summary = self.clean_summary(raw_summary)
 
-            return {"summary": cleaned_summary}
+            # Add professional header
+            header = self.generate_report_header(request.project_id)
+            final_report = header + "\n" + cleaned_summary
+
+            return {"report": final_report}
 
         except Exception as e:
             raise HTTPException(
-                status_code=500, detail=f"Summary generation failed: {str(e)}"
+                status_code=500, detail=f"Report generation failed: {str(e)}"
             )
 
     def clean_summary(self, raw_summary: str) -> str:
-        """Clean up the summary text by removing unwanted symbols and formatting."""
+        """Enhanced cleaning for professional report formatting"""
 
         # Remove any leading/trailing whitespace
         cleaned = raw_summary.strip()
 
-        # Remove any <think> blocks that might appear in the output
+        # Remove thinking blocks and HTML tags
         cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL)
-
-        # Remove any other HTML-like tags
         cleaned = re.sub(r"<.*?>", "", cleaned)
 
-        # Remove asterisks, which might be used for emphasis in markdown
-        cleaned = re.sub(r"\*\*", "", cleaned)
+        # Remove Markdown bold formatting (**text**)
+        cleaned = re.sub(r"\*\*([^*]+)\*\*", r"\1", cleaned)
 
-        # Remove hyphens/dashes at the beginning of lines (bullet points)
-        cleaned = re.sub(r"(?m)^[\s]*-[\s]+", "", cleaned)
+        # Remove Markdown italic formatting (*text*)
+        cleaned = re.sub(r"\*([^*]+)\*", r"\1", cleaned)
 
-        # Remove hash symbols used for headers
+        # Remove Markdown headers (# ## ###)
         cleaned = re.sub(r"#{1,6}\s+", "", cleaned)
 
-        # Remove any excessive newlines (more than 2 in a row)
+        # Remove Markdown underlines (__text__)
+        cleaned = re.sub(r"__([^_]+)__", r"\1", cleaned)
+
+        # Remove Markdown strikethrough (~~text~~)
+        cleaned = re.sub(r"~~([^~]+)~~", r"\1", cleaned)
+
+        # Standardize bullet points
+        cleaned = re.sub(r"(?m)^[\s]*[-*]\s+", "• ", cleaned)
+
+        # Fix numbering format
+        cleaned = re.sub(r"(?m)^(\d+)\.\s+", r"\1. ", cleaned)
+
+        # Remove excessive newlines but preserve section breaks
         cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
 
-        # Remove any "Summary:" prefix that might be added
-        cleaned = re.sub(r"^Summary:?\s*", "", cleaned)
+        # Remove any redundant prefixes
+        cleaned = re.sub(r"^(Summary|Report):?\s*", "", cleaned)
+
+        # Clean up any remaining asterisks at the beginning of lines
+        cleaned = re.sub(r"(?m)^\*+\s*", "", cleaned)
+
+        # Remove standalone asterisks
+        cleaned = re.sub(r"\s+\*+\s+", " ", cleaned)
 
         return cleaned
 
@@ -214,6 +285,23 @@ Return only the report with the two sections, properly labeled.
         if project_id:
             return os.path.join(base_path, f"project_{project_id}")
         return os.path.join(base_path, "default")
+
+    def generate_report_header(self, project_id: str = None):
+        """Generate professional report header"""
+        from datetime import datetime
+
+        current_date = datetime.now().strftime("%B %d, %Y")
+
+        header = f"""
+PROJECT STATUS REPORT
+Generated on: {current_date}
+Project ID: {project_id or 'N/A'}
+Report Type: Comprehensive Status Review
+Prepared by: DoconAI Project Management System
+
+{'='*60}
+"""
+        return header
 
 
 # Create singleton instance

@@ -110,7 +110,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
                     />
                     <SidebarItem 
                         icon={<LibraryBig size={24} />} 
-                        label="Library" 
+                        label="Documents" 
                         isActive={activeStatus === 'library'?true:false}
                         route="/Client/DocLibrary"
                         onClick={onToggle}
