@@ -1,62 +1,58 @@
-"use client";
-import React, { useState, useEffect } from 'react'
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
-const page = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+import UserProfileMenu from '../../../Components/Common/UserProfileMenu'; // make sure this path is correct
 
-    useEffect(() => {
-        const checkScreenSize = () => {
-            const mobile = window.innerWidth < 1024; // lg breakpoint
-            setIsMobile(mobile);
+export default function Dashboard() {
+  const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-            // Auto-open sidebar on desktop, close on mobile
-            if (!mobile) {
-                setIsSidebarOpen(true);
-            } else {
-                setIsSidebarOpen(false);
-            }
-        };
+  // Auth check
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login first!');
+      router.push('/Client/Login');
+    }
+  }, [router]);
 
-        // Initial check
-        checkScreenSize();
-
-        // Add event listener
-        window.addEventListener('resize', checkScreenSize);
-
-        // Cleanup
-        return () => window.removeEventListener('resize', checkScreenSize);
-    }, []);
-
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-        console.log(`Sidebar: ${!isSidebarOpen ? 'Open' : 'Closed'}`);
+  // Handle screen size for sidebar toggle
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
     };
 
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-    return (
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      {/* Sidebar */}
+      <DocumentSidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        isMobile={isMobile}
+        active="dashboard"
+      />
 
-        <div className="min-h-screen bg-gray-50 flex">
-            {/* Sidebar */}
-            <DocumentSidebar
-                isOpen={isSidebarOpen}
-                onToggle={toggleSidebar}
-                isMobile={isMobile}
-                active={'documents'}
-            />
-
-            {/* Main Content Area */}
-            <div className={`
-                          flex-1 flex flex-col
-                          transition-all duration-300 ease-in-out
-                          ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}
-                          lg:ml-5
-                          min-h-screen
-                        `}>
-
-            </div>
+      {/* Main Content */}
+      <div className="flex-1 ml-0 lg:ml-60 transition-all duration-300">
+        {/* Top Header with Profile */}
+        <div className="flex justify-end items-center p-4   sticky top-0 z-40">
+          <UserProfileMenu userName="Lahiruni Meegama" profileImageUrl="/default-avatar.png" />
         </div>
-    )
-}
 
-export default page
+        {/* Dashboard content */}
+        <div className="p-8">
+          <h1 className="text-3xl font-bold mb-4 text-[#166394]">Dashboard</h1>
+          <p className="text-lg text-gray-700">Welcome to your dashboard! 🎉</p>
+        </div>
+      </div>
+    </div>
+  );
+}

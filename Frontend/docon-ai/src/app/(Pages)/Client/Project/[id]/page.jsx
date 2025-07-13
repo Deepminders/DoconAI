@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from 'next/navigation';
+import DocumentSidebar from '../../../../Components/DocumentComponents/DocumentSidebar';
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import {
@@ -10,7 +11,7 @@ import {
     ArrowLeft,
 } from "lucide-react";
 import profile from "../profile.jpg";
-import Sidebar from '../../../../Components/Project/Sidebar';
+
 import MobileMenuButton from "../../../../Components/Project/MobileMenuButton";
 import ProjectHeader from '../../../../Components/Project/ProjectHeader';
 import ProjectInfo from '../../../../Components/Project/ProjectInfo';
@@ -24,6 +25,7 @@ import ProjectActions from "../../../../Components/Project/ProjectActions";
 import DeleteConfirmationModel from "../../../../Components/Project/DeleteConfirmationModel";
 import Summarizer from '../../../../Components/Project/summarizer';
 import FinanceBOQCostPredictor from "../../../../Components/Project/FinanceBOQCostPredictor";
+import DocumentSidebar from '../../../../Components/DocumentComponents/DocumentSidebar';
 
 const categories = [
     {
@@ -421,7 +423,7 @@ const ProjectPage = () => {
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Sidebar */}
-            <Sidebar
+            <DocumentSidebar
                 isOpen={isSidebarOpen}
                 isMobile={isMobile}
                 toggleSidebar={toggleSidebar}

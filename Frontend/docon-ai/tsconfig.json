@@ -27,8 +27,7 @@
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
-, "src/app/(Pages)/Client/Project/[id]/page.jsx"  ],
+    "**/*.tsx"],
   "exclude": [
     "node_modules"
   ]
