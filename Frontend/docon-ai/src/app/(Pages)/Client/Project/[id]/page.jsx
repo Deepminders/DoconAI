@@ -25,6 +25,7 @@ import ProjectActions from "../../../../Components/Project/ProjectActions";
 import DeleteConfirmationModel from "../../../../Components/Project/DeleteConfirmationModel";
 import Summarizer from '../../../../Components/Project/summarizer';
 import FinanceBOQCostPredictor from "../../../../Components/Project/FinanceBOQCostPredictor";
+import DocumentSidebar from '../../../../Components/DocumentComponents/DocumentSidebar';
 
 const categories = [
     {
@@ -169,7 +170,7 @@ const ProjectPage = () => {
 
     // Summarizer state
     const [showSummarizer, setShowSummarizer] = useState(false);
-    
+
     useEffect(() => {
         async function fetchProject() {
             try {
@@ -215,13 +216,18 @@ const ProjectPage = () => {
             setFilteredDocuments(documents);
         } else {
             const query = searchQuery.toLowerCase();
-            const filtered = documents.filter(
-                (doc) =>
-                    doc.name.toLowerCase().includes(query) ||
-                    doc.category.toLowerCase().includes(query) ||
-                    doc.modifiedBy.toLowerCase().includes(query) ||
-                    doc.uploadedBy.toLowerCase().includes(query)
-            );
+            const filtered = documents.filter((doc) => {
+                // Safely get values with fallbacks
+                const name = (doc.document_name || doc.name || '').toLowerCase();
+                const category = (doc.document_category || doc.category || '').toLowerCase();
+                const modifiedBy = (doc.modifiedBy || '').toLowerCase();
+                const uploadedBy = (doc.uploadedBy || '').toLowerCase();
+
+                return name.includes(query) ||
+                    category.includes(query) ||
+                    modifiedBy.includes(query) ||
+                    uploadedBy.includes(query);
+            });
             setFilteredDocuments(filtered);
         }
     }, [searchQuery, documents]);

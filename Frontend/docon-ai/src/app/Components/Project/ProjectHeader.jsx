@@ -78,7 +78,7 @@ const ProjectHeader = ({
   const projectStatus = projectData?.projectStatus || "Unknown";
 
   return (
-    <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-2 sm:pb-4 px-2 sm:px-4 lg:px-6 bg-white sticky top-0 z-10 gap-2 sm:gap-0">
+    <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-2 sm:pb-4 px-2 sm:px-4 lg:px-6 bg-white  top-0 z-10 gap-2 sm:gap-0">
       {/* Left Section - Project Info */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
         {/* Project Name */}

@@ -62,7 +62,7 @@ async def generate_vector_store(
     return await summarizer_generate_vector_store(files, project_id)
 
 
-@routerproject.post("/generate-summary")
+@routerproject.post("/generate-report")
 async def generate_summary_route(request: SummaryRequest):
     """
     Generate summary from project documents

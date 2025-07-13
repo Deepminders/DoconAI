@@ -117,7 +117,7 @@ async def classify_document_with_llm(filename: str, content: bytes, file_type: s
     Document Content: "This Agreement is made and entered into as of July 10, 2025, by and between Apex Construction Ltd. ('Contractor') and Elysian Properties Inc. ('Owner'). The Contractor shall provide all labor, materials, and equipment for the construction of the 'Azure Tower' project..."
     Category: Contracts and Agreements
 
-    ---
+    --- 
     **Example 2:**
     Document Content: "Weekly Progress Report #12. Period: July 1 - July 7, 2025. Project: Azure Tower. Summary: Concrete pouring for the 5th floor is 80% complete. Electrical rough-in is ongoing on floors 2 and 3. Safety inspection conducted on July 5, with no major findings. Upcoming Activities: Complete 5th-floor slab, begin framing on the 6th floor."
     Category: Progress Reports

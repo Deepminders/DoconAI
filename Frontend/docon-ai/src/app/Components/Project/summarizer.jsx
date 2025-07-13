@@ -109,33 +109,157 @@ const ReportGenerator = ({ onClose, projectId }) => {
   };
 
   const downloadAsPDF = () => {
-    // Create new PDF document
     const doc = new jsPDF();
 
-    // Set title
-    doc.setFontSize(16);
+    // Professional header
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('Project Report', 20, 20);
+    doc.text('PROJECT STATUS REPORT', 20, 20);
 
-    // Add generation date
+    // Date and project info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 30);
+    doc.text(`Project ID: ${projectId}`, 20, 35);
 
-    // Add a line separator
-    doc.setDrawColor(220, 220, 220);
-    doc.line(20, 35, 190, 35);
+    // Header line
+    doc.setDrawColor(0, 0, 0);
+    doc.line(20, 40, 190, 40);
 
-    // Add the report content with word wrapping
-    doc.setFontSize(12);
+    // Report content with much better formatting
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
 
-    // Split the text to handle line breaks properly
-    const textLines = doc.splitTextToSize(report, 170);
-    doc.text(textLines, 20, 45);
+    // Clean and format the report text - remove tables and complex formatting
+    let cleanedReport = report.replace(/={60,}/g, '').trim();
 
-    // Save the PDF
-    doc.save('project_report.pdf');
+    // Remove table formatting (convert tables to simple text)
+    cleanedReport = cleanedReport.replace(/\|[^|\n]*\|/g, ''); // Remove table rows
+    cleanedReport = cleanedReport.replace(/\|[-:\s]+\|/g, ''); // Remove table separators
+
+    // Split into sections
+    const sections = cleanedReport.split(/\n\s*\n/);
+
+    let currentY = 50;
+    const pageHeight = doc.internal.pageSize.height;
+    const lineHeight = 6;
+    const margin = 20;
+    const maxWidth = 170;
+
+    sections.forEach((section) => {
+      if (!section.trim()) return;
+
+      const lines = section.split('\n');
+
+      lines.forEach((line, index) => {
+        // Check if we need a new page
+        if (currentY + lineHeight > pageHeight - 30) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        // Skip empty lines
+        if (!line.trim()) {
+          currentY += lineHeight / 2;
+          return;
+        }
+
+        // Format different types of content
+        if (line.match(/^[A-Z\s\d\.\-]+$/) && line.length < 50) {
+          // Section headers (all caps, short lines)
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          currentY += 4; // Extra space before headers
+        } else if (line.match(/^\d+\.\s+[A-Z]/) || line.includes('SUMMARY') || line.includes('STATUS')) {
+          // Numbered sections or key terms
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(11);
+        } else if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+          // Bullet points
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          line = '  ' + line; // Indent bullet points
+        } else if (line.includes(':') && line.split(':')[0].length < 30) {
+          // Key-value pairs (like "Budget Status: ...")
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          // Make the key part bold
+          const [key, ...valueParts] = line.split(':');
+          const value = valueParts.join(':');
+
+          // Check if we need a new page
+          if (currentY + lineHeight > pageHeight - 30) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          // Print key in bold
+          doc.setFont('helvetica', 'bold');
+          doc.text(key + ':', margin, currentY);
+
+          // Print value in normal font
+          doc.setFont('helvetica', 'normal');
+          const keyWidth = doc.getTextWidth(key + ': ');
+
+          if (value.trim()) {
+            const valueLines = doc.splitTextToSize(value.trim(), maxWidth - keyWidth);
+            valueLines.forEach((valueLine, i) => {
+              if (i === 0) {
+                doc.text(valueLine, margin + keyWidth, currentY);
+              } else {
+                currentY += lineHeight;
+                if (currentY + lineHeight > pageHeight - 30) {
+                  doc.addPage();
+                  currentY = 20;
+                }
+                doc.text(valueLine, margin + 15, currentY); // Indent continuation
+              }
+            });
+          }
+
+          currentY += lineHeight + 2;
+          return; // Skip the normal processing for this line
+        } else {
+          // Regular text
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+        }
+
+        // Split long lines and add them
+        const wrappedLines = doc.splitTextToSize(line, maxWidth);
+
+        wrappedLines.forEach((wrappedLine) => {
+          if (currentY + lineHeight > pageHeight - 30) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          doc.text(wrappedLine, margin, currentY);
+          currentY += lineHeight;
+        });
+
+        // Add extra spacing after headers
+        if (line.match(/^[A-Z\s\d\.\-]+$/) && line.length < 50) {
+          currentY += 3;
+        } else {
+          currentY += 1;
+        }
+      });
+
+      currentY += 4; // Extra space between sections
+    });
+
+    // Add page numbers and footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Page ${i} of ${pageCount}`, 180, pageHeight - 10, { align: 'right' });
+      doc.text('Generated by DoconAI Project Management System', 20, pageHeight - 10);
+    }
+
+    doc.save(`project_${projectId}_status_report.pdf`);
   };
 
   const handleCheckboxChange = (docId) => {
@@ -279,24 +403,26 @@ const ReportGenerator = ({ onClose, projectId }) => {
 
                         return (
                           <div key={idx}>
-                            {heading && (
-                              <h4 className="text-lg font-semibold text-blue-700 mb-2">{heading}</h4>
-                            )}
-                            {isList ? (
-                              <ul className="list-disc list-inside space-y-1">
-                                {content.split('\n').map((line, i) =>
-                                  /^[-*•]/.test(line.trim()) ? (
-                                    <li key={i}>{line.replace(/^[-*•]\s*/, '')}</li>
-                                  ) : null
-                                )}
-                              </ul>
-                            ) : (
-                              content.split('\n').map((para, i) =>
-                                para.trim() ? (
-                                  <p className="mb-2" key={i}>{para.trim()}</p>
-                                ) : null
-                              )
-                            )}
+                          {heading && (
+                            <h4 className="text-lg font-semibold text-blue-700 mb-2">{heading}</h4>
+                          )}
+                          {isList ? (
+                            <ul className="list-disc list-inside space-y-1">
+                            {content.split('\n').map((line, i) => {
+                              if (/^[-*•]/.test(line.trim())) {
+                              return <li key={i}>{line.replace(/^[-*•]\s*/, '')}</li>;
+                              }
+                              return null;
+                            })}
+                            </ul>
+                          ) : (
+                            content.split('\n').map((para, i) => {
+                            if (para.trim()) {
+                              return <p className="mb-2" key={i}>{para.trim()}</p>;
+                            }
+                            return null;
+                            })
+                          )}
                           </div>
                         );
                       })}
