@@ -1,7 +1,7 @@
-from Controllers.UserController import add_user, get_users,find_user,update_user,delete_user, addprojectmanager, authenticate_user, create_access_token
+from Controllers.UserController import add_user, get_users,find_user,update_user,delete_user, addprojectmanager, authenticate_user, create_access_token, get_user_from_token
 from Models.UserModel import UserModel,UserUpdate, TokenResponse
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 router = APIRouter(prefix="/user",tags=["User"])
 
@@ -36,3 +36,14 @@ async def login(form_data: OAuth2PasswordRequestForm=Depends()):
     token_data={"sub":str(user["_id"]), "username": user["username"]}
     token=create_access_token(token_data)
     return {"access_token":token,"token_type":"bearer"}
+
+
+"/-------------------------This Route is Added By Sehara-----------------------/"
+@router.get("/decode-token")
+async def decode_user_token(token: str = Query(..., description="JWT token to decode")):
+    """
+    Decode JWT token and return user information
+    
+    Example: GET /user/decode-token?token=your_jwt_token_here
+    """
+    return await get_user_from_token(token)

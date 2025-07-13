@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
-// import UserProfileMenu from '../../../Components/Common/UserProfileMenu'; // make sure this path is correct
+import UserProfileMenu from '../../../Components/Common/UserProfileMenu'; // make sure this path is correct
 
 export default function Dashboard() {
   const router = useRouter();
