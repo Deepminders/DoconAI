@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from 'react';
-import { useNotifications } from '../common/NotificationSystem';
+import { useNotifications } from '../Common/NotificationSystem';
 
 export default function UploadDocument({ onUpload }) {
   const [projectId] = useState("687000c9df820986d0a5ba42");

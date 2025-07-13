@@ -1,10 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 import DocHeader from '../../../Components/DocumentComponents/DocHeader';
 import SectionTitle from '../../../Components/DocumentComponents/SectionTitle';
 import AllDocuments from '../../../Components/DocumentComponents/AllDocuments';
-import { NotificationProvider, createNotificationHelpers } from '../../../Components/common/NotificationSystem';
+import { NotificationProvider, createNotificationHelpers } from '../../../Components/Common/NotificationSystem';
 import { UserProvider } from '../../../Components/auth/UserContext';
 import "../../../CSS/Docs/style.css";
 
@@ -101,6 +102,7 @@ const Page = () => {
     console.log(`Sidebar: ${!isSidebarOpen ? 'Open' : 'Closed'}`);
   };
 
+  
   return (
     <ErrorBoundary>
       <NotificationProvider>
@@ -111,7 +113,7 @@ const Page = () => {
               isOpen={isSidebarOpen} 
               onToggle={toggleSidebar} 
               isMobile={isMobile} 
-              active={'documents'}
+              
             />
             
             {/* Main Content Area */}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Save, RefreshCw, Calendar, FileText, Hash, Loader2, FolderOpen, Tag, Upload, X, File } from 'lucide-react'
-import { useNotifications } from '../common/NotificationSystem'
+import { useNotifications } from '../Common/NotificationSystem'
 
 const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
