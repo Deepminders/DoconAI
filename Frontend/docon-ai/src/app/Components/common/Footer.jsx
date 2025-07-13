@@ -6,10 +6,10 @@ import Link from 'next/link';
 
 const Footer = () => {
   const quickLinks = [
-    { name: 'Home', href: '/' },
-    { name: 'Services', href: '/services' },
-    { name: 'About Us', href: '/about' },
-    { name: 'Contact Us', href: '/contact' }
+    { name: 'Home', href: '/Client/Home' },
+    { name: 'Services', href: '/Client/Services' },
+    { name: 'About Us', href: '/Client/Aboutus' },
+    { name: 'Contact Us', href: '/Client/Contactus' }
   ];
 
   const resources = [
@@ -41,7 +41,7 @@ const Footer = () => {
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">AI</span>
               </div>
-              <span className="text-xl font-bold">DocsAI</span>
+              <span className="text-xl font-bold">DoconAI</span>
             </div>
             <p className="text-slate-400 leading-relaxed">
               Revolutionizing construction document management with AI-powered analysis and smart insights.
@@ -134,8 +134,8 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-blue-400" />
-                <a href="mailto:contact@docsai.com" className="text-slate-400 hover:text-white transition-colors duration-200">
-                  contact@docsai.com
+                <a href="mailto:contact@DoconAI.com" className="text-slate-400 hover:text-white transition-colors duration-200">
+                  contact@DoconAI.com
                 </a>
               </div>
             </div>
@@ -151,7 +151,7 @@ const Footer = () => {
         >
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-slate-400 text-sm">
-              © 2024 DocsAI. All rights reserved.
+              © 2024 DoconAI. All rights reserved.
             </p>
             <div className="flex space-x-6 text-sm">
               <Link href="/privacy" className="text-slate-400 hover:text-white transition-colors duration-200">

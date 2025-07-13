@@ -45,41 +45,41 @@ const AboutPage = () => {
 
   const team = [
     {
-      name: "Sarah Johnson",
-      role: "CEO & Co-Founder",
-      image: "👩‍💼",
-      description: "15+ years in construction technology and AI innovation"
-    },
-    {
-      name: "Michael Chen",
-      role: "CTO & Co-Founder",
+      name: "Sehara Fernando",
+      role: "Team Leader",
       image: "👨‍💻",
-      description: "Former AI researcher at leading tech companies"
+      description: "Undergraduate of BSc. Hon's in Artificial Intelligence, University of Moratuwa."
     },
     {
-      name: "Emily Rodriguez",
-      role: "Head of Product",
+      name: "Lahiruni Meegama",
+      role: "Team Member",
+      image: "👩‍💼",
+      description: "Undergraduate of BSc. Hon's in Artificial Intelligence, University of Moratuwa."
+    },
+    {
+      name: "Ashini Dananjana",
+      role: "Team Member",
       image: "👩‍🔬",
-      description: "Construction industry expert with deep domain knowledge"
+      description: "Undergraduate of BSc. Hon's in Artificial Intelligence, University of Moratuwa."
     },
     {
-      name: "David Kim",
-      role: "Lead AI Engineer",
+      name: "Laavanjan",
+      role: "Team Member",
       image: "👨‍🔬",
-      description: "PhD in Machine Learning with focus on document analysis"
+      description: "Undergraduate of BSc. Hon's in Artificial Intelligence, University of Moratuwa."
     }
   ];
 
   const testimonials = [
     {
-      quote: "DocsAI has revolutionized how we handle construction documents. The AI insights are incredibly accurate.",
+      quote: "DoconAI has revolutionized how we handle construction documents. The AI insights are incredibly accurate.",
       author: "John Smith",
       role: "Project Manager",
       company: "BuildTech Solutions",
       rating: 5
     },
     {
-      quote: "The time savings are remarkable. What used to take hours now takes minutes with DocsAI.",
+      quote: "The time savings are remarkable. What used to take hours now takes minutes with DoconAI.",
       author: "Lisa Wang",
       role: "Construction Supervisor",
       company: "Metro Construction",
@@ -103,7 +103,7 @@ const AboutPage = () => {
             <h1 className="text-5xl lg:text-6xl font-bold text-slate-800 leading-tight">
               About{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">
-                DocsAI
+                DoconAI
               </span>
             </h1>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">

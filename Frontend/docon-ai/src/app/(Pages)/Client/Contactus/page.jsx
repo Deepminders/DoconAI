@@ -54,9 +54,9 @@ const ContactPage = () => {
     {
       icon: <Mail className="w-6 h-6" />,
       title: "Email Us",
-      content: "contact@docsai.com",
+      content: "contact@DoconAI.com",
       description: "We'll respond within 24 hours",
-      href: "mailto:contact@docsai.com"
+      href: "mailto:contact@DoconAI.com"
     },
     {
       icon: <Phone className="w-6 h-6" />,
@@ -85,7 +85,7 @@ const ContactPage = () => {
     {
       icon: <MessageCircle className="w-8 h-8" />,
       title: "General Inquiries",
-      description: "Questions about DocsAI features, pricing, or general information"
+      description: "Questions about DoconAI features, pricing, or general information"
     },
     {
       icon: <Users className="w-8 h-8" />,
@@ -125,7 +125,7 @@ const ContactPage = () => {
             </h1>
             
             <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Have questions about DocsAI? We're here to help you transform your 
+              Have questions about DoconAI? We're here to help you transform your 
               construction document management workflow.
             </p>
           </motion.div>
@@ -320,7 +320,7 @@ const ContactPage = () => {
               <div>
                 <h2 className="text-2xl font-bold text-slate-800 mb-6">How Can We Help?</h2>
                 <p className="text-slate-600 mb-8">
-                  We're here to support you with any questions or assistance you need with DocsAI.
+                  We're here to support you with any questions or assistance you need with DoconAI.
                 </p>
               </div>
 
@@ -352,8 +352,8 @@ const ContactPage = () => {
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <Mail className="w-5 h-5 text-blue-600" />
-                    <a href="mailto:contact@docsai.com" className="text-blue-600 hover:text-blue-800 transition-colors">
-                      contact@docsai.com
+                    <a href="mailto:contact@DoconAI.com" className="text-blue-600 hover:text-blue-800 transition-colors">
+                      contact@DoconAI.com
                     </a>
                   </div>
                   <div className="flex items-center space-x-3">
@@ -380,7 +380,7 @@ const ContactPage = () => {
           >
             <h2 className="text-3xl font-bold text-slate-800 mb-4">Frequently Asked Questions</h2>
             <p className="text-lg text-slate-600">
-              Quick answers to common questions about DocsAI
+              Quick answers to common questions about DoconAI
             </p>
           </motion.div>
 
@@ -395,8 +395,8 @@ const ContactPage = () => {
                 answer: "We support all major file formats including PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, and many others commonly used in construction projects."
               },
               {
-                question: "Is DocsAI really free to use?",
-                answer: "Yes, DocsAI is completely free to use with all features included. There are no hidden fees, subscriptions, or premium tiers."
+                question: "Is DoconAI really free to use?",
+                answer: "Yes, DoconAI is completely free to use with all features included. There are no hidden fees, subscriptions, or premium tiers."
               },
               {
                 question: "How long does document analysis take?",
@@ -433,7 +433,7 @@ const ContactPage = () => {
           >
             <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
             <p className="text-lg text-cyan-100 mb-8 leading-relaxed">
-              Join thousands of construction professionals who trust DocsAI
+              Join thousands of construction professionals who trust DoconAI
             </p>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -441,7 +441,7 @@ const ContactPage = () => {
               onClick={() => window.location.href = '/Pages/Signup'}
               className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
             >
-              Try DocsAI Free
+              Try DoconAI Free
             </motion.button>
           </motion.div>
         </div>

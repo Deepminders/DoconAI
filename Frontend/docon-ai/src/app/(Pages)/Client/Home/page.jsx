@@ -53,7 +53,7 @@ const LandingPage = () => {
             <Header />
 
             {/* Hero Section - Optimized for 100vh */}
-            <section className="relative overflow-hidden h-screen flex items-center px-4 py-5 mt-0">
+            <section className="relative overflow-hidden h-screen flex items-center px-4 py-5">
                 <div className="max-w-7xl mx-auto w-full mt-10">
                     <div className="grid lg:grid-cols-12 gap-12 items-center">
                         {/* Left Content - Compact and Focused */}
