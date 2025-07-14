@@ -7,6 +7,7 @@ URI = "mongodb+srv://Sehara:Sehara1234@deepminders.mnjvr.mongodb.net/?retryWrite
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 try:

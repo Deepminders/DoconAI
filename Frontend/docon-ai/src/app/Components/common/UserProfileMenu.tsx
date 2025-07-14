@@ -32,7 +32,7 @@ export default function UserProfileMenu({
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    router.push("/Pages/Login"); // Ensure correct route
+    router.push("/Client/Login"); // Ensure correct route
   };
 
   const handleUpdateProfile = () => {

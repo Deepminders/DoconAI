@@ -64,14 +64,14 @@ const Header = () => {
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <Link
-              href="/Pages/Login"
+              href="/Client/Login"
               className="text-slate-700 hover:text-blue-600 font-medium transition-colors duration-200"
             >
               Login
             </Link>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
-                href="/Pages/Signup"
+                href="/Client/Signup"
                 className="bg-gradient-to-r from-blue-900 to-blue-700 text-white px-6 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Sign Up

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from './Header';
+import { useNotifications } from '../Common/NotificationSystem'; // <-- Update path accordingly
 
 export default function LoginForm() {
   const [loginData, setLoginData] = useState({
@@ -9,16 +10,20 @@ export default function LoginForm() {
     password: '',
   });
   const router = useRouter();
+
+  // Initialize notification helpers
+  const { success, error, warning } = useNotifications();
+
   const handleChange = (e) => {
     const { id, value } = e.target;
-    setLoginData(prev => ({ ...prev, [id]: value }));
+    setLoginData((prev) => ({ ...prev, [id]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (loginData.username.trim() === '' || loginData.password.trim() === '') {
-      alert('Please fill in both Username and Password!');
+      warning('Please fill in both Username and Password!');
       return;
     }
 
@@ -40,16 +45,14 @@ export default function LoginForm() {
       if (response.ok) {
         console.log('Login successful:', data);
         localStorage.setItem('token', data.access_token);
-        alert('Login successful!');
+        success('Login successful!');
         router.push('http://localhost:3000/Client/Dashboard');
-
-        
       } else {
-        alert(data.detail || 'Login failed');
+        error(data.detail || 'Login failed');
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      alert('Something went wrong');
+    } catch (err) {
+      console.error('Login error:', err);
+      error('Something went wrong');
     }
   };
 
@@ -93,8 +96,14 @@ export default function LoginForm() {
         </button>
 
         <div className="text-sm text-center">
-          <a href="#" className="text-[#166394] hover:underline">
+          <a href="/Client/ResetRequest" className="text-[#166394] hover:underline">
             Reset password
+          </a>
+        </div>
+        <div className="text-sm text-center">
+          <span className="text-gray-600">New to docon ai? </span>
+          <a href="/Client/Signup" className="text-[#166394] hover:underline">
+            Register
           </a>
         </div>
       </form>

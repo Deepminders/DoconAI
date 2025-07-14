@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+
 
 class UserModel(BaseModel):
     company_name: str
@@ -28,3 +30,18 @@ class projectmcreate(BaseModel):
 class TokenResponse(BaseModel):
     access_token:str
     token_type:str
+
+class PasswordResetRequest(BaseModel):
+    email_or_username: str
+
+class PasswordResetPayload(BaseModel):
+    token: str
+    new_password: str
+
+class StaffCreateRequest(BaseModel):
+    email: EmailStr
+    user_role:str = "Staff"  # Default role for staff
+
+class TokenData(BaseModel):
+    sub: Optional[str] = None
+    username: Optional[str] = None

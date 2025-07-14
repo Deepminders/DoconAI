@@ -14,7 +14,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #d2cfcf;
     --foreground: #ededed;
   }
 }
@@ -48,4 +48,139 @@ body {
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: #357ABD;
+}
+
+/* Add these animations to your globals.css file */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 1.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out;
+}
+
+ @keyframes ken-burns {
+          0% {
+            transform: scale(1) rotate(0deg);
+          }
+          50% {
+            transform: scale(1.1) rotate(1deg);
+          }
+          100% {
+            transform: scale(1) rotate(0deg);
+          }
+        }
+
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 0.6;
+          }
+        }
+
+        @keyframes smooth-slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(40px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-ken-burns {
+          animation: ken-burns 20s ease-in-out infinite;
+        }
+
+        .animate-fade-in {
+          animation: fade-in 1.5s ease-out;
+        }
+
+        .animate-smooth-slide-up {
+          animation: smooth-slide-up 1s ease-out forwards;
+        }
+
+        @keyframes ken-burns {
+          0% {
+            transform: scale(1) rotate(0deg);
+          }
+          50% {
+            transform: scale(1.1) rotate(1deg);
+          }
+          100% {
+            transform: scale(1) rotate(0deg);
+          }
+        }
+
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 0.6;
+          }
+        }
+
+        @keyframes smooth-slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(40px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-ken-burns {
+          animation: ken-burns 20s ease-in-out infinite;
+        }
+
+        .animate-fade-in {
+          animation: fade-in 1.5s ease-out;
+        }
+
+        .animate-smooth-slide-up {
+          animation: smooth-slide-up 1s ease-out forwards;
+        }
+        @keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 0.1; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
 }
