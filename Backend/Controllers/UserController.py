@@ -297,7 +297,7 @@ async def get_user_from_token(token: str) -> dict:
     """
     try:
         # Decode the token
-        payload = decode_token(token)
+        payload = await decode_token(token)
         
         # Extract user_id from payload (adjust field name based on your token structure)
         user_id = payload.get("user_id") or payload.get("sub") or payload.get("id")
