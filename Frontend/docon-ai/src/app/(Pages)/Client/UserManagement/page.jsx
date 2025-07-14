@@ -28,7 +28,6 @@ export default function UserManagementPage() {
       const token = getToken();
       const res = await fetch('http://localhost:8000/user/list-users', {
         headers: {
-
           'Authorization': `Bearer ${token}`,
         }
       });
