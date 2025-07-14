@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import '../../../CSS/staff/staff.css';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
@@ -12,7 +12,7 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:8000';
 
 const Staff = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const [staffList, setStaffList] = useState([]);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,7 +21,7 @@ const Staff = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [roles, setRoles] = useState(["Site Engineer", "Qs Engineer", "Project Manager", "Technician"]);
   const genders = ["Male","Female","Other"];
-  const [showAddModal, setShowAddModal] = useState(false);
+  // const [showAddModal, setShowAddModal] = useState(false);
   const [validated, setValidated] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -46,30 +46,30 @@ const Staff = () => {
     staff_image_url: ''
 });
   
-  const [formData, setFormData] = useState({
-    staff_fname: '',
-    staff_lname: '',
-    staff_email: '',
-    staff_age: '',
-    staff_gender: '',
-    staff_role: '',
-    assigned_projects: [],
-    staff_image_url: ''
-  });
+  // const [formData, setFormData] = useState({
+  //   staff_fname: '',
+  //   staff_lname: '',
+  //   staff_email: '',
+  //   staff_age: '',
+  //   staff_gender: '',
+  //   staff_role: '',
+  //   assigned_projects: [],
+  //   staff_image_url: ''
+  // });
   
-  const clearForm = () => {
-    setFormData({
-      staff_fname: '',
-      staff_lname: '',
-      staff_email: '',
-      staff_age: '',
-      staff_gender: '',
-      staff_role: '',
-      assigned_projects: [],
-      staff_image_url: ''
-    });
-    setValidated(false);
-  };
+  // const clearForm = () => {
+  //   setFormData({
+  //     staff_fname: '',
+  //     staff_lname: '',
+  //     staff_email: '',
+  //     staff_age: '',
+  //     staff_gender: '',
+  //     staff_role: '',
+  //     assigned_projects: [],
+  //     staff_image_url: ''
+  //   });
+  //   setValidated(false);
+  // };
 
   const handleDelete = async (id) => {
     try {
@@ -107,9 +107,9 @@ const Staff = () => {
     setShowModal(true);
   };
 
-  const openAddModal = () => {
-    setShowAddModal(true);
-  };
+  // const openAddModal = () => {
+  //   setShowAddModal(true);
+  // };
 
   const openAssignModal = (staffId) => {
     const staff = staffList.find(s => s.id === staffId);
@@ -372,7 +372,7 @@ const [filteredStaff, setFilteredStaff] = useState([]);
     <div className='staff-container'>
       <div className='staff-header'>
         <h2 className='staff-title'>Staff Management</h2>
-        <button className="add-staff-button" onClick={openAddModal}>+ Add Staff</button>
+        {/* <button className="add-staff-button" onClick={openAddModal}>+ Add Staff</button> */}
       </div>
 
       <div className='staff-filters'>
@@ -460,7 +460,7 @@ const [filteredStaff, setFilteredStaff] = useState([]);
       </Modal>
 
     
-    <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>
+    {/* <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>
   <Modal.Header closeButton>
     
     <Modal.Title className="add-staff-title">Add Staff</Modal.Title>
@@ -590,7 +590,7 @@ const [filteredStaff, setFilteredStaff] = useState([]);
       </div>
     </Form>
   </Modal.Body>
-</Modal>
+</Modal> */}
 
 
     <Modal show={showUpdateModal} onHide={() => setShowUpdateModal(false)} centered>
@@ -794,4 +794,6 @@ const [filteredStaff, setFilteredStaff] = useState([]);
 
 
 <ToastContainer position="top-right" autoClose={1500} />
-</div>)};export default Staff;
+</div>)};
+
+export default Staff;

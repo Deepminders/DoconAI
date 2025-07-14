@@ -1,6 +1,6 @@
 import base64
 from fastapi import HTTPException
-from Config.db import staff_collection, project_collection
+from Config.db import staff_collection, project_collection,user_collection
 from Models.StaffModel import StaffModel
 from Schemas.StaffSchema import getIndividualStaff,getAllStaff
 from bson import ObjectId
@@ -8,122 +8,106 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from typing import List
+from bson import ObjectId
 
 import shutil
 import uuid
 import os
 
-UPLOAD_DIR = "uploaded_images"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+async def add_staff(staff_data):
+    user_id = ObjectId(staff_data["_id"])  # user ID passed in body
+    staff_doc = {
+      "_id": user_id,
+      "assigned_projects": staff_data.get("assigned_projects", []),
+    #   "staff_image_url": staff_data.get("staff_image_url")
+    }
+    await staff_collection.insert_one(staff_doc)
+    return { "Message": "Staff created", "UserID": str(user_id) }
 
-async def add_staff(
-    staff: StaffModel
-):
+async def get_staff() -> dict:
     try:
-        staff_fname = staff.staff_fname
-        staff_lname = staff.staff_lname
-        staff_email = staff.staff_email
-        staff_age = staff.staff_age
-        staff_gender = staff.staff_gender
-        staff_role = staff.staff_role
-        staff_image_url = staff.staff_image_url
-        assigned_projects = staff.assigned_projects or []  # Ensure empty array default
+        users_cursor = user_collection.find()  # find() returns a cursor, no await here
 
-        # Extract image format and data
-        header, base64_data = staff_image_url.split(',', 1)
-        mime_type = header.split(':')[1].split(';')[0]
-        extension = f".{mime_type.split('/')[1]}"  # e.g. .png, .jpeg
-        
-        # Decode Base64
-        image_data = base64.b64decode(base64_data)
-        
-        # Generate filename
-        filename = f"{uuid.uuid4()}{extension}"
-        filepath = os.path.join(UPLOAD_DIR, filename)
+        staff_users = []
+        async for user in users_cursor:
+            user["_id"] = str(user["_id"])
+            staff_users.append(user)
 
-        # Save file
-        with open(filepath, "wb") as buffer:
-            buffer.write(image_data)
-
-        # Create staff document
-        staff_data = {
-            "staff_fname": staff_fname,
-            "staff_lname": staff_lname,
-            "staff_email": staff_email,
-            "staff_age": staff_age,
-            "staff_gender": staff_gender,
-            "staff_role": staff_role,
-            "assigned_projects": assigned_projects or [],  # Ensure empty array
-            "staff_image_url": f"/uploaded_images/{filename}"
+        return {
+            "Message": "All staff displayed successfully",
+            "Staff": staff_users
         }
 
-        result = await staff_collection.insert_one(staff_data)
-        
-        return JSONResponse(
-            status_code=201,
-            content={
-                "message": "Staff added successfully",
-                "staff_id": str(result.inserted_id),
-                "staff_image_url": staff_data["staff_image_url"],
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "Error": "All staff not displayed",
+                "Details": str(e)
             }
         )
 
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        print(e)
-        if 'filepath' in locals() and os.path.exists(filepath):
-            os.remove(filepath)
-        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
-
-async def get_staff()->dict: 
+async def find_staff(_id: ObjectId) -> dict:
     try:
-        result = await getAllStaff(staff_collection.find())
-        print(result)
-        return result
-    
-    except Exception as e:
-        print(e)
-        return {
-            "Error": "All Staff not display",
-            "Details": str(e)  
-        }
-
-async def find_staff(staff_id:ObjectId)->dict:
-    try:
-        result = await staff_collection.find_one({"_id": staff_id})
-        if result is None:
-            raise HTTPException(status_code=404, detail="Staff not found")
+        # Get user base info
+        user = await user_collection.find_one({"_id": _id})
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
         
+        # Get extra staff info
+        staff = await staff_collection.find_one({"_id": _id})
+        if staff is None:
+            raise HTTPException(status_code=404, detail="Staff profile not found")
+
+        # Combine and return
         return {
             "Message": "Staff found",
-            "Staff": getIndividualStaff(result)  
-        }
-        
-    except Exception as e:
-        return {
-            "Error": "Staff not founded",
-            "Details": str(e)  
+            "Staff": getIndividualStaff(user, staff)
         }
 
+    except Exception as e:
+        return {
+            "Error": "Staff not found",
+            "Details": str(e)
+        }
+
+
     
-async def delete_staff(staff_id:ObjectId)->dict:
+async def delete_staff(_id: ObjectId) -> dict:
     try:
-        result = await staff_collection.delete_one({"_id":staff_id})
-        if result.deleted_count == 1:
-            return{
-                "Message": "Staff deleted successfully"
+        # Delete from user collection
+        user_result = await user_collection.delete_one({"_id": _id})
+
+        # Delete from staff collection
+        staff_result = await staff_collection.delete_one({"_id": _id})
+
+        if user_result.deleted_count == 1 and staff_result.deleted_count == 1:
+            return {
+                "Message": "Staff and user data deleted successfully"
+            }
+        elif user_result.deleted_count == 1:
+            return {
+                "Warning": "User deleted but staff profile was not found"
+            }
+        elif staff_result.deleted_count == 1:
+            return {
+                "Warning": "Staff profile deleted but user account was not found"
+            }
+        else:
+            return {
+                "Warning": "No user or staff data found for the given ID"
             }
 
     except Exception as e:
         return {
             "Error": "Staff not deleted",
-            "Details": str(e)  
+            "Details": str(e)
         }
 
-async def update_staff(staff_id:ObjectId,staff_data)->dict:
+
+async def update_staff(_id:ObjectId,staff_data)->dict:
     try:
-        result = await staff_collection.update_one({"_id":staff_id},{"$set": staff_data})
+        result = await user_collection.update_one({"_id":_id},{"$set": staff_data})
         return{
             "Message":"Updated Successfully"
         }

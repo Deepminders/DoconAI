@@ -7,9 +7,9 @@ router = APIRouter(prefix="/staff",tags=["Staff_Member"])
 
 @router.post("/addStaff")
 async def add_staff_route(staff:StaffModel):
-    return await add_staff(staff)
+     return await add_staff(staff.dict)
 
-@router.get("/getStaff")
+@router.get("/getstaff")
 async def get_staff_route():
     return await get_staff()
 
@@ -32,3 +32,7 @@ async def assign_project_route(s_id:str,p_id:str):
 @router.get("/projects/")
 async def get_project_route():
     return await get_project()
+
+
+
+
