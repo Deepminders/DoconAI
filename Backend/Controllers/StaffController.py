@@ -172,3 +172,60 @@ async def get_project():
             "projectName": project.get("projectName")
         })
     return projects
+
+async def fetchUserProjects(user_id: str):
+    """
+    Fetches all projects assigned to a specific user from staff collection.
+    Returns project IDs and names for project selection in upload.
+    """
+    try:
+        # Find the user in staff collection
+        staff_member = await staff_collection.find_one({"_id": ObjectId(user_id)})
+        
+        if not staff_member:
+            raise HTTPException(status_code=404, detail="Staff member not found")
+        
+        assigned_projects = staff_member.get("assigned_projects", [])
+        
+        if not assigned_projects:
+            return JSONResponse({
+                "status": "success",
+                "projects": [],
+                "user_id": user_id,
+                "count": 0,
+                "message": "No projects assigned to this user"
+            })
+        
+        # Fetch project details from project collection
+        # Convert ObjectIds to strings for query
+        project_ids = [ObjectId(project_id) if isinstance(project_id, str) else project_id 
+                      for project_id in assigned_projects]
+        
+        # Query project collection to get project names and details
+        cursor = project_collection.find(
+            {"_id": {"$in": project_ids}}, 
+            {"_id": 1, "projectName": 1}  # Only fetch needed fields
+        )
+        
+        projects = await cursor.to_list(length=None)
+        
+        # Format response for frontend
+        project_list = []
+        for project in projects:
+            project_list.append({
+                "project_id": str(project["_id"]),
+                "project_name": project.get("projectName", "Unnamed Project")
+            })
+        
+        
+        return JSONResponse({
+            "status": "success",
+            "projects": project_list,
+            "user_id": user_id,
+            "count": len(project_list)
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user projects: {str(e)}")

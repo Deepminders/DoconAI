@@ -2,12 +2,12 @@ __pycache__/
 *.pyc
 venv/
 .uploaded_images/
-<<<<<<< HEAD
+
 Uploaded_Documents/
 
-=======
+
 vector_stores/
 
 Mobile/
 .gitignore
->>>>>>> f73ba0d2f4d5c751d15806e33c9f2beff28078e0
+Documents/

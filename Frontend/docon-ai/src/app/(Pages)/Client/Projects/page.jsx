@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 import Header from '../../../Components/Projects/Header';
 import FilterPopup from '../../../Components/Projects/FilterPopup';
 import ProjectDetailsPopup from '../../../Components/Projects/ProjectDetailsPopup';

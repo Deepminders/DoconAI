@@ -1,8 +1,9 @@
-from Controllers.UserController import add_user, get_users,find_user,update_user,delete_user, addprojectmanager, authenticate_user, create_access_token, request_password_reset, reset_password, create_staff_user, list_staff_created_by_user, get_current_user
+from Controllers.UserController import add_user, get_users,find_user,update_user,delete_user, addprojectmanager, authenticate_user, create_access_token, request_password_reset, reset_password, create_staff_user, list_staff_created_by_user, get_current_user,get_user_from_token
 from Models.UserModel import UserModel,UserUpdate, TokenResponse, PasswordResetRequest, PasswordResetPayload,StaffCreateRequest
 from bson import ObjectId
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request,Query
+
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 router = APIRouter(prefix="/user",tags=["User"])
 
@@ -71,3 +72,15 @@ async def add_staff(req: StaffCreateRequest,request: Request, user: dict = Depen
     print("Headers received:", request.headers)
     print("Received:", req.model_dump())
     return await create_staff_user(req.email, req.user_role, created_by=user["_id"])
+
+
+"/-------------------------This Route is Added By Sehara-----------------------/"
+@router.get("/decode-token")
+async def decode_user_token(token: str = Query(..., description="JWT token to decode")):
+    """
+    Decode JWT token and return user information
+    
+    Example: GET /user/decode-token?token=your_jwt_token_here
+    """
+    return await get_user_from_token(token)
+
