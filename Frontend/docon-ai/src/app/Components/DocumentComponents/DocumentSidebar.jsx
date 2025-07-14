@@ -13,6 +13,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
     if (pathname.includes('/Dashboard')) return 'dashboard';
     if (pathname.includes('/Chatbot')) return 'chat';
     if (pathname.includes('/Projects')) return 'projects';
+    if (pathname.includes('/UserManagement')) return 'users';
     return 'home';
     };
 
@@ -129,6 +130,13 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
                         route="/Client/Chatbot"
                         onClick={onToggle}
                     />
+                     <SidebarItem 
+                        icon={<Book size={24} />} 
+                        label="User Management" 
+                        isActive={activeStatus === 'users'}
+                        route="/Client/UserManagement"
+                        onClick={onToggle}
+    />
                 </nav>
 
                 {/* Footer */}

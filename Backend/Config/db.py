@@ -7,6 +7,7 @@ URI = "mongodb+srv://Sehara:Sehara1234@deepminders.mnjvr.mongodb.net/?retryWrite
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -21,8 +22,8 @@ try:
     chat_collection = db.get_collection("chat_history")
     counters_collection = db.get_collection("counters")
     session_collection = db.get_collection("chat_sessions")
+    search_cache_collection = db.get_collection("search_cache")
 
-    
 except Exception as e:
     logger.error(f"Failed to connect to MongoDB: {str(e)}")
     raise HTTPException(
