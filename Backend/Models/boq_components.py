@@ -2,7 +2,7 @@ import os
 import tempfile
 import shutil
 import re
-import pickle
+import pickle, joblib
 import pandas as pd
 import json
 from typing import Optional, Dict, Any
@@ -54,6 +54,7 @@ class BOQComponents:
         # Load cost model
         self.cost_model = None
         self.label_encoders = {}
+        self.preprocessor = None  # Initialize preprocessor
         self._load_cost_model()
 
         # Feature extraction prompt
@@ -80,46 +81,31 @@ class BOQComponents:
         """
 
     def _load_cost_model(self):
-        """Load the cost prediction model"""
         try:
-            # Try different possible paths
-            possible_paths = [
-                "ml_models/cost-model.pkl",
-                "Models/cost-model.pkl",
-                "ml_models/cost_model.pkl",
-                "Models/cost_model.pkl",
-                "D:\\NOTES\\SEMI-4\\software project\\DoconAI\\Backend\\ml_models\\cost-model.pkl"
-            ]
+            preprocessor_path = "ml_models/preprocessor.pkl"
+            model_path = "ml_models/best_model.pkl"
 
-            model_loaded = False
-            for model_path in possible_paths:
-                if os.path.exists(model_path):
-                    with open(model_path, "rb") as f:
-                        self.cost_model = pickle.load(f)
-                    print(f"✅ Cost model loaded from: {model_path}")
-                    model_loaded = True
-                    break
+            print(f"Looking for preprocessor at: {preprocessor_path}")
+            print(f"Looking for model at: {model_path}")
 
-            if not model_loaded:
-                print("⚠️ Cost model not found, using mock prediction")
+            if os.path.exists(preprocessor_path):
+                self.preprocessor = joblib.load(preprocessor_path)
+                print(f"✅ Preprocessor loaded from: {preprocessor_path}")
+            else:
+                self.preprocessor = None
+                print("⚠️ Preprocessor not found.")
 
-            # Try to load encoders
-            encoder_paths = [
-                "ml_models/label_encoders.pkl",
-                "Models/label_encoders.pkl",
-            ]
-
-            for encoder_path in encoder_paths:
-                if os.path.exists(encoder_path):
-                    with open(encoder_path, "rb") as f:
-                        self.label_encoders = pickle.load(f)
-                    print(f"✅ Label encoders loaded from: {encoder_path}")
-                    break
+            if os.path.exists(model_path):
+                self.cost_model = joblib.load(model_path)
+                print(f"✅ Cost model loaded from: {model_path}")
+            else:
+                self.cost_model = None
+                print("⚠️ Cost model not found.")
 
         except Exception as e:
             print(f"❌ Model loading error: {str(e)}")
             self.cost_model = None
-            self.label_encoders = {}
+            self.preprocessor = None
 
     async def process_boq_complete(self, files: list[UploadFile]) -> Dict[str, Any]:
         """Complete BOQ workflow with proper error handling (no project_id)"""
@@ -418,19 +404,24 @@ class BOQComponents:
             "building_type": "residential",
             "area_sqm": 150.0,
             "foundation_type": "concrete",
-            "has_parking": "no",
+            "has_parking": 0,  # changed from "no" to 0
             "floors": 2,
             "labor_rate": 25.0,
-            "has_basement": "no",
+            "has_basement": 0,  # changed from "no" to 0
             "roof_type": "flat",
             "location": "urban",
         }
 
+        yes_no_fields = ["has_parking", "has_basement"]
+
         for key, default_value in expected_features.items():
             if key in features:
                 try:
-                    # Type conversion based on expected type
-                    if isinstance(default_value, float):
+                    # Convert yes/no to 1/0 for boolean fields
+                    if key in yes_no_fields:
+                        val = str(features[key]).strip().lower()
+                        validated[key] = 1 if val == "yes" else 0
+                    elif isinstance(default_value, float):
                         validated[key] = float(features[key])
                     elif isinstance(default_value, int):
                         validated[key] = int(features[key])
@@ -440,9 +431,25 @@ class BOQComponents:
                         validated[key] = features[key]
                 except (ValueError, TypeError):
                     print(f"⚠️ Invalid value for {key}: {features[key]}, using default")
-                    validated[key] = default_value
+                    validated[key] = (
+                        1
+                        if (key in yes_no_fields and default_value == "yes")
+                        else (
+                            0
+                            if (key in yes_no_fields and default_value == "no")
+                            else default_value
+                        )
+                    )
             else:
-                validated[key] = default_value
+                validated[key] = (
+                    1
+                    if (key in yes_no_fields and default_value == "yes")
+                    else (
+                        0
+                        if (key in yes_no_fields and default_value == "no")
+                        else default_value
+                    )
+                )
 
         return validated
 
@@ -452,10 +459,10 @@ class BOQComponents:
             "building_type": "residential",
             "area_sqm": 150.0,
             "foundation_type": "concrete",
-            "has_parking": "no",
+            "has_parking": 0,  # changed from "no" to 0
             "floors": 2,
             "labor_rate": 25.0,
-            "has_basement": "no",
+            "has_basement": 0,  # changed from "no" to 0
             "roof_type": "flat",
             "location": "urban",
         }
@@ -483,36 +490,25 @@ class BOQComponents:
         return is_meaningful
 
     def _predict_cost_with_model(self, features: Dict[str, Any]) -> Dict[str, Any]:
-        """Predict cost using the loaded model"""
+        """Predict cost using the preprocessor and loaded model"""
         try:
-            if not self.cost_model:
-                print("⚠️ No cost model available, using mock prediction")
-                # Mock prediction based on area and type
-                base_cost = features.get("area_sqm", 150) * 500  # $500 per sqm
-                if features.get("building_type") == "commercial":
-                    base_cost *= 1.5
-                elif features.get("building_type") == "industrial":
-                    base_cost *= 1.3
-
+            if not self.cost_model or not self.preprocessor:
+                print("⚠️ Model or preprocessor missing, using fallback prediction")
+                base_cost = features.get("area_sqm", 150) * 500
                 return {
                     "prediction": base_cost,
-                    "status": "mock_prediction",
-                    "message": "Used mock prediction algorithm",
+                    "status": "fallback_prediction",
+                    "message": "Used fallback prediction due to missing model/preprocessor",
                 }
 
-            # Prepare features for model
+            # Prepare features as DataFrame
             feature_df = pd.DataFrame([features])
 
-            # Apply label encoders if available
-            for column, encoder in self.label_encoders.items():
-                if column in feature_df.columns:
-                    try:
-                        feature_df[column] = encoder.transform(feature_df[column])
-                    except Exception as e:
-                        print(f"⚠️ Encoding error for {column}: {e}")
+            # Transform features using preprocessor
+            X_transformed = self.preprocessor.transform(feature_df)
 
-            # Make prediction
-            prediction = self.cost_model.predict(feature_df)[0]
+            # Predict using the trained model
+            prediction = self.cost_model.predict(X_transformed)[0]
 
             return {
                 "prediction": float(prediction),
@@ -522,7 +518,6 @@ class BOQComponents:
 
         except Exception as e:
             print(f"❌ Cost prediction error: {str(e)}")
-            # Fallback to simple calculation
             base_cost = features.get("area_sqm", 150) * 500
             return {
                 "prediction": base_cost,
