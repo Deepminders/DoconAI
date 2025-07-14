@@ -2,3 +2,12 @@ __pycache__/
 *.pyc
 venv/
 .uploaded_images/
+
+Uploaded_Documents/
+
+
+vector_stores/
+
+Mobile/
+.gitignore
+Documents/

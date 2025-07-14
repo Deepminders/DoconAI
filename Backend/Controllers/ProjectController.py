@@ -46,7 +46,7 @@ async def find_project(id: ObjectId) -> dict:
         }
     else:
         return {
-            "Error": "Project not found",
+            "Message": "Project not found",
         }
 
 async def update_project(project_id: str, project_update: ProjectUpdateModel) -> dict:
@@ -220,3 +220,5 @@ async def remove_project_from_staff(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred: {str(e)}"
         )
+    
+

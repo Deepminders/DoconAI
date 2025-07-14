@@ -6,11 +6,9 @@ from pymongo import ReturnDocument
 from fastapi import HTTPException
 import random
 import string 
-from jose import jwt, JWTError
+from jose import JWTError,jwt
 from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
-
-
 
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
@@ -115,5 +113,44 @@ async def addprojectmanager(uname:str):
 
     return {"message": "Project Manager created successfully", "username": uname}
 
+"/----------------------------This function is created by Sehara to fetch user information by token----------------------------/"
 
-    
+
+async def get_user_from_token(token: str) -> dict:
+    """
+    Decode JWT token and return user information (user_id, first_name, user_role)
+    """
+    try:
+        # Decode the token
+        payload = decode_token(token)
+        
+        # Extract user_id from payload (adjust field name based on your token structure)
+        user_id = payload.get("user_id") or payload.get("sub") or payload.get("id")
+        username = payload.get("username")
+        
+        if not user_id and not username:
+            raise HTTPException(status_code=401, detail="Invalid token: user identifier not found")
+        
+        # Query the database to get user information
+        if user_id:
+            user = await user_collection.find_one({"_id": ObjectId(user_id)})
+        else:
+            user = await user_collection.find_one({"username": username})
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Return user information
+        return {
+            "user_id": str(user["_id"]),
+            "first_name": user.get("first_name", ""),
+            "user_role": user.get("user_role", ""),
+            "username": user.get("username", ""),
+            "email": user.get("email", "")
+        }
+        
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+

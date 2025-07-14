@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Sidebar from '../../../Components/Projects/Sidebar';
 import Header from '../../../Components/Projects/Header';
 import FilterPopup from '../../../Components/Projects/FilterPopup';
 import ProjectDetailsPopup from '../../../Components/Projects/ProjectDetailsPopup';
 import ProjectList from '../../../Components/Projects/ProjectList';
+import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 
 const parseDate = (dateString) => {
   if (!dateString) return new Date(0);
@@ -40,7 +40,36 @@ export default function ProjectsDashboard() {
   const [isFilterPopupVisible, setIsFilterPopupVisible] = useState(false);
   const [isProjectPopupVisible, setIsProjectPopupVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-    
+
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 1024; // lg breakpoint
+      setIsMobile(mobile);
+
+      // Auto-open sidebar on desktop, close on mobile
+      if (!mobile) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+    console.log(`Sidebar: ${!isSidebarOpen ? 'Open' : 'Closed'}`);
+  };
+
 
   const fetchProjects = async () => {
     try {
@@ -65,7 +94,7 @@ export default function ProjectsDashboard() {
 
   useEffect(() => {
     fetchProjects();
-    
+
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
@@ -76,6 +105,23 @@ export default function ProjectsDashboard() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Add missing handler functions
+  const handleFilterClick = () => {
+    setIsFilterPopupVisible(true);
+  };
+
+  const handleSortClick = () => {
+    setIsReversed(!isReversed);
+  };
+
+  const handleNewProjectClick = () => {
+    setIsProjectPopupVisible(true);
+  };
+
+  const handleSearch = (searchValue) => {
+    setSearchTerm(searchValue);
+  };
 
   const handleNewProjectSubmit = async (projectData) => {
     try {
@@ -89,7 +135,7 @@ export default function ProjectsDashboard() {
       });
 
       if (!response.ok) throw new Error('Failed to create project');
-      
+
       const result = await response.json();
       return result;
     } catch (error) {
@@ -103,11 +149,11 @@ export default function ProjectsDashboard() {
 
   const filteredProjects = useMemo(() => {
     if (loading || !allProjects.length) return [];
-    return filter === "All Projects" 
-      ? allProjects 
-      : allProjects.filter(project => 
-          mapStatusToFilter(project.projectStatus) === filter
-        );
+    return filter === "All Projects"
+      ? allProjects
+      : allProjects.filter(project =>
+        mapStatusToFilter(project.projectStatus) === filter
+      );
   }, [allProjects, filter, loading]);
 
   const sortedProjects = useMemo(() => {
@@ -118,9 +164,17 @@ export default function ProjectsDashboard() {
     });
   }, [filteredProjects, isReversed]);
 
+  // Filter projects based on search term
+  const searchFilteredProjects = useMemo(() => {
+    return sortedProjects.filter(project =>
+      project.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.projectLead?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [sortedProjects, searchTerm]);
+
   if (loading) return (
     <div className="flex h-screen">
-      <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} isMobile={isMobile} />
+      <DocumentSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} isMobile={isMobile} />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-sky-700 mx-auto"></div>
@@ -132,14 +186,14 @@ export default function ProjectsDashboard() {
 
   if (error) return (
     <div className="flex h-screen">
-      <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} isMobile={isMobile} />
+      <DocumentSidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} isMobile={isMobile} />
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Projects</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button 
-            onClick={fetchProjects} 
+          <button
+            onClick={fetchProjects}
             className="bg-sky-700 text-white px-4 py-2 rounded-lg hover:bg-sky-800"
           >
             Retry
@@ -151,35 +205,41 @@ export default function ProjectsDashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
-        isMobile={isMobile} 
-      />
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <DocumentSidebar
+          isOpen={isSidebarOpen}
+          onToggle={toggleSidebar}
+          isMobile={isMobile}
+          active={'documents'}
+        />
+
+        {/* Main Content Area */}
+        <div className={`
+                                flex-1 flex flex-col
+                                transition-all duration-300 ease-in-out
+                                ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}
+                                lg:-ml-75
+                                min-h-screen
+                              `}>
+
+        </div>
+      </div>
 
       <div className="flex-1 overflow-y-auto pt-[150px] max-[600px]:pt-[150px] max-[765px]:pt-[10px] md:pt-[50px] lg:pt-[20px]">
-        {isMobile && !isSidebarOpen && (
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="fixed top-1 left-4 z-50 bg-sky-700 text-white p-2 rounded-lg lg:hidden"
-          >
-            📂 Menu
-          </button>
-        )}
+       
 
         <Header
-          onFilterClick={() => setIsFilterPopupVisible(true)}
-          onSortClick={() => setIsReversed(!isReversed)}
+          onFilterClick={handleFilterClick}
+          onSortClick={handleSortClick}
           isReversed={isReversed}
-          onNewProjectClick={() => setIsProjectPopupVisible(true)}
-          onSearch={setSearchTerm}
+          onNewProjectClick={handleNewProjectClick}
+          onSearch={handleSearch}
+          projects={allProjects} // Pass actual projects data
         />
 
         <ProjectList
-          projects={sortedProjects.filter(project =>
-            project.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            project.projectLead?.toLowerCase().includes(searchTerm.toLowerCase())
-          )}
+          projects={searchFilteredProjects}
           filter={filter}
           isMobile={isMobile}
         />

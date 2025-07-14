@@ -6,7 +6,12 @@ module.exports = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        // Remove all Google fonts, keep only default if needed
+        // Example: sans: ['ui-sans-serif', 'system-ui', ...],
+      },
+    },
   },
   plugins: [],
 }
