@@ -21,7 +21,7 @@ const Staff = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [roles, setRoles] = useState(["Site Engineer", "Qs Engineer", "Project Manager", "Technician"]);
   const genders = ["Male","Female","Other"];
-  // const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [validated, setValidated] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -46,30 +46,18 @@ const Staff = () => {
     staff_image_url: ''
 });
   
-  // const [formData, setFormData] = useState({
-  //   staff_fname: '',
-  //   staff_lname: '',
-  //   staff_email: '',
-  //   staff_age: '',
-  //   staff_gender: '',
-  //   staff_role: '',
-  //   assigned_projects: [],
-  //   staff_image_url: ''
-  // });
+    const [formData, setFormData] = useState({
+      assigned_projects: []
+     });
   
-  // const clearForm = () => {
-  //   setFormData({
-  //     staff_fname: '',
-  //     staff_lname: '',
-  //     staff_email: '',
-  //     staff_age: '',
-  //     staff_gender: '',
-  //     staff_role: '',
-  //     assigned_projects: [],
-  //     staff_image_url: ''
-  //   });
-  //   setValidated(false);
-  // };
+    const clearForm = () => {
+       setFormData({
+
+      assigned_projects: [],
+    
+    });
+   setValidated(false);
+   };
 
   const handleDelete = async (id) => {
     try {
@@ -92,9 +80,7 @@ const Staff = () => {
     setShowModal(false);
   };
 
-  /*const handleUpdate = (id) => {
-    router.push(`/Client/Staff/Updatestaff/${id}`);
-  };*/
+ 
 
   const toggleRoleSelection = (role) => {
     setSelectedRoles(prev =>
@@ -107,9 +93,9 @@ const Staff = () => {
     setShowModal(true);
   };
 
-  // const openAddModal = () => {
-  //   setShowAddModal(true);
-  // };
+    const openAddModal = () => {
+     setShowAddModal(true);
+   };
 
   const openAssignModal = (staffId) => {
     const staff = staffList.find(s => s.id === staffId);
@@ -174,16 +160,6 @@ const Staff = () => {
 
     getAllStaff();
   }, []);
-
-
-  const convertToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-  };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -372,7 +348,6 @@ const [filteredStaff, setFilteredStaff] = useState([]);
     <div className='staff-container'>
       <div className='staff-header'>
         <h2 className='staff-title'>Staff Management</h2>
-        {/* <button className="add-staff-button" onClick={openAddModal}>+ Add Staff</button> */}
       </div>
 
       <div className='staff-filters'>
@@ -460,7 +435,7 @@ const [filteredStaff, setFilteredStaff] = useState([]);
       </Modal>
 
     
-    {/* <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>
+     <Modal show={showAddModal} onHide={() => setShowAddModal(false)} centered>
   <Modal.Header closeButton>
     
     <Modal.Title className="add-staff-title">Add Staff</Modal.Title>
@@ -590,7 +565,7 @@ const [filteredStaff, setFilteredStaff] = useState([]);
       </div>
     </Form>
   </Modal.Body>
-</Modal> */}
+</Modal> 
 
 
     <Modal show={showUpdateModal} onHide={() => setShowUpdateModal(false)} centered>

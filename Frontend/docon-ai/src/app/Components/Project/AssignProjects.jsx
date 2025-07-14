@@ -20,7 +20,7 @@ export default function StaffModalWithTrigger() {
     try {
     const staffId = staff.id || staff._id; 
     const response =  axios.put(
-      `http://localhost:8000/staff/assignProject/${staffId}/${PROJECT_ID}`
+      `http://localhost:8000/staff/assignProject/${staffId}/${projectid}`
     );
   } catch (error) {
     console.error("Error assigning project:", error);}

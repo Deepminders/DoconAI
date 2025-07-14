@@ -14,100 +14,82 @@ import shutil
 import uuid
 import os
 
-async def add_staff(staff_data):
-    user_id = ObjectId(staff_data["_id"])  # user ID passed in body
-    staff_doc = {
-      "_id": user_id,
-      "assigned_projects": staff_data.get("assigned_projects", []),
-    #   "staff_image_url": staff_data.get("staff_image_url")
-    }
-    await staff_collection.insert_one(staff_doc)
-    return { "Message": "Staff created", "UserID": str(user_id) }
-
-async def get_staff() -> dict:
+async def add_staff(
+    staff: StaffModel
+):
     try:
-        users_cursor = user_collection.find()  # find() returns a cursor, no await here
+        assigned_projects = staff.assigned_projects or []  # Ensure empty array default
 
-        staff_users = []
-        async for user in users_cursor:
-            user["_id"] = str(user["_id"])
-            staff_users.append(user)
-
-        return {
-            "Message": "All staff displayed successfully",
-            "Staff": staff_users
+        # Create staff document
+        staff_data = {
+            "assigned_projects": assigned_projects or [],  # Ensure empty array   
         }
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "Error": "All staff not displayed",
-                "Details": str(e)
+        result = await staff_collection.insert_one(staff_data)
+        
+        return JSONResponse(
+            status_code=201,
+            content={
+                "message": "Staff added successfully",
+                "staff_id": str(result.inserted_id) 
             }
         )
 
-async def find_staff(_id: ObjectId) -> dict:
-    try:
-        # Get user base info
-        user = await user_collection.find_one({"_id": _id})
-        if user is None:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        # Get extra staff info
-        staff = await staff_collection.find_one({"_id": _id})
-        if staff is None:
-            raise HTTPException(status_code=404, detail="Staff profile not found")
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
-        # Combine and return
+async def get_staff()->dict: 
+    try:
+        result = await getAllStaff(staff_collection.find())
+        print(result)
+        return result
+    
+    except Exception as e:
+        print(e)
+        return {
+            "Error": "All Staff not display",
+            "Details": str(e)  
+        }
+
+async def find_staff(staff_id:ObjectId)->dict:
+    try:
+        result = await staff_collection.find_one({"_id": staff_id})
+        if result is None:
+            raise HTTPException(status_code=404, detail="Staff not found")
+        
         return {
             "Message": "Staff found",
-            "Staff": getIndividualStaff(user, staff)
+            "Staff": getIndividualStaff(result)  
         }
-
+        
     except Exception as e:
         return {
-            "Error": "Staff not found",
-            "Details": str(e)
+            "Error": "Staff not founded",
+            "Details": str(e)  
         }
 
-
     
-async def delete_staff(_id: ObjectId) -> dict:
+async def delete_staff(staff_id:ObjectId)->dict:
     try:
-        # Delete from user collection
-        user_result = await user_collection.delete_one({"_id": _id})
-
-        # Delete from staff collection
-        staff_result = await staff_collection.delete_one({"_id": _id})
-
-        if user_result.deleted_count == 1 and staff_result.deleted_count == 1:
-            return {
-                "Message": "Staff and user data deleted successfully"
-            }
-        elif user_result.deleted_count == 1:
-            return {
-                "Warning": "User deleted but staff profile was not found"
-            }
-        elif staff_result.deleted_count == 1:
-            return {
-                "Warning": "Staff profile deleted but user account was not found"
-            }
-        else:
-            return {
-                "Warning": "No user or staff data found for the given ID"
+        result = await staff_collection.delete_one({"_id":staff_id})
+        if result.deleted_count == 1:
+            return{
+                "Message": "Staff deleted successfully"
             }
 
     except Exception as e:
         return {
             "Error": "Staff not deleted",
-            "Details": str(e)
+            "Details": str(e)  
         }
 
 
-async def update_staff(_id:ObjectId,staff_data)->dict:
+async def update_staff(staff_id:ObjectId,staff_data)->dict:
     try:
-        result = await user_collection.update_one({"_id":_id},{"$set": staff_data})
+        result = await staff_collection.update_one({"_id":staff_id},{"$set": staff_data})
         return{
             "Message":"Updated Successfully"
         }
@@ -117,7 +99,6 @@ async def update_staff(_id:ObjectId,staff_data)->dict:
             "Error": "Staff not Updated",
             "Details": str(e)  
         }
-    
 
 async def assign_project(s_id:str, p_id:str) -> dict:
     try:
