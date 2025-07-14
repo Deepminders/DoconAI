@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams } from 'next/navigation';
-import DocumentSidebar from '../../../../Components/DocumentComponents/DocumentSidebar';
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import {
