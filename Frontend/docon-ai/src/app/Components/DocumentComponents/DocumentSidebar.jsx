@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
 
     const pathname = usePathname();
-    const router = useRouter();
 
     // Get current active section based on path
     const getActiveSidebarItem = () => {
@@ -14,6 +13,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
     if (pathname.includes('/Chatbot')) return 'chat';
     if (pathname.includes('/Projects')) return 'projects';
     if (pathname.includes('/UserManagement')) return 'users';
+    if (pathname.includes('/DocumentComparator')) return 'documentComparator';
     return 'home';
     };
 
@@ -137,6 +137,13 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
                         route="/Client/UserManagement"
                         onClick={onToggle}
     />
+    <SidebarItem 
+                        icon={<MessageCircle size={24} />} 
+                        label="Document Comparator" 
+                        isActive={activeStatus === 'documentComparator'?true:false}
+                        route="/Client/DocumentComparator"
+                        onClick={onToggle}
+                    />
                 </nav>
 
                 {/* Footer */}
