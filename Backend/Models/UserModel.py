@@ -12,14 +12,21 @@ class UserModel(BaseModel):
     email: str
     phone_number: str
     password: str
-
+    profile_image_url: Optional[str] = None
+    must_change_password: Optional[bool] = False
 class UserCreate(UserModel):
     password: str
 
-class UserUpdate(BaseModel): 
-    email: str 
-    username: str 
-    password: str 
+class UserUpdate(BaseModel):
+    company_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    gender: Optional[str] = None
+    password: Optional[str] = None
+    profile_image_url: Optional[str] = None
 
 class projectmcreate(BaseModel):
     username:str
@@ -30,6 +37,7 @@ class projectmcreate(BaseModel):
 class TokenResponse(BaseModel):
     access_token:str
     token_type:str
+    must_change_password: Optional[bool] = False
 
 class PasswordResetRequest(BaseModel):
     email_or_username: str
@@ -41,6 +49,8 @@ class PasswordResetPayload(BaseModel):
 class StaffCreateRequest(BaseModel):
     email: EmailStr
     user_role:str = "Staff"  # Default role for staff
+    first_name: str
+    last_name: str
 
 class TokenData(BaseModel):
     sub: Optional[str] = None
