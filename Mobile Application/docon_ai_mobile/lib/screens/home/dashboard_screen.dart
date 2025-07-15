@@ -16,10 +16,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool isUserIdExpanded = false;
   List<dynamic> userProjects = [];
   List<dynamic> recentDocuments = [];
-  int projectCount = 0;
   int documentCount = 0;
-  bool isLoadingDocuments = false;
+  int projectCount = 0;
   bool isLoadingProjects = false;
+  bool isLoadingDocuments = false;
 
   @override
   void initState() {
@@ -118,10 +118,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   _buildSidebarItem(
                     icon: Icons.people,
-                    title: 'Documents',
+                    title: 'Team Members',
                     onTap: () {
                       Navigator.pop(context);
-                      _showDocumentBottomSheet();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Team members feature coming soon!'),
+                          backgroundColor: AppTheme.primaryBlue,
+                        ),
+                      );
                     },
                   ),
                   _buildSidebarItem(
@@ -232,160 +237,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-void _showDocumentBottomSheet(){
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: AppTheme.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: AppTheme.greyText.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Recent Documents',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.darkBlue,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightSky,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '$documentCount Documents',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryBlue,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Documents List
-            Expanded(
-              child: isLoadingDocuments
-                  ? const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primaryBlue),
-                    )
-                  : recentDocuments.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.description_outlined,
-                                size: 64,
-                                color: AppTheme.greyText,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'No documents found',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: AppTheme.greyText,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: recentDocuments.length,
-                          itemBuilder: (context, index) {
-                            final document = recentDocuments[index];
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(16),
-                                leading: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryBlue,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.folder,
-                                    color: AppTheme.white,
-                                    size: 20,
-                                  ),
-                                ),
-                                title: Text(
-                                  document['document_name'] ?? 'Unnamed Project',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.darkBlue,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  document['document_category'] ?? 'No description',
-                                  style: const TextStyle(
-                                    color: AppTheme.greyText,
-                                    fontSize: 12,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                trailing: const Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                  color: AppTheme.greyText,
-                                ),
-                                onTap: () {
-                                  // TODO: Navigate to project details
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Opening ${document['document_name']}...'),
-                                      backgroundColor: AppTheme.primaryBlue,
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-                          
-
 
   void _showProjectsBottomSheet() {
     showModalBottomSheet(
@@ -507,7 +358,7 @@ void _showDocumentBottomSheet(){
                                   ),
                                 ),
                                 subtitle: Text(
-                                  project['project_id'] ?? 'No description',
+                                  project['project_status'] ?? 'No description',
                                   style: const TextStyle(
                                     color: AppTheme.greyText,
                                     fontSize: 12,
@@ -540,8 +391,55 @@ void _showDocumentBottomSheet(){
     );
   }
 
+Future<void> _loadDocuments() async {
+  if (currentUser?.userId == null) return;
+
+  setState(() {
+    isLoadingDocuments = true;
+  });
+
+  try {
+    final result = await AuthService.getDocumentCount(currentUser!.userId);
+    
+    if (result['success']) {
+      setState(() {
+        recentDocuments = result['documents'];
+        documentCount = recentDocuments.length;
+        isLoadingDocuments = false;
+      });
+      print('Document Count: ${result['count']}');
+    } else {
+      setState(() {
+        isLoadingDocuments = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load documents: ${result['message']}'),
+          backgroundColor: AppTheme.errorRed,
+        ),
+      );
+    }
+  } catch (error) {
+    setState(() {
+      isLoadingDocuments = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error loading documents: ${error.toString()}'),
+        backgroundColor: AppTheme.errorRed,
+      ),
+    );
+  }
+}
 
 
+Future<void> _loadDashboardData() async {
+ if (currentUser?.userRole.toLowerCase() == 'project owner' || 
+     currentUser?.userRole.toLowerCase() == 'project manager') {
+   _loadUserProjects();
+   
+ }
+}
   Future<void> _loadUserData() async {
     setState(() {
       isLoading = true;
@@ -561,7 +459,6 @@ void _showDocumentBottomSheet(){
         if (currentUser?.userRole.toLowerCase() == 'project owner' || 
             currentUser?.userRole.toLowerCase() == 'project manager') {
           _loadUserProjects();
-          _loadDocuments();
         }
       } else {
         setState(() {
@@ -598,8 +495,6 @@ void _showDocumentBottomSheet(){
           projectCount = result['count'];
           isLoadingProjects = false;
         });
-
-        print(userProjects);
       } else {
         setState(() {
           isLoadingProjects = false;
@@ -616,41 +511,6 @@ void _showDocumentBottomSheet(){
       setState(() {
         isLoadingProjects = false;
       });
-    }
-
-  }
-
-
-  Future<void> _loadDocuments() async {
-    if (currentUser?.userId == null) return;
-
-    try {
-      final result = await AuthService.getDocumentCount(currentUser!.userId);
-      
-      if (result['success']) {
-        // Handle document count and recent documents
-        // For now, just print the count
-        setState(() {
-          documentCount = result['count'];
-          recentDocuments = result['documents'];
-          isLoadingDocuments = false;
-        });
-        print('Document Count: ${result['count']}');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load documents: ${result['message']}'),
-            backgroundColor: AppTheme.errorRed,
-          ),
-        );
-      }
-    } catch (error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading documents: ${error.toString()}'),
-          backgroundColor: AppTheme.errorRed,
-        ),
-      );
     }
   }
 
@@ -689,12 +549,18 @@ void _showDocumentBottomSheet(){
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _loadUserData,
+                onPressed: () {
+                  // Reload dashboard data
+                  // _loadDashboardData();
+                },
                 child: const Text('Retry'),
               ),
               TextButton(
-                onPressed: _redirectToLogin,
-                child: const Text('Back to Login'),
+                onPressed: () {
+                  // Navigate back (this will go to login via MainNavigation)
+                  Navigator.pop(context);
+                },
+                child: const Text('Back'),
               ),
             ],
           ),
@@ -1078,7 +944,7 @@ void _showDocumentBottomSheet(){
             Expanded(
               child: _buildStatCard(
                 'Documents',
-                isLoadingDocuments?"...":documentCount.toString(), // Keep static for now
+                isLoadingDocuments?'...':documentCount.toString(), // Keep static for now
                 Icons.description,
                 AppTheme.successGreen,
               ),

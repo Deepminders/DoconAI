@@ -204,7 +204,7 @@ async def fetchUserProjects(user_id: str):
         # Query project collection to get project names and details
         cursor = project_collection.find(
             {"_id": {"$in": project_ids}}, 
-            {"_id": 1, "projectName": 1}  # Only fetch needed fields
+            {"_id": 1, "projectName": 1, "projectStatus":1,"startDate":1, "endDate":1, "Client":1}  # Only fetch needed fields
         )
         
         projects = await cursor.to_list(length=None)
@@ -214,7 +214,11 @@ async def fetchUserProjects(user_id: str):
         for project in projects:
             project_list.append({
                 "project_id": str(project["_id"]),
-                "project_name": project.get("projectName", "Unnamed Project")
+                "project_name": project.get("projectName", "Unnamed Project"),
+                "project_status": project.get("projectStatus", "Unknown Status"),
+                "start_date": project.get("startDate", "N/A"),
+                "end_date": project.get("endDate", "N/A"),
+                "client": project.get("Client", "N/A")
             })
         
         
