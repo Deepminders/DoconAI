@@ -239,6 +239,7 @@ async def create_staff_user(
         "password": hashed,
         "created_at": datetime.now(timezone.utc),
         "created_by": created_by,
+        "must_change_password": True,
     }
 
     result = await user_collection.insert_one(user_doc)
@@ -291,7 +292,7 @@ async def reset_password(data: PasswordResetPayload):
         hashed_pwd = hash_password(data.new_password)
         updated = await user_collection.update_one(
             {"_id": ObjectId(user_id)},
-            {"$set": {"password": hashed_pwd}}
+            {"$set": {"password": hashed_pwd,  "must_change_password": False}}
         )
 
         if updated.modified_count == 0:
@@ -300,6 +301,39 @@ async def reset_password(data: PasswordResetPayload):
         return {"message": "Password reset successful"}
     except JWTError:
         raise HTTPException(status_code=401, detail="Token is invalid or expired")
+# In UserController.py
+
+from fastapi import HTTPException
+from passlib.context import CryptContext
+from bson import ObjectId
+from Config.db import user_collection
+from Models.UserModel import UserUpdate
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(pwd): 
+    return pwd_context.hash(pwd)
+
+async def force_reset_password(user: dict, new_password: str):
+    if not new_password:
+        raise HTTPException(status_code=400, detail="Password is required")
+
+    hashed_pwd = hash_password(new_password)
+
+    updated = await user_collection.update_one(
+        {"_id": ObjectId(user["_id"])},
+        {
+            "$set": {
+                "password": hashed_pwd,
+                "must_change_password": False  # ✅ clear flag
+            }
+        }
+    )
+
+    if updated.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Password update failed")
+
+    return {"message": "Password updated successfully"}
 
 async def get_user_by_id(user_id: str):
     # Example: query MongoDB to get user dict by user_id

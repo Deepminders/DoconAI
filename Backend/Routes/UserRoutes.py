@@ -1,9 +1,8 @@
-from Controllers.UserController import add_user, get_users,find_user,update_user,delete_user, addprojectmanager, authenticate_user, create_access_token, request_password_reset, reset_password, create_staff_user, list_staff_created_by_user, get_current_user,get_user_from_token,save_profile_picture
+from Controllers.UserController import add_user, get_users,find_user,update_user,delete_user, addprojectmanager, authenticate_user, create_access_token, request_password_reset, reset_password, create_staff_user, list_staff_created_by_user, get_current_user,get_user_from_token,save_profile_picture, force_reset_password
 from Models.UserModel import UserModel,UserUpdate, TokenResponse, PasswordResetRequest, PasswordResetPayload,StaffCreateRequest
 from bson import ObjectId
-
-from fastapi import APIRouter, Depends, HTTPException, Request,Query, UploadFile, File
-
+from fastapi import APIRouter, Depends, HTTPException, Request,Query, UploadFile, File,Body
+from typing import Dict
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 router = APIRouter(prefix="/user",tags=["User"])
 
@@ -56,7 +55,13 @@ async def login(form_data: OAuth2PasswordRequestForm=Depends()):
     user=await authenticate_user(form_data.username, form_data.password)
     token_data={"sub":str(user["_id"]), "username": user["username"]}
     token= await create_access_token(token_data)
-    return {"access_token":token,"token_type":"bearer"}
+    must_change = user.get("must_change_password", False)
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "must_change_password": must_change  # ✅ Include in response
+    }
 
 @router.post("/request-password-reset")
 async def request_reset_password_route(data: PasswordResetRequest):
@@ -119,3 +124,11 @@ async def upload_profile_picture(user: dict = Depends(get_current_user), file: U
         return {"profile_image_url": image_url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/force-reset-password")
+async def force_reset_password_route(
+    data: Dict = Body(...),
+    user: dict = Depends(get_current_user)
+):
+    new_password = data.get("new_password")
+    return await force_reset_password(user, new_password)

@@ -13,7 +13,7 @@ class UserModel(BaseModel):
     phone_number: str
     password: str
     profile_image_url: Optional[str] = None
-
+    must_change_password: Optional[bool] = False
 class UserCreate(UserModel):
     password: str
 
@@ -37,6 +37,7 @@ class projectmcreate(BaseModel):
 class TokenResponse(BaseModel):
     access_token:str
     token_type:str
+    must_change_password: Optional[bool] = False
 
 class PasswordResetRequest(BaseModel):
     email_or_username: str
