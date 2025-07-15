@@ -28,7 +28,7 @@ export default function UserProfileMenu() {
 
         const data = await res.json();
 
-        setUserName(`${data.firstname || ""} ${data.lastname || ""}`);
+        setUserName(`${data.firstname || ""} ${data.lastname || ""}`.trim());
         setUserRole(data.user_role || "");
         if (data.profile_image_url) {
           setProfileImageUrl(`http://localhost:8000${data.profile_image_url}`);
@@ -64,16 +64,30 @@ export default function UserProfileMenu() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative flex items-center space-x-3 cursor-pointer select-none" ref={dropdownRef}>
+      {/* Name and Role */}
+      <div
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="text-right"
+        style={{ minWidth: '140px' }}
+      >
+        <p className="font-medium text-gray-900 truncate">{userName || "User Name"}</p>
+        {userRole && (
+          <p className="text-sm text-gray-500 font-small truncate">{userRole}</p>
+        )}
+      </div>
+
+      {/* Profile Image */}
       <img
         src={profileImageUrl}
         alt="Profile"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-12 h-12 rounded-full cursor-pointer border-2 border-blue-950 hover:border-sky-500 transition-all"
+        className=" w-12 h-12 rounded-full border-2 border-blue-950 hover:border-sky-500 transition-all"
       />
 
+      {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 top-full mt-1 w-48 bg-white text-black rounded-lg shadow-lg z-50">
           <div className="px-4 py-3 border-b">
             <p className="text-sm text-gray-600">Signed in as</p>
             <p className="font-semibold truncate">{userName}</p>

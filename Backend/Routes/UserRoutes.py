@@ -71,7 +71,13 @@ async def add_staff(req: StaffCreateRequest,request: Request, user: dict = Depen
     """Project Owner adds a staff by email; returns temp password"""
     print("Headers received:", request.headers)
     print("Received:", req.model_dump())
-    return await create_staff_user(req.email, req.user_role, created_by=user["_id"])
+    return await create_staff_user(
+        email=req.email,
+        user_role=req.user_role,
+        first_name=req.first_name,
+        last_name=req.last_name,
+        created_by=user["_id"]
+    )
 
 
 "/-------------------------This Route is Added By Sehara-----------------------/"

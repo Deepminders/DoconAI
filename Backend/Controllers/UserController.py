@@ -212,18 +212,25 @@ async def addprojectmanager(uname: str):
 
     return {"message": "Project Manager created successfully", "username": uname}
 
-async def create_staff_user(email: str, user_role: str = "Staff", created_by: str = ""):
-    # Check if user exists
+async def create_staff_user(
+    email: str,
+    user_role: str = "Staff",
+    created_by: str = "",
+    first_name: str = "",
+    last_name: str = ""
+):
+    # Check if user already exists
     if await user_collection.find_one({"email": email}):
+        print(f"User with email {email} already exists.")
         raise HTTPException(400, "User already exists")
 
-    temp_pwd = generate_temporary_password()
+    temp_pwd = "doconai23"
     hashed = hash_password(temp_pwd)
 
     user_doc = {
         "company_name": "",
-        "first_name": "",
-        "last_name": "",
+        "first_name": first_name,
+        "last_name": last_name,
         "username": email.split("@")[0],
         "email": email,
         "phone_number": "",
@@ -231,19 +238,31 @@ async def create_staff_user(email: str, user_role: str = "Staff", created_by: st
         "user_role": user_role,
         "password": hashed,
         "created_at": datetime.now(timezone.utc),
-        "created_by": created_by,  # 👈 Add this line
+        "created_by": created_by,
     }
 
     result = await user_collection.insert_one(user_doc)
+
     staff_doc = {
         "user_id": result.inserted_id,
         "email": email,
         "role": user_role,
+        "first_name": first_name,
+        "last_name": last_name,
         "created_by": created_by,
-        "created_at": datetime.now(timezone.utc)
+        "created_at": datetime.now(timezone.utc),
     }
+
     await staff_collection.insert_one(staff_doc)
-    return {"id": str(result.inserted_id), "email": email, "temporary_password": temp_pwd}
+
+    return  {
+        "id": str(result.inserted_id),
+        "email": email,
+        "first_name": first_name,
+        "last_name": last_name,
+        "temporary_password": temp_pwd
+    }
+
 
 # ===================== PASSWORD RESET HANDLERS =====================
 async def request_password_reset(data: PasswordResetRequest):

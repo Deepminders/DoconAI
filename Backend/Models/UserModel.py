@@ -48,6 +48,8 @@ class PasswordResetPayload(BaseModel):
 class StaffCreateRequest(BaseModel):
     email: EmailStr
     user_role:str = "Staff"  # Default role for staff
+    first_name: str
+    last_name: str
 
 class TokenData(BaseModel):
     sub: Optional[str] = None
