@@ -342,6 +342,7 @@ async def get_user_by_id(user_id: str):
         user["id"] = str(user["_id"])
         return user
     return None
+
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     print("Token received:", token)
     credentials_exception = HTTPException(

@@ -9,6 +9,8 @@ import {
   Menu,
   FileText,
   X,
+  FileDiff,
+  Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -106,7 +108,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
           bg-sky-900 text-white w-60 p-4
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:relative lg:h-auto lg:w-60
+          lg:translate-x-0 lg:relative lg:h-auto lg:w-70
           ${isMobile && isOpen ? 'z-50' : 'z-30'}
           overflow-y-auto flex-shrink-0 h-full
         `}
@@ -157,7 +159,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
             onClick={onToggle}
           />
           <SidebarItem
-            icon={<MessageCircle size={24} />}
+            icon={<FileDiff size={24} />}
             label="Document Comparator"
             isActive={activeStatus === 'documentComparator'}
             route="/Client/DocumentComparator"
@@ -167,7 +169,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
           {/* Conditionally Rendered */}
           {userRole === 'Project Owner' && (
             <SidebarItem
-              icon={<Book size={24} />}
+              icon={<Users size={24} />}
               label="User Management"
               isActive={activeStatus === 'users'}
               route="/Client/UserManagement"

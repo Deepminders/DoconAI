@@ -2,19 +2,25 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime,timezone
 from Config.db import session_collection
 from Models.Chatbotmodel import ChatRequest, ChatResponse, NewSessionRequest, SessionIDResponse
+from Models.UserModel import UserModel
 from Controllers.ChatController import handle_chat  # NEW: Import RAG logic
+from Controllers.UserController import get_current_user
+from bson import ObjectId
 import traceback
+from fastapi import Depends
 router = APIRouter(prefix="/chatbot", tags=["Chatbot"])
 
 from Config.db import chat_collection
 
 @router.post("/start-session", response_model=SessionIDResponse)
-async def start_session(req: NewSessionRequest):
+async def start_session(req: NewSessionRequest, current_user: UserModel = Depends(get_current_user)):
     from uuid import uuid4
     session_id = str(uuid4())
+    user_id = str(current_user["_id"]) if isinstance(current_user["_id"], ObjectId) else current_user["_id"]
+# or current_user["_id"]
 
-    session_collection.insert_one({
-        "user_id": req.user_id,
+    await session_collection.insert_one({
+        "user_id": user_id,
         "session_id": session_id,
         "created_time": datetime.now(timezone.utc),
         "title": req.title or "Untitled"
@@ -37,26 +43,35 @@ async def chat(chat_request: ChatRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Chatbot failed: {str(e)}")
 
-@router.get("/sessions/{user_id}")
-async def list_sessions(user_id: str):
+@router.get("/sessions")
+async def list_sessions(current_user: UserModel = Depends(get_current_user)):
+    user_id = str(current_user["_id"]) if isinstance(current_user["_id"], ObjectId) else current_user["_id"]
+# or current_user["_id"] if it's a dict
     sessions_cursor = session_collection.find({"user_id": user_id}).sort("created_time", -1)
     result = []
     async for s in sessions_cursor:
-        result.append({"session_id": s["session_id"], "created_time": s["created_time"]})
+        result.append({
+            "session_id": s["session_id"],
+            "title": s.get("title", ""),
+            "created_time": s["created_time"]
+        })
     return result
     
 
 
 @router.get("/history/{session_id}")
-async def get_chat_history(session_id: str):
-    try:
-        messages_cursor = chat_collection.find({"session_id": session_id}).sort("created_time", 1)
-        history = []
-        async for msg in messages_cursor:
-            history.append({"role": msg["role"], "content": msg["content"]})
-        return history
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching history: {str(e)}")
+async def get_chat_history(session_id: str, current_user: UserModel = Depends(get_current_user)):
+    user_id = str(current_user.get("_id")) or current_user.get("user_id")
+
+    session = await session_collection.find_one({"session_id": session_id, "user_id": user_id})
+    if not session:
+        raise HTTPException(status_code=403, detail="You do not have access to this session.")
+
+    messages_cursor = chat_collection.find({"session_id": session_id, "user_id": user_id}).sort("created_time", 1)
+    history = []
+    async for msg in messages_cursor:
+        history.append({"role": msg["role"], "content": msg["content"]})
+    return history
 
 
 @router.delete("/delete-empty-sessions/{user_id}")
@@ -78,4 +93,21 @@ async def delete_empty_sessions(user_id: str):
         return {"deleted_count": result.deleted_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete empty sessions: {str(e)}")
+
+@router.get("/history/{user_id}/{session_id}")
+async def get_chat_history(user_id: str, session_id: str):
+    try:
+        # Step 1: Ensure this session belongs to the user
+        session = await session_collection.find_one({"session_id": session_id, "user_id": user_id})
+        if not session:
+            raise HTTPException(status_code=403, detail="You do not have access to this session.")
+
+        # Step 2: Fetch messages if session is valid
+        messages_cursor = chat_collection.find({"session_id": session_id, "user_id": user_id}).sort("created_time", 1)
+        history = []
+        async for msg in messages_cursor:
+            history.append({"role": msg["role"], "content": msg["content"]})
+        return history
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching history: {str(e)}")
 
