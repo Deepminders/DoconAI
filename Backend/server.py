@@ -9,19 +9,16 @@ from Routes import StaffRoutes
 from Routes.ChatRoutes import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
 from Config.db import initialize_db
-<<<<<<< HEAD
 import os
-=======
 from Routes import comparator_router  # adjust import if needed
 
->>>>>>> 7a4fad807ef944a04f4102af55c07c33e47a620d
 
 server = FastAPI()
 server.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name="uploaded_images")
 
 server.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Frontend origin
+    allow_origins=["*","http://192.168.163.1:3001/*"],  # Frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
