@@ -9,7 +9,12 @@ from Routes import StaffRoutes
 from Routes.ChatRoutes import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
 from Config.db import initialize_db
+<<<<<<< HEAD
 import os
+=======
+from Routes import comparator_router  # adjust import if needed
+
+>>>>>>> 7a4fad807ef944a04f4102af55c07c33e47a620d
 
 server = FastAPI()
 server.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name="uploaded_images")
@@ -28,6 +33,7 @@ server.include_router(routerproject)
 server.include_router(cost_routes)
 server.include_router(StaffRoutes.router)
 server.include_router(chat_router)
+server.include_router(comparator_router.router)  # Include the comparator router
 @server.get("/home")
 def home():
     return {"Message":"Hello World"}
