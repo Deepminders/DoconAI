@@ -18,7 +18,11 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
   const [replaceStep, setReplaceStep] = useState('initial') // 'initial', 'classifying', 'confirming'
   const [classificationData, setClassificationData] = useState(null)
   const [confirmedCategory, setConfirmedCategory] = useState('')
+  const [user, setUser] = useState({ user_id: '' })
   const fileInputRef = useRef(null)
+
+
+
 
   // Initialize notification system
   const notify = useNotifications()
@@ -39,6 +43,23 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
     { value: 'Other', label: 'Other' }
   ]
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (token) {
+          const response = await fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`)
+          if (response.ok) {
+            const userData = await response.json()
+            setUser(userData)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+      }
+    }
+    fetchUser()
+  }, [])
   // Initialize form data when selectedDocument changes
   useEffect(() => {
     const initialData = {
@@ -54,7 +75,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
     setReplaceStep('initial')
     setClassificationData(null)
     setConfirmedCategory('')
-    
+
     if (selectedDocument?.document_name) {
       notify.info(`Loaded "${selectedDocument.document_name}" for editing`, {
         title: 'Document Loaded',
@@ -71,7 +92,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
         setHasChanges(selectedFile !== null && replaceStep === 'confirming')
       } else {
         // For info mode, check all fields except file
-        const hasChanges = 
+        const hasChanges =
           formData.document_name !== selectedDocument.document_name ||
           formData.document_category !== (selectedDocument.document_category || '') ||
           formData.modified_date !== new Date().toISOString().split('T')[0]
@@ -91,7 +112,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
     setReplaceStep('initial')
     setClassificationData(null)
     setConfirmedCategory('')
-    
+
     // Reset form to original values when switching modes
     if (selectedDocument) {
       setFormData({
@@ -101,7 +122,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
         modified_date: new Date().toISOString().split('T')[0]
       })
     }
-    
+
     notify.info(`Switched to ${mode === 'info' ? 'Update Info' : 'Replace Document'} mode`, {
       duration: 2000
     })
@@ -201,7 +222,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
       setClassificationData(data)
       setConfirmedCategory(data.predicted_category)
       setReplaceStep('confirming')
-      
+
       notify.info('Please confirm the document category for replacement.', {
         title: 'Classification Complete',
         duration: 4000
@@ -226,7 +247,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
       })
       return false
     }
-    
+
     if (formData.document_name.trim().length < 3) {
       notify.warning('Document name must be at least 3 characters long', {
         title: 'Validation Error',
@@ -243,7 +264,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
         })
         return false
       }
-      
+
       if (!formData.modified_date) {
         notify.warning('Modified date is required', {
           title: 'Validation Error',
@@ -276,17 +297,17 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
         return false
       }
     }
-    
+
     return true
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
-    
+
     if (!hasChanges) {
       notify.info('No changes to save', {
         title: 'Nothing to Update',
@@ -294,7 +315,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
       })
       return
     }
-    
+
     setIsSaving(true)
 
     try {
@@ -305,31 +326,32 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
 
       const submitFormData = new FormData()
       let apiUrl = ''
-      
+
       if (updateMode === 'replace') {
         // For replace mode: PUT /update/{doc_id}/file
         submitFormData.append('file', selectedFile)
         submitFormData.append('confirmed_category', confirmedCategory)
-        
+        submitFormData.append('user_id', user.user_id)
+
         // Only send new_name if it's different from original
         if (formData.document_name.trim() !== selectedDocument.document_name) {
           submitFormData.append('new_name', formData.document_name.trim())
         }
-        
+
         apiUrl = `http://127.0.0.1:8000/api/doc/update/${formData.document_id}/file`
-        
+
       } else {
         // For info mode: PUT /update/{docid}
         // Only send new_name if it's different from original
         if (formData.document_name.trim() !== selectedDocument.document_name) {
           submitFormData.append('new_name', formData.document_name.trim())
         }
-        
+
         // Only send new_category if it's different from original
         if (formData.document_category !== (selectedDocument.document_category || '')) {
           submitFormData.append('new_category', formData.document_category)
         }
-        
+
         apiUrl = `http://127.0.0.1:8000/api/doc/update/${formData.document_id}`
       }
 
@@ -341,19 +363,19 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
 
       if (!response.ok) {
         let errorMessage = `HTTP error! Status: ${response.status}`
-        
+
         try {
           const errorData = await response.json()
-          
+
           if (typeof errorData.detail === 'string') {
             errorMessage = errorData.detail
           } else if (typeof errorData.detail === 'object') {
             if (Array.isArray(errorData.detail)) {
               errorMessage = errorData.detail.map(err => err.msg).join(', ')
             } else {
-              errorMessage = errorData.detail.message || 
-                            JSON.stringify(errorData.detail) || 
-                            errorMessage
+              errorMessage = errorData.detail.message ||
+                JSON.stringify(errorData.detail) ||
+                errorMessage
             }
           } else if (errorData.message) {
             errorMessage = errorData.message
@@ -363,19 +385,19 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
         } catch (parseError) {
           console.warn('Failed to parse error response:', parseError)
         }
-        
+
         throw new Error(errorMessage)
       }
 
       // Parse successful response
       const responseData = await response.json()
-      
+
       setHasChanges(false)
       setSelectedFile(null)
       setReplaceStep('initial')
       setClassificationData(null)
       setConfirmedCategory('')
-      
+
       // Show success notification based on mode
       if (updateMode === 'replace') {
         notify.success(`Document file replaced successfully!`, {
@@ -407,7 +429,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
           }
         })
       }
-      
+
       // Call onUpdate to refresh the documents list
       if (onUpdate) {
         onUpdate()
@@ -420,7 +442,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
 
     } catch (error) {
       console.error('Error updating document:', error)
-      
+
       // Error notification with retry option
       notify.error(error.message || 'Failed to update document. Please check your connection and try again.', {
         title: updateMode === 'replace' ? 'File Replace Failed' : 'Update Failed',
@@ -448,7 +470,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
       setClassificationData(null)
       setConfirmedCategory('')
       setHasChanges(false)
-      
+
       notify.info('Form reset to original values', {
         title: 'Form Reset',
         duration: 3000
@@ -494,11 +516,10 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
           <button
             type="button"
             onClick={() => handleModeChange('info')}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-              updateMode === 'info'
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${updateMode === 'info'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
+              }`}
           >
             <FileText className="h-4 w-4 inline mr-2" />
             Update Info
@@ -506,18 +527,17 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
           <button
             type="button"
             onClick={() => handleModeChange('replace')}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-              updateMode === 'replace'
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${updateMode === 'replace'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
+              }`}
           >
             <Upload className="h-4 w-4 inline mr-2" />
             Replace Document
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-2">
-          {updateMode === 'info' 
+          {updateMode === 'info'
             ? 'Update document name, category, and other metadata'
             : 'Replace the document file with a new one (includes auto-categorization)'
           }
@@ -556,16 +576,15 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
                 Replace Document File
                 {hasChanges && <span className="ml-1 text-orange-500">*</span>}
               </label>
-              
+
               {/* File Drop Zone */}
               <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
-                  isDragOver
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${isDragOver
                     ? 'border-blue-500 bg-blue-50'
                     : selectedFile
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-300 hover:border-gray-400'
-                }`}
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -603,7 +622,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
                   </div>
                 )}
               </div>
-              
+
               <input
                 ref={fileInputRef}
                 type="file"
@@ -667,8 +686,8 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
                   required
                 >
                   {documentCategories.map((category) => (
-                    <option 
-                      key={category.value} 
+                    <option
+                      key={category.value}
                       value={category.value}
                       disabled={category.disabled}
                       className={category.disabled ? 'text-gray-400' : ''}
@@ -703,8 +722,8 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
                 required
               >
                 {documentCategories.map((category) => (
-                  <option 
-                    key={category.value} 
+                  <option
+                    key={category.value}
                     value={category.value}
                     disabled={category.disabled}
                     className={category.disabled ? 'text-gray-400' : ''}
@@ -830,7 +849,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
           <p><span className="font-medium">Name:</span> {selectedDocument.document_name}</p>
           <p><span className="font-medium">ID:</span> {selectedDocument.document_id}</p>
           <p><span className="font-medium">Category:</span> {
-            selectedDocument.document_category 
+            selectedDocument.document_category
               ? documentCategories.find(cat => cat.value === selectedDocument.document_category)?.label || selectedDocument.document_category
               : 'Not categorized'
           }</p>
@@ -850,7 +869,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
           {updateMode === 'info' ? 'Update Information' : 'Replace Document'}
         </h3>
         <p className="text-xs text-blue-700">
-          {updateMode === 'info' 
+          {updateMode === 'info'
             ? 'Modify the document name, category, and other metadata without changing the file.'
             : 'Upload a new file to replace the existing document. The system will automatically classify the new document and ask for confirmation.'
           }

@@ -19,6 +19,10 @@ import docx # Required for reading .docx files
 import google.generativeai as genai
 from dotenv import load_dotenv
 import time
+import re
+import pandas as pd
+import openpyxl
+from io import StringIO
 
 # --- Configuration ---
 logging.basicConfig(level=logging.INFO)
@@ -825,3 +829,473 @@ async def fetchProjectDocumentsByUser(user_id: str):
     except Exception as e:
         logger.error(f"Error fetching project documents for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch project documents: {str(e)}")
+
+async def summarizeDocument(doc_id: str):
+    """
+    Fetches a document by ID, reads its content, and generates a clean, formatted AI summary.
+    Now supports Excel files (BOQ, cost sheets, etc.) with enhanced financial analysis.
+    """
+    try:
+        # Fetch document from database
+        document_record = await document_collection.find_one({"document_id": int(doc_id)})
+        if not document_record:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Get the latest version's download link
+        latest_version = document_record["versions"][-1] if document_record.get("versions") else None
+        if not latest_version or "download_link" not in latest_version:
+            raise HTTPException(status_code=404, detail="Document download link not found")
+        
+        download_url = latest_version["download_link"]
+        original_filename = latest_version.get("original_filename", "document")
+        file_type = latest_version.get("file_type", "")
+        
+        logger.info(f"Downloading document from: {download_url}")
+        
+        # Download the file content
+        response = requests.get(download_url, stream=True)
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Failed to download document from Google Drive")
+        
+        # Extract text content based on file type
+        text_content = ""
+        
+        if file_type == "application/pdf" or original_filename.lower().endswith('.pdf'):
+            # Extract text from PDF using PyMuPDF (fitz)
+            try:
+                pdf_bytes = io.BytesIO(response.content)
+                with fitz.open(stream=pdf_bytes, filetype="pdf") as pdf_doc:
+                    for page_num in range(pdf_doc.page_count):
+                        page = pdf_doc[page_num]
+                        text_content += page.get_text() + "\n"
+                        
+                logger.info(f"Extracted {len(text_content)} characters from PDF using PyMuPDF")
+                
+            except Exception as e:
+                logger.error(f"Failed to extract PDF content with PyMuPDF: {e}")
+                raise HTTPException(status_code=500, detail="Failed to extract PDF content")
+                
+        elif file_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" or original_filename.lower().endswith('.docx'):
+            # Extract text from DOCX
+            try:
+                docx_file = io.BytesIO(response.content)
+                docx_doc = docx.Document(docx_file)
+                
+                for paragraph in docx_doc.paragraphs:
+                    text_content += paragraph.text + "\n"
+                    
+                # Also extract text from tables
+                for table in docx_doc.tables:
+                    for row in table.rows:
+                        for cell in row.cells:
+                            text_content += cell.text + "\t"
+                        text_content += "\n"
+                        
+                logger.info(f"Extracted {len(text_content)} characters from DOCX")
+                
+            except Exception as e:
+                logger.error(f"Failed to extract DOCX content: {e}")
+                raise HTTPException(status_code=500, detail="Failed to extract DOCX content")
+                
+        elif file_type in ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] or original_filename.lower().endswith(('.xls', '.xlsx')):
+            # Enhanced BOQ/Excel analysis - FIXED VERSION
+            try:
+                excel_file = io.BytesIO(response.content)
+                
+                # Read Excel file with pandas
+                if original_filename.lower().endswith('.xlsx'):
+                    excel_data = pd.read_excel(excel_file, sheet_name=None, engine='openpyxl')
+                else:
+                    excel_data = pd.read_excel(excel_file, sheet_name=None, engine='xlrd')
+                
+                # Initialize analysis variables
+                grand_total_budget = 0
+                all_cost_items = []
+                sheet_summaries = []
+                
+                # Process all sheets
+                for sheet_name, df in excel_data.items():
+                    text_content += f"\n=== SHEET: {sheet_name} ===\n"
+                    
+                    if not df.empty:
+                        # Basic sheet info
+                        text_content += f"Rows: {len(df)}, Columns: {len(df.columns)}\n"
+                        text_content += "COLUMNS: " + ", ".join(str(col) for col in df.columns) + "\n\n"
+                        
+                        # Find potential cost/amount columns with more flexible matching
+                        cost_columns = []
+                        quantity_columns = []
+                        item_columns = []
+                        
+                        for col in df.columns:
+                            col_str = str(col).lower().strip()
+                            # Look for cost/amount related columns (more flexible)
+                            if any(keyword in col_str for keyword in ['amount', 'cost', 'price', 'total', 'value', 'budget', 'sum', 'rate', 'rs', 'rupee', 'dollar', 'usd', 'lkr']):
+                                cost_columns.append(col)
+                            # Look for quantity columns
+                            elif any(keyword in col_str for keyword in ['qty', 'quantity', 'no', 'count', 'unit', 'nos']):
+                                quantity_columns.append(col)
+                            # Look for item/description columns
+                            elif any(keyword in col_str for keyword in ['item', 'description', 'work', 'activity', 'task', 'material', 'service', 'labour']):
+                                item_columns.append(col)
+                        
+                        # If no cost columns found by keywords, look for numeric columns
+                        if not cost_columns:
+                            numeric_cols = df.select_dtypes(include=['number']).columns
+                            # Check if numeric columns contain values that look like costs
+                            for col in numeric_cols:
+                                non_zero_values = df[col].dropna()
+                                non_zero_values = non_zero_values[non_zero_values != 0]
+                                if len(non_zero_values) > 0 and non_zero_values.max() > 10:  # Assume costs > 10
+                                    cost_columns.append(col)
+                        
+                        text_content += f"IDENTIFIED COLUMNS:\n"
+                        text_content += f"Cost/Amount columns: {cost_columns}\n"
+                        text_content += f"Quantity columns: {quantity_columns}\n" 
+                        text_content += f"Item/Description columns: {item_columns}\n\n"
+                        
+                        # Analyze cost data
+                        sheet_total = 0
+                        sheet_items = []
+                        
+                        # Process each cost column
+                        for cost_col in cost_columns:
+                            # Convert to numeric, replacing any text with NaN
+                            df[cost_col] = pd.to_numeric(df[cost_col], errors='coerce')
+                            
+                            # Get all non-null, non-zero values
+                            valid_costs = df[cost_col].dropna()
+                            valid_costs = valid_costs[valid_costs != 0]  # Remove zeros
+                            
+                            if len(valid_costs) > 0:
+                                col_total = valid_costs.sum()
+                                col_max = valid_costs.max()
+                                col_min = valid_costs.min()
+                                col_avg = valid_costs.mean()
+                                
+                                text_content += f"COST ANALYSIS - {cost_col}:\n"
+                                text_content += f"  Total: {col_total:,.2f}\n"
+                                text_content += f"  Maximum: {col_max:,.2f}\n"
+                                text_content += f"  Minimum: {col_min:,.2f}\n"
+                                text_content += f"  Average: {col_avg:,.2f}\n"
+                                text_content += f"  Valid entries: {len(valid_costs)} out of {len(df)}\n\n"
+                                
+                                sheet_total += col_total
+                                
+                                # Create cost items with descriptions
+                                for idx, cost_value in valid_costs.items():
+                                    if cost_value > 0:  # Only positive costs
+                                        # Try to get item description
+                                        item_desc = "Item"
+                                        if len(item_columns) > 0:
+                                            desc_value = df.loc[idx, item_columns[0]]
+                                            if pd.notna(desc_value):
+                                                item_desc = str(desc_value)[:60]  # Limit length
+                                        
+                                        # Add row number if no description
+                                        if item_desc == "Item" or item_desc.strip() == "":
+                                            item_desc = f"Row {idx + 1} Item"
+                                        
+                                        sheet_items.append((item_desc, cost_value, cost_col, sheet_name))
+                        
+                        # If no cost columns worked, try to find any numeric data
+                        if sheet_total == 0:
+                            text_content += "No cost columns identified by keywords. Checking all numeric columns...\n"
+                            for col in df.columns:
+                                try:
+                                    numeric_data = pd.to_numeric(df[col], errors='coerce')
+                                    valid_numbers = numeric_data.dropna()
+                                    valid_numbers = valid_numbers[valid_numbers > 0]
+                                    
+                                    if len(valid_numbers) > 0 and valid_numbers.max() > 10:
+                                        col_total = valid_numbers.sum()
+                                        text_content += f"  Found numeric data in '{col}': {len(valid_numbers)} values, total: {col_total:,.2f}\n"
+                                        
+                                        # Add these as potential cost items
+                                        for idx, value in valid_numbers.items():
+                                            item_desc = f"Row {idx + 1} - {col}"
+                                            if len(item_columns) > 0:
+                                                desc_value = df.loc[idx, item_columns[0]]
+                                                if pd.notna(desc_value):
+                                                    item_desc = f"{str(desc_value)[:40]} ({col})"
+                                            
+                                            sheet_items.append((item_desc, value, col, sheet_name))
+                                        
+                                        sheet_total += col_total
+                                except:
+                                    continue
+                        
+                        # Show top cost items for this sheet
+                        if sheet_items:
+                            sheet_items_sorted = sorted(sheet_items, key=lambda x: x[1], reverse=True)
+                            text_content += f"\nTOP 5 COST ITEMS IN {sheet_name}:\n"
+                            for i, (item, cost, column, sheet) in enumerate(sheet_items_sorted[:5], 1):
+                                text_content += f"  {i}. {item}: {cost:,.2f}\n"
+                            text_content += "\n"
+                        
+                        # Add sample data
+                        sample_rows = min(5, len(df))
+                        text_content += f"SAMPLE DATA (first {sample_rows} rows):\n"
+                        for index, row in df.head(sample_rows).iterrows():
+                            row_text = " | ".join(str(value)[:30] if pd.notna(value) else "N/A" for value in row)
+                            text_content += f"Row {index + 1}: {row_text}\n"
+                        
+                        if len(df) > sample_rows:
+                            text_content += f"... and {len(df) - sample_rows} more rows\n"
+                        
+                        # Store sheet summary
+                        sheet_summaries.append({
+                            'name': sheet_name,
+                            'total': sheet_total,
+                            'rows': len(df),
+                            'cost_columns': len(cost_columns) if cost_columns else 0,
+                            'items_count': len(sheet_items)
+                        })
+                        
+                        grand_total_budget += sheet_total
+                        all_cost_items.extend(sheet_items)
+                    
+                    text_content += "\n" + "="*50 + "\n"
+                
+                # Overall summary
+                text_content += f"\n=== OVERALL BOQ SUMMARY ===\n"
+                text_content += f"CALCULATED TOTAL BUDGET: {grand_total_budget:,.2f}\n"
+                text_content += f"Number of Sheets: {len(excel_data)}\n"
+                text_content += f"Total Cost Items Found: {len(all_cost_items)}\n\n"
+                
+                # Top cost items across all sheets
+                if all_cost_items:
+                    all_cost_items.sort(key=lambda x: x[1], reverse=True)  # Sort by cost
+                    text_content += "TOP 15 HIGHEST COST ITEMS (ACROSS ALL SHEETS):\n"
+                    for i, (item, cost, column, sheet) in enumerate(all_cost_items[:15], 1):
+                        text_content += f"{i}. {item}: {cost:,.2f} (Sheet: {sheet}, Column: {column})\n"
+                    text_content += "\n"
+                
+                # Sheet-wise breakdown
+                text_content += "SHEET-WISE BREAKDOWN:\n"
+                for sheet_info in sheet_summaries:
+                    percentage = (sheet_info['total'] / grand_total_budget * 100) if grand_total_budget > 0 else 0
+                    text_content += f"• {sheet_info['name']}: {sheet_info['total']:,.2f} ({percentage:.1f}% of total, {sheet_info['items_count']} items)\n"
+                
+                # Cost distribution analysis
+                if grand_total_budget > 0 and all_cost_items:
+                    text_content += f"\nCOST DISTRIBUTION ANALYSIS:\n"
+                    # Top 10 items percentage
+                    top_10_total = sum(item[1] for item in all_cost_items[:10])
+                    top_10_percentage = (top_10_total / grand_total_budget * 100)
+                    text_content += f"Top 10 items represent: {top_10_percentage:.1f}% of total budget\n"
+                    
+                    # Average cost per item
+                    avg_cost = grand_total_budget / len(all_cost_items)
+                    text_content += f"Average cost per item: {avg_cost:,.2f}\n"
+                
+                logger.info(f"Extracted BOQ data: {len(text_content)} characters, Calculated Total Budget: {grand_total_budget:,.2f}")
+                
+            except Exception as e:
+                logger.error(f"Failed to extract Excel content: {e}")
+                raise HTTPException(status_code=500, detail=f"Failed to extract Excel content: {str(e)}")
+                
+        else:
+            # Try to extract as plain text for other file types
+            try:
+                text_content = response.content.decode('utf-8', errors='ignore')
+            except Exception as e:
+                logger.error(f"Failed to extract text content: {e}")
+                raise HTTPException(status_code=500, detail="Unsupported file type for text extraction")
+        
+        if not text_content.strip():
+            raise HTTPException(status_code=400, detail="No text content could be extracted from the document")
+        
+        # CLEAN AND FORMAT THE TEXT CONTENT
+        def clean_text(text):
+            """Clean and format extracted text for better AI processing"""
+            # Replace multiple newlines with single newlines
+            text = re.sub(r'\n{3,}', '\n\n', text)
+            
+            # Replace multiple spaces with single spaces
+            text = re.sub(r' {2,}', ' ', text)
+            
+            # Remove leading/trailing whitespace from each line
+            lines = [line.strip() for line in text.split('\n')]
+            
+            # Remove empty lines
+            lines = [line for line in lines if line]
+            
+            # Join lines back together with proper spacing
+            cleaned_text = '\n'.join(lines)
+            
+            # Fix common formatting issues
+            cleaned_text = cleaned_text.replace('\\n', '\n')
+            cleaned_text = cleaned_text.replace('\\t', ' ')
+            cleaned_text = re.sub(r'\s+', ' ', cleaned_text)  # Replace multiple whitespace with single space
+            cleaned_text = re.sub(r'\n\s*\n', '\n\n', cleaned_text)  # Proper paragraph separation
+            
+            return cleaned_text.strip()
+        
+        # Clean the extracted text
+        text_content = clean_text(text_content)
+        
+        # Truncate content if too long (Gemini has token limits)
+        max_chars = 50000
+        if len(text_content) > max_chars:
+            text_content = text_content[:max_chars] + "...\n[Content truncated due to length]"
+            logger.info(f"Content truncated to {max_chars} characters")
+        
+        # Generate summary using Gemini AI
+        if not GOOGLE_API_KEY:
+            raise HTTPException(status_code=503, detail="AI summarization service is not configured")
+        
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # Enhanced prompt for Excel/BOQ files
+            if file_type in ["application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] or original_filename.lower().endswith(('.xls', '.xlsx')):
+                prompt = f"""
+                You are analyzing a BOQ (Bill of Quantities) or cost estimation document. Provide a comprehensive financial analysis and summary.
+                
+                **FORMATTING REQUIREMENTS:**
+                - Use clear markdown formatting with proper headers
+                - Use bullet points and tables where appropriate
+                - Highlight important financial figures with **bold**
+                
+                **BOQ ANALYSIS STRUCTURE:**
+                
+                ## 📊 Executive Summary
+                Provide a high-level overview of this BOQ/cost document.
+                
+                ## 💰 Financial Overview
+                - **Total Project Budget:** [Extract the calculated total from the data]
+                - **Number of Cost Categories:** [Count of different sections/sheets]
+                - **Budget Range:** [Highest and lowest individual items]
+                
+                ## 🏆 Top Cost Items
+                List the highest budget items found:
+                - **Item 1:** Description and amount
+                - **Item 2:** Description and amount
+                - **Item 3:** Description and amount
+                
+                ## 📈 Budget Breakdown
+                Analyze the cost distribution:
+                - Major cost categories and their totals
+                - Percentage breakdown if possible
+                - Any patterns in the pricing structure
+                
+                ## 🔍 Key Insights
+                - **Highest Cost Driver:** What category/item consumes most budget
+                - **Budget Distribution:** How costs are spread across items
+                - **Cost Patterns:** Any interesting observations about pricing
+                - **Potential Risks:** Items with unusually high/low costs
+                
+                ## 📋 Document Structure
+                - **Sheets/Sections:** What different parts exist
+                - **Data Quality:** Completeness of cost information
+                - **Organization:** How the BOQ is structured
+                
+                ## 💡 Recommendations
+                Based on the cost analysis:
+                - Budget optimization opportunities
+                - Items requiring closer review
+                - Cost management suggestions
+                
+                ---
+                
+                **Document Details:**
+                - Name: {document_record.get('document_name', 'Untitled')}
+                - Category: {document_record.get('document_category', 'Uncategorized')}
+                - Type: BOQ/Cost Estimation Spreadsheet
+                
+                **Extracted BOQ Data:**
+                {text_content}
+                
+                Please provide a detailed financial analysis following the structure above:
+                """
+            else:
+                prompt = f"""
+                Please provide a comprehensive and well-formatted summary of the following document. 
+                
+                **FORMATTING REQUIREMENTS:**
+                - Use clear markdown formatting
+                - Use proper headers (##, ###)
+                - Use bullet points for lists
+                - Use **bold** for important terms
+                - Use line breaks for readability
+                
+                **CONTENT STRUCTURE:**
+                
+                ## Document Overview
+                Brief description of what this document is about and its main purpose.
+                
+                ## Key Information
+                - **Document Type:** [type]
+                - **Period Covered:** [if applicable]
+                - **Main Subject:** [subject]
+                
+                ## Main Points
+                List the most important information, decisions, or findings:
+                - Point 1
+                - Point 2
+                - Point 3
+                
+                ## Important Details
+                Critical numbers, dates, names, specifications, or requirements:
+                - **Detail 1:** Description
+                - **Detail 2:** Description
+                
+                ## Action Items & Next Steps
+                Any tasks, deadlines, responsibilities mentioned:
+                - Action 1
+                - Action 2
+                
+                ## Conclusion
+                Main takeaways or outcomes
+                
+                ---
+                
+                **Document Information:**
+                - Title: {document_record.get('document_name', 'Untitled')}
+                - Category: {document_record.get('document_category', 'Uncategorized')}
+                - File Type: {file_type}
+                
+                **Document Content:**
+                {text_content}
+                
+                Please provide a clean, well-formatted summary following the structure above:
+                """
+            
+            # Use sync version instead of async to avoid response object issues
+            response = model.generate_content(prompt)
+            summary = response.text.strip()
+            
+            # Additional cleaning of the AI response
+            summary = summary.replace('\\n', '\n')
+            summary = re.sub(r'\n{3,}', '\n\n', summary)
+            
+            logger.info(f"Generated formatted summary of {len(summary)} characters for document {doc_id}")
+            
+            return JSONResponse({
+                "status": "success",
+                "document_id": int(doc_id),
+                "document_name": document_record.get("document_name", "Untitled"),
+                "document_category": document_record.get("document_category", "Uncategorized"),
+                "summary": summary,
+                "content_length": len(text_content),
+                "file_type": file_type,
+                "version": latest_version.get("version", 1),
+                "generated_at": datetime.now().isoformat(),
+                "processing_info": {
+                    "extraction_method": "PyMuPDF" if "pdf" in file_type.lower() else "python-docx" if "docx" in file_type.lower() else "pandas" if any(ext in file_type.lower() for ext in ["excel", "sheet"]) else "text",
+                    "text_cleaned": True,
+                    "formatting_applied": True,
+                    "excel_sheets": len(excel_data) if 'excel_data' in locals() else None
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Gemini AI summarization failed: {e}")
+            raise HTTPException(status_code=500, detail=f"AI summarization failed: {str(e)}")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in summarizeDocument: {e}")
+        raise HTTPException(status_code=500, detail=f"Document summarization failed: {str(e)}")
