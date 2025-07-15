@@ -9,6 +9,7 @@ from Routes import StaffRoutes
 from Routes.ChatRoutes import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
 from Config.db import initialize_db
+import os
 
 server = FastAPI()
 server.mount("/uploaded_images", StaticFiles(directory="uploaded_images"), name="uploaded_images")
@@ -34,3 +35,8 @@ def home():
 @server.on_event("startup")
 async def startup_db_client():
     await initialize_db()
+
+os.makedirs("static/profile_images", exist_ok=True)
+
+# Mount the /static path
+server.mount("/static", StaticFiles(directory="static"), name="static")

@@ -4,18 +4,42 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut, Settings } from "lucide-react";
 
-interface UserProfileMenuProps {
-  userName: string;
-  profileImageUrl?: string;
-}
-
-export default function UserProfileMenu({
-  userName,
-  profileImageUrl,
-}: UserProfileMenuProps) {
+export default function UserProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [profileImageUrl, setProfileImageUrl] = useState("/default-profile.png");
+  const [userRole, setUserRole] = useState(""); 
   const dropdownRef = useRef(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch("http://localhost:8000/user/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch user");
+
+        const data = await res.json();
+
+        setUserName(`${data.firstname || ""} ${data.lastname || ""}`);
+        setUserRole(data.user_role || "");
+        if (data.profile_image_url) {
+          setProfileImageUrl(`http://localhost:8000${data.profile_image_url}`);
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -32,7 +56,7 @@ export default function UserProfileMenu({
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    router.push("/Client/Login"); // Ensure correct route
+    router.push("/Client/Login");
   };
 
   const handleUpdateProfile = () => {
@@ -41,20 +65,21 @@ export default function UserProfileMenu({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Only profile image visible until clicked */}
       <img
-        src={profileImageUrl || "/default-avatar.png"}
+        src={profileImageUrl}
         alt="Profile"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-10 h-10 rounded-full cursor-pointer border-2 border-blue-950 hover:border-sky-500 transition-all"
+        className="w-12 h-12 rounded-full cursor-pointer border-2 border-blue-950 hover:border-sky-500 transition-all"
       />
 
-      {/* Dropdown only rendered if open */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg z-50">
           <div className="px-4 py-3 border-b">
             <p className="text-sm text-gray-600">Signed in as</p>
             <p className="font-semibold truncate">{userName}</p>
+            {userRole && (
+              <p className="text-sm text-blue-700 font-medium mt-1 truncate">{userRole}</p>
+            )}
           </div>
           <button
             onClick={handleUpdateProfile}

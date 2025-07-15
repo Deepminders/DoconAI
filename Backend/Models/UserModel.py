@@ -12,14 +12,21 @@ class UserModel(BaseModel):
     email: str
     phone_number: str
     password: str
+    profile_image_url: Optional[str] = None
 
 class UserCreate(UserModel):
     password: str
 
-class UserUpdate(BaseModel): 
-    email: str 
-    username: str 
-    password: str 
+class UserUpdate(BaseModel):
+    company_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    gender: Optional[str] = None
+    password: Optional[str] = None
+    profile_image_url: Optional[str] = None
 
 class projectmcreate(BaseModel):
     username:str
