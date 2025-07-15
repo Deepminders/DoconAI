@@ -4,6 +4,7 @@ from Routes.UserRoutes import router
 from Routes.ProjectRoutes import routerproject
 from Routes.DocumentRoutes import router as doc_router
 from Routes.CostRoutes import cost_routes
+from Routes.contactRoute import router as contact_router
 from fastapi.middleware.cors import CORSMiddleware
 from Routes import StaffRoutes
 from Routes.ChatRoutes import router as chat_router
@@ -31,6 +32,7 @@ server.include_router(cost_routes)
 server.include_router(StaffRoutes.router)
 server.include_router(chat_router)
 server.include_router(comparator_router.router)  # Include the comparator router
+server.include_router(contact_router)
 @server.get("/home")
 def home():
     return {"Message":"Hello World"}
