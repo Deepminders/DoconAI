@@ -1,7 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Depends, Body
 from bson import ObjectId
-from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project,get_project,fetchUserProjects
+from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project,get_project,fetchUserProjects,fetchOwnerProjects,get_assigned_staff_project
 from Models.StaffModel import StaffModel
+from Controllers import UserController
+
+
+
 
 router = APIRouter(prefix="/staff",tags=["Staff_Member"])
 
@@ -21,9 +25,7 @@ async def find_staff_route(id:str):
 async def delete_staff_route(id:str):
     return await delete_staff(ObjectId(id))
 
-@router.put("/update/{id}")
-async def update_staff_route(id:str,staff: StaffModel):
-    return await update_staff(ObjectId(id),staff.dict())
+
 
 @router.put("/assignProject/{s_id}/{p_id}")
 async def assign_project_route(s_id:str,p_id:str):
@@ -55,3 +57,36 @@ async def get_user_projects(user_id: str):
     Example: GET /api/doc/user/681c944f8dfa6f904a04ffec/projects
     """
     return await fetchUserProjects(user_id)
+
+@router.get("/staff/by-owner/{owner_id}")
+async def list_staff_by_owner(
+    owner_id: str,
+    user=Depends(UserController.get_current_user)
+):
+    if user["user_role"].lower() != "project owner":
+        raise HTTPException(status_code=403, detail="Only Project Owners can view their staff")
+    return await UserController.get_staff_by_owner(owner_id)
+
+
+@router.get("/owner/{user_id}/projects")
+async def get_owner_projects(user_id: str): 
+    """
+    Fetch all projects owned by a specific user.
+    
+    Returns project IDs and names for project selection during document upload.
+    
+    Parameters:
+    - user_id: The MongoDB ObjectId of the user (from staff collection)
+    
+    Returns:
+    - projects: List of owned projects with id, name, and description
+    - user_id: The user ID that was queried
+    - count: Total number of owned projects
+    
+    Example: GET /api/doc/owner/681c944f8dfa6f904a04ffec/projects
+    """
+    return await fetchOwnerProjects(user_id)
+
+@router.get("/projects/{project_id}/assigned-staff")
+async def get_assigned_staff_for_project(project_id: str):
+    return get_assigned_staff_project(project_id)
