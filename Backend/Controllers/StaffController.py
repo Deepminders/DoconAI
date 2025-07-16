@@ -10,10 +10,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from typing import List
 from bson import ObjectId
-
-import shutil
-import uuid
-import os
+from fastapi import APIRouter
 
 async def add_staff(
     staff: StaffModel
@@ -88,18 +85,18 @@ async def delete_staff(staff_id:ObjectId)->dict:
         }
 
 
-async def update_staff(staff_id:ObjectId,staff_data)->dict:
-    try:
-        result = await staff_collection.update_one({"_id":staff_id},{"$set": staff_data})
-        return{
-            "Message":"Updated Successfully"
-        }
+# async def update_staff(staff_id:ObjectId,staff_data)->dict:
+#     try:
+#         result = await staff_collection.update_one({"_id":staff_id},{"$set": staff_data})
+#         return{
+#             "Message":"Updated Successfully"
+#         }
 
-    except Exception as e:
-        return {
-            "Error": "Staff not Updated",
-            "Details": str(e)  
-        }
+#     except Exception as e:
+#         return {
+#             "Error": "Staff not Updated",
+#             "Details": str(e)  
+#         }
 
 async def assign_project(s_id:str, p_id:str) -> dict:
     try:

@@ -11,5 +11,5 @@ class StaffModel(BaseModel):
     email: str
     phone_number: str
     password: str
-    staff_image_url: Optional[str] = None
+    profile_image_url: Optional[str] = None
     assigned_projects: Optional[list] = None

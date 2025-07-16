@@ -5,8 +5,13 @@ from bson import ObjectId
 import traceback
 from fastapi import HTTPException, status
 from datetime import datetime
+
 import json
 
+
+async def get_projects() -> dict:
+    project_cursor = project_collection.find()
+    return await getAllProject(project_cursor)
 
 async def add_project(project: ProjectModel) -> dict:
     try:
@@ -22,16 +27,62 @@ async def add_project(project: ProjectModel) -> dict:
             "project_name": project.projectName,
         }
     except Exception as e:
-        traceback.print_exc()
         raise HTTPException(status_code=400, detail=f"Error creating project: {str(e)}")
 
 
-async def get_projects() -> dict:
+async def get_projects_by_owner(owner_id: str) -> dict:
+    """
+    Get all projects created by a specific Project Owner
+    """
+    try:
+        cursor = project_collection.find({"owner_id": ObjectId(owner_id)})
+        projects = []
+        async for project in cursor:
+            projects.append({
+                "project_id": str(project["_id"]),
+                "project_name": project.get("projectName"),
+                "created_at": project.get("created_at")
+            })
+        return {"projects": projects, "count": len(projects)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching projects: {str(e)}")
 
-    project_cursor = project_collection.find()
-    return await getAllProject(project_cursor)
+
+async def assign_staff_to_project(project_id: str, staff_ids: list):
+    """
+    Assign multiple staff members to a project
+    """
+    try:
+        for staff_id in staff_ids:
+            await staff_collection.update_one(
+                {"_id": ObjectId(staff_id)},
+                {"$addToSet": {"assigned_projects": ObjectId(project_id)}}
+            )
+        return {"message": "Staff assigned successfully", "project_id": project_id, "staff_ids": staff_ids}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error assigning staff: {str(e)}")
 
 
+async def get_staff_by_project(project_id: str):
+    """
+    Get all staff assigned to a given project
+    """
+    try:
+        cursor = staff_collection.find({
+            "assigned_projects": {"$in": [ObjectId(project_id)]}
+        })
+        staff_list = []
+        async for staff in cursor:
+            staff_list.append({
+                "staff_id": str(staff["_id"]),
+                "email": staff.get("email"),
+                "role": staff.get("role"),
+                "created_by": str(staff.get("created_by"))
+            })
+        return {"members": staff_list, "count": len(staff_list)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching staff: {str(e)}")
+    
 async def find_project(id: ObjectId) -> dict:
 
     project = await project_collection.find_one({"_id": id})

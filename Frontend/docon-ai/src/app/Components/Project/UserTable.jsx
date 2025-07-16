@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 import UserRow from "./UserRow";
 import AssignUserModal from "./AssignUserModel";
+import StaffModalWithTrigger  from "./AssignProjects";
 //import { toast } from "react-toastify"; // Optional for notifications
 
-const UsersTable = ({ 
-  users = [], 
+const UsersTable = ({
+  users = [],
   onRemoveFromProject = () => {},
   isProjectView = false,
-  projectId = null
+  projectId = null,
 }) => {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
@@ -18,12 +19,17 @@ const UsersTable = ({
   // Get the correct user ID based on your data structure
   const getUserId = (user) => {
     if (!user) {
-      console.error('Undefined user encountered');
+      console.error("Undefined user encountered");
       return `invalid-${Math.random().toString(36).substr(2, 9)}`;
     }
-    
+
     // Use staff_id as the primary identifier
-    return user.staff_id || user._id || user.id || `temp-${Math.random().toString(36).substr(2, 9)}`;
+    return (
+      user.staff_id ||
+      user._id ||
+      user.id ||
+      `temp-${Math.random().toString(36).substr(2, 9)}`
+    );
   };
 
   const handleAssign = async (userId, role) => {
@@ -51,45 +57,54 @@ const UsersTable = ({
         <span className="flex-[2] border-t-3 border-sky-700 ml-4"></span>
       </h1>
 
+      <StaffModalWithTrigger projectid = {projectId}/>
       {/* Error message display */}
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-          {error}
-        </div>
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
       )}
 
       <div className="overflow-x-auto shadow-md rounded-lg">
         <table className="min-w-full bg-white">
           <thead className="bg-gray-50">
             <tr>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Role
+              </th>
+              <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {isProjectView ? "Actions" : "Actions"}
               </th>
             </tr>
           </thead>
-           <tbody className="divide-y divide-gray-200">
-        {users.map((user) => {
-          const userId = getUserId(user);
-          
-          if (!user || typeof user !== 'object' || Object.keys(user).length === 0) {
-            console.warn('Invalid user data:', user);
-            return null;
-          }
+          <tbody className="divide-y divide-gray-200">
+            {users.map((user) => {
+              const userId = getUserId(user);
 
-          return (
-            <UserRow
-              key={userId}
-              user={user}
-              onRemoveFromProject={onRemoveFromProject}
-              isProjectView={isProjectView}
-              projectId={projectId}
-            />
-          );
-        })}
-      </tbody>
+              if (
+                !user ||
+                typeof user !== "object" ||
+                Object.keys(user).length === 0
+              ) {
+                console.warn("Invalid user data:", user);
+                return null;
+              }
+
+              return (
+                <UserRow
+                  key={userId}
+                  user={user}
+                  onRemoveFromProject={onRemoveFromProject}
+                  isProjectView={isProjectView}
+                  projectId={projectId}
+                />
+              );
+            })}
+          </tbody>
         </table>
         {users.length === 0 && (
           <div className="text-center py-8 text-gray-500">
@@ -107,7 +122,7 @@ const UsersTable = ({
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-sm"
             disabled={isAssigning}
           >
-            {isAssigning ? 'Assigning...' : 'Assign User'}
+            {isAssigning ? "Assigning..." : "Assign User"}
           </button>
         </div>
       )}
