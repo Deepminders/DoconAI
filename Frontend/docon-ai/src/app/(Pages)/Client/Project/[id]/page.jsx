@@ -166,9 +166,15 @@ const ProjectPage = () => {
     // User States
     const [editingUser, setEditingUser] = useState(null);
     const [userToDelete, setUserToDelete] = useState(null);
+    const [userRole, setUserRole] = useState(null);
 
     // Summarizer state
     const [showSummarizer, setShowSummarizer] = useState(false);
+
+    // Profile dropdown and logout modal states
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [userInfo, setUserInfo] = useState({ username: '', user_role: '', email: '' });
 
     useEffect(() => {
         async function fetchProject() {
@@ -242,6 +248,26 @@ const ProjectPage = () => {
         handleResize();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Fetch user info from token
+    useEffect(() => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        if (!token) return;
+        fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`)
+            .then(res => res.json())
+            .then(user => {
+                setUserInfo({
+                    username: user?.username || '',
+                    user_role: user?.user_role || '',
+                    email: user?.email || ''
+                });
+                setUserRole(user?.user_role || null); // <-- Add this line
+            })
+            .catch(() => {
+                setUserInfo({ username: '', user_role: '', email: '' });
+                setUserRole(null); // <-- And this line
+            });
     }, []);
 
     if (loading) {
@@ -418,7 +444,6 @@ const ProjectPage = () => {
         setShowDeleteConfirm(false);
     };
 
-
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Sidebar */}
@@ -444,6 +469,8 @@ const ProjectPage = () => {
                     <ProjectActions
                         onDeleteProject={handleDeleteProject}
                         onSummarize={handleSummarizeClick}
+                        // Only show Delete Project if user is Project Owner
+                        showDelete={userRole === "Project Owner"}
                     />
 
                     {showSummarizer && (
@@ -461,7 +488,9 @@ const ProjectPage = () => {
                     )}
 
                     {/* Finance BOQ Cost Predictor */}
-                    <FinanceBOQCostPredictor projectId={id} />
+                    <div className="mt-8">
+                        <FinanceBOQCostPredictor projectId={id} />
+                    </div>
 
                     {/* Document Section */}
                     <DocumentManagement

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Search, Filter, SortAsc, PlusCircle, Bell, Settings } from 'lucide-react';
+import { Search, Filter, SortAsc, PlusCircle, Bell, Settings, LogOut, ChevronDown } from 'lucide-react';
 import profile from '../../(Pages)/Client/Projects/profile.jpg';
+import { useRouter } from 'next/navigation';
 
 const Header = ({
   onFilterClick,
@@ -9,14 +10,48 @@ const Header = ({
   isReversed,
   onNewProjectClick,
   onSearch,
-  projects = [] // Add projects prop
+  projects = [],
+  showNewProjectButton = true
 }) => {
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [userInfo, setUserInfo] = useState({ username: '', user_role: '', email: '' });
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) return;
+    fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`)
+      .then(res => res.json())
+      .then(user => setUserInfo({
+        username: user?.username || '',
+        user_role: user?.user_role || '',
+        email: user?.email || ''
+      }))
+      .catch(() => setUserInfo({ username: '', user_role: '', email: '' }));
+  }, []);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
     onSearch(value);
+  };
+
+  // Logout functions
+  const handleLogout = () => {
+    setIsLogoutModalOpen(true);
+    setIsProfileDropdownOpen(false);
+  };
+
+  const confirmLogout = () => {
+    localStorage.removeItem('token');
+    setIsLogoutModalOpen(false);
+    router.push('/');
+  };
+
+  const cancelLogout = () => {
+    setIsLogoutModalOpen(false);
   };
 
   // Calculate real project statistics
@@ -60,7 +95,7 @@ const Header = ({
       {/* Main Header Content */}
       <div className="px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-6">
-          
+
           {/* Left Section - Title & Breadcrumb */}
           <div className="flex flex-col">
             <div className="flex items-center space-x-2 text-sm text-gray-500 mb-1">
@@ -117,12 +152,15 @@ const Header = ({
             </button>
 
             {/* Profile */}
-            <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
+            <div className="flex items-center space-x-3 pl-3 border-l border-gray-200 relative">
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-gray-700">John Doe</p>
-                <p className="text-xs text-gray-500">Project Manager</p>
+                <p className="text-sm font-medium text-gray-700">{userInfo.username || "User"}</p>
+                <p className="text-xs text-gray-500">{userInfo.user_role || "Role"}</p>
               </div>
-              <div className="relative">
+              <button
+                onClick={() => setIsProfileDropdownOpen((v) => !v)}
+                className="relative flex items-center focus:outline-none"
+              >
                 <Image
                   src={profile}
                   alt="User Avatar"
@@ -131,7 +169,51 @@ const Header = ({
                   className="w-10 h-10 rounded-full border-2 border-gray-200 hover:border-blue-500 transition-colors cursor-pointer"
                 />
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
-              </div>
+                <ChevronDown className="ml-2 h-4 w-4 text-gray-400" />
+              </button>
+              {/* Profile Dropdown */}
+              {isProfileDropdownOpen && (
+                <>
+                  {/* Click outside to close dropdown */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsProfileDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-25 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center space-x-3">
+                        <Image
+                          src={profile}
+                          alt="Profile"
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {userInfo.username}
+                          </p>
+                          <p className="text-xs text-gray-500">{userInfo.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-4 py-2">
+                      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {userInfo.user_role}
+                      </div>
+                    </div>
+                    <div className="border-t border-gray-100">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -140,7 +222,7 @@ const Header = ({
       {/* Action Bar */}
       <div className="px-4 sm:px-6 lg:px-8 pb-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          
+
           {/* Left Actions */}
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -191,17 +273,48 @@ const Header = ({
           </div>
 
           {/* Right Action - New Project */}
-          <button
-            className="inline-flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 
-              text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 
-              focus:ring-blue-500/20 transform hover:scale-105 transition-all duration-200 shadow-lg font-medium"
-            onClick={onNewProjectClick}
-          >
-            <PlusCircle size={18} />
-            <span>New Project</span>
-          </button>
+          {showNewProjectButton && (
+            <button
+              className="inline-flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 
+                text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 
+                focus:ring-blue-500/20 transform hover:scale-105 transition-all duration-200 shadow-lg font-medium"
+              onClick={onNewProjectClick}
+            >
+              <PlusCircle size={18} />
+              <span>New Project</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {isLogoutModalOpen && (
+        <div className="z-50 flex items-center justify-center p-4 fixed inset-0">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 mt-24">
+            <div className="flex items-center mb-4">
+              <LogOut className="h-6 w-6 text-red-500 mr-3" />
+              <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to logout? You will need to sign in again to access your projects.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelLogout}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

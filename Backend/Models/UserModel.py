@@ -14,6 +14,7 @@ class UserModel(BaseModel):
     password: str
     profile_image_url: Optional[str] = None
     must_change_password: Optional[bool] = False
+    
 class UserCreate(UserModel):
     password: str
 

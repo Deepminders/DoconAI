@@ -1,9 +1,11 @@
+// your original Dashboard.jsx file (or where it's located)
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
-import UserProfileMenu from '../../../Components/Common/UserProfileMenu'; // make sure this path is correct
+import UserProfileMenu from '../../../Components/Common/UserProfileMenu';
+import DashboardContent from '../../../Components/Dashboard/PODashboard'; // Import the new component
 
 export default function Dashboard() {
   const router = useRouter();
@@ -41,17 +43,14 @@ export default function Dashboard() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 ml-0 lg:ml-60 transition-all duration-300">
+      <div className="flex-1 ml-0 lg:ml-2 transition-all duration-300"> {/* Added lg:ml-60 back for sidebar spacing */}
         {/* Top Header with Profile */}
-        <div className="flex justify-end items-center p-4   sticky top-0 z-40">
+        <div className="flex justify-end items-center p-4  top-0 z-40shadow-sm"> {/* Added bg-white and shadow-sm for header */}
           <UserProfileMenu userName="Lahiruni Meegama" profileImageUrl="/default-avatar.png" />
         </div>
 
         {/* Dashboard content */}
-        <div className="p-8">
-          <h1 className="text-3xl font-bold mb-4 text-[#166394]">Dashboard</h1>
-          <p className="text-lg text-gray-700">Welcome to your dashboard! 🎉</p>
-        </div>
+        <DashboardContent /> {/* Render the extracted component */}
       </div>
     </div>
   );

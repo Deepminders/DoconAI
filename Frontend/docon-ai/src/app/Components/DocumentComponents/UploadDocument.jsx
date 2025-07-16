@@ -35,7 +35,7 @@ export default function UploadDocument({ onUpload }) {
     setIsProjectsLoading(true);
     try {
       console.log('📡 Fetching projects for user:', userId);
-      if (userRole != 'Project Manager' || userRole != 'Project owner') {
+      if (userRole != 'Project Manager' && userRole != 'Project Owner') {
         const response = await fetch(`http://127.0.0.1:8000/staff/user/${userId}/projects`);
 
         if (!response.ok) {
@@ -61,7 +61,7 @@ export default function UploadDocument({ onUpload }) {
         }
       }
       else {
-        const response = await fetch(`http://127.0.0.1:8000/staff/user/${userId}/projects`);
+        const response = await fetch(`http://127.0.0.1:8000/staff/owner/${userId}/projects`);
         if (!response.ok) {
           throw new Error('Failed to fetch user projects');
         }
@@ -125,7 +125,7 @@ export default function UploadDocument({ onUpload }) {
       setUser(userData);
 
       // Fetch user's projects after getting user data
-      await fetchUserProjects(userData.user_id);
+      await fetchUserProjects(userData.user_id, userData.user_role);
 
     } catch (error) {
       console.error('❌ Error fetching user data for upload:', error);

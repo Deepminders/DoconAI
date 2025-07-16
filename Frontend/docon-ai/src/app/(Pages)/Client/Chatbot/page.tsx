@@ -52,7 +52,7 @@ export default function ChatPage() {
         <UserProfileMenu />
       </div>
       <Sidebar
-        userId={userId}
+      
         setSessionId={setSessionId}
         setChatLog={setChatLog}
         setChatSessions={setChatSessions}
