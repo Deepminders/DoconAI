@@ -478,7 +478,6 @@ const ProjectPage = () => {
           <ProjectActions
             onDeleteProject={handleDeleteProject}
             onSummarize={handleSummarizeClick}
-            // Only show Delete Project if user is Project Owner
             showDelete={userRole === "Project Owner"}
           />
 

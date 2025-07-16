@@ -31,7 +31,7 @@ const ProjectsList = ({ projects, filter, isMobile, loading = false, error = nul
   // Handle empty state (responsive)
   if (!projects || projects.length === 0) {
     return (
-      <div className="mt-[660px] sm:mt-[180px] md:mt-[160px] lg:mt-[140px] lg:ml-60 p-3 sm:p-4 transition-all duration-300">
+      <div className="mt-[660px] sm:mt-[180px] md:mt-[160px] lg:mt-[140px]  p-3 sm:p-4 transition-all duration-300">
         {/* Responsive Centered Blue Header */}
         <div className="flex items-center justify-center mb-6 sm:mb-8">
           <div className="flex-1 h-0.5 bg-blue-600"></div>

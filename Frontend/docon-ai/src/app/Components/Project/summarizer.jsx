@@ -70,7 +70,7 @@ const ReportGenerator = ({ onClose, projectId }) => {
     }
 
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/project';
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/projects';
 
       // Step 1: Generate vector store
       const vectorRes = await fetch(`${API_BASE}/generate-vector-store`, {
