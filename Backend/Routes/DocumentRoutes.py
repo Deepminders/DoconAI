@@ -15,7 +15,8 @@ from Controllers.DocumentController import (
     getDocsfromProject,
     proxy_download_document,
     fetchProjectDocumentsByUser,
-    fetchUserDocuments
+    fetchUserDocuments,
+    summarizeDocument   
 )
 
 router = APIRouter(prefix="/api/doc", tags=["Document"])
@@ -183,3 +184,16 @@ async def get_user_documents(user_id: str):
     Example: GET /api/doc/user/681c944f8dfa6f904a04ffec/documents
     """
     return await fetchUserDocuments(user_id)
+
+
+@router.get("/summarize/{doc_id}")
+async def summarize_document(doc_id: str):
+    """
+    Generate an AI-powered summary of a document using PyMuPDF for PDF extraction.
+    
+    Supported file types: PDF (via PyMuPDF), DOCX (via python-docx), TXT
+    Excel files are not supported for text summarization.
+    
+    Example: GET /api/doc/summarize/123
+    """
+    return await summarizeDocument(doc_id)
