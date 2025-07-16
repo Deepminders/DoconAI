@@ -40,7 +40,7 @@ class SummarizerComponents:
     def __init__(self):
         # Initialize with default settings
         self.model_name = "BAAI/bge-small-en"
-        self.llm_name = "qwen-qwq-32b"  # Updated model name
+        self.llm_name = "meta-llama/llama-4-scout-17b-16e-instruct"  # Updated model name
         self.chunk_size = 700
         self.chunk_overlap = 50
         self.max_docs = 30

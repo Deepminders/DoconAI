@@ -21,7 +21,7 @@ export default function Login() {
   <div className="absolute w-32 h-32 bg-[#166394] rounded-full opacity-30 animate-pulse-slow bottom-10 left-1/2 blur-2xl" />
 </div>
         {/* 🧱 Login Card */}
-        <div className="z-20 flex flex-col md:flex-row bg-white shadow-lg rounded-xl overflow-hidden max-w-5xl w-full border-2 border-[#166394] animate-smooth-slide-up">
+        <div className="z-20 flex flex-col md:flex-row bg-[#e8effd] shadow-lg rounded-xl overflow-hidden max-w-5xl w-full border-2 border-[#166394] animate-smooth-slide-up">
           <ConstructionImage />
           <LoginForm />
         </div>

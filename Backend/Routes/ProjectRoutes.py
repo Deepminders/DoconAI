@@ -7,6 +7,7 @@ from Controllers.ProjectController import (
     delete_project,
     get_staff_by_project,
     remove_project_from_staff,
+    get_projects
 )
 from Models.ProjectModel import ProjectModel, ProjectUpdateModel, RemoveProjectRequest
 from bson import ObjectId
@@ -23,6 +24,10 @@ from Models.report_components import (
 )
 
 routerproject = APIRouter(prefix="/projects", tags=["Project"])
+
+@routerproject.get("/getproject")
+async def get_project_route():
+    return await get_projects()
 
 
 @routerproject.post("/{owner_id}/add")
