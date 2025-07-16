@@ -39,6 +39,7 @@ const mapStatusToFilter = (status) => {
 
 export default function ProjectsDashboard() {
   const [allProjects, setAllProjects] = useState([]);
+  const [assignedProjects, setAssignedProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("All Projects");
@@ -158,9 +159,9 @@ export default function ProjectsDashboard() {
   };
 
   const filteredProjects = useMemo(() => {
-    if (loading || !allProjects.length || !userInfo?.user_id) return [];
-    // Only projects for this user
-    let projects = allProjects.filter(
+    if (loading || !userInfo?.user_id) return [];
+    // Use assignedProjects if present
+    let projects = assignedProjects.length > 0 ? assignedProjects : allProjects.filter(
       project => project.client_id === userInfo.user_id
     );
     // Status filter
@@ -178,7 +179,7 @@ export default function ProjectsDashboard() {
       );
     }
     return projects;
-  }, [allProjects, loading, userInfo, filter, searchTerm]);
+  }, [allProjects, loading, userInfo, filter, searchTerm, assignedProjects]);
 
   const sortedProjects = useMemo(() => {
     return [...filteredProjects].sort((a, b) => {
@@ -206,6 +207,36 @@ export default function ProjectsDashboard() {
     };
     fetchUserInfo();
   }, []);
+
+  useEffect(() => {
+    // Only run if allProjects and userInfo are loaded
+    if (!loading && allProjects.length && userInfo?.user_id) {
+      let projects = allProjects.filter(
+        project => project.client_id === userInfo.user_id
+      );
+
+      if (projects.length === 0) {
+        // Fetch assigned projects if none owned
+        fetch(`http://127.0.0.1:8000/staff/user/${userInfo.user_id}/projects`)
+          .then(res => res.json())
+          .then(data => {
+            // Map API response to your frontend format
+            const mapped = data.projects.map(p => ({
+              projectId: p.project_id,
+              projectName: p.project_name,
+              projectStatus: p.project_status,
+              startDate: new Date(Number(p.start_date.$date.$numberLong)).toISOString(),
+              endDate: new Date(Number(p.end_date.$date.$numberLong)).toISOString(),
+              client: p.client,
+              projectLead: p.projectLead, 
+            }));
+            setAssignedProjects(mapped);
+          });
+      } else {
+        setAssignedProjects([]);
+      }
+    }
+  }, [allProjects, loading, userInfo]);
 
   if (loading) return (
     <div className="flex h-screen">

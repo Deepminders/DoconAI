@@ -147,9 +147,19 @@ const Header = ({
             </button>
 
             {/* Settings */}
-            <button className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-              <Settings size={20} />
-            </button>
+            <div className="relative group">
+              <button
+                onClick={() => router.push('/Client/Profile')}
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+              >
+                <Settings size={20} />
+              </button>
+              {/* Tooltip */}
+              <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                Update Profile
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-800"></div>
+              </div>
+            </div>
 
             {/* Profile */}
             <div className="flex items-center space-x-3 pl-3 border-l border-gray-200 relative">

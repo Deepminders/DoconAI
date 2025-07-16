@@ -31,7 +31,7 @@ const ProjectsList = ({ projects, filter, isMobile, loading = false, error = nul
   // Handle empty state (responsive)
   if (!projects || projects.length === 0) {
     return (
-      <div className="mt-[660px] sm:mt-[180px] md:mt-[160px] lg:mt-[140px]  p-3 sm:p-4 transition-all duration-300">
+      <div className="mt-[660px] sm:mt-[180px] md:mt-[160px] lg:mt-[140px] lg:ml-1 p-3 sm:p-4 transition-all duration-300">
         {/* Responsive Centered Blue Header */}
         <div className="flex items-center justify-center mb-6 sm:mb-8">
           <div className="flex-1 h-0.5 bg-blue-600"></div>
@@ -60,7 +60,10 @@ const ProjectsList = ({ projects, filter, isMobile, loading = false, error = nul
       {/* Responsive Centered Blue Header with Project Count */}
       <div className="flex items-center justify-center mb-6 sm:mb-8">
         <div className="flex-1 h-0.5 bg-blue-600"></div>
-        <h1 className="px-3 sm:px-6 text-lg sm:text-xl md:text-2xl font-bold text-blue-600 bg-white text-center whitespace-nowrap">
+        <h1
+          className="px-3 sm:px-6 text-lg sm:text-xl md:text-2xl font-bold text-blue-600 text-center whitespace-nowrap"
+          style={{ backgroundColor: "rgba(249,250,251,1)" }}
+        >
           {filter} ({projects.length})
         </h1>
         <div className="flex-1 h-0.5 bg-blue-600"></div>

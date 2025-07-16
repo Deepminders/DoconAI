@@ -1,5 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { jsPDF } from 'jspdf';
+import {
+  FileText,
+  Upload,
+  Download,
+  X,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  FileCheck,
+  Sparkles,
+  ChevronRight,
+  Clock,
+  Users,
+  Target,
+  TrendingUp
+} from 'lucide-react';
 
 const ReportGenerator = ({ onClose, projectId }) => {
   const [files, setFiles] = useState([]);
@@ -9,6 +25,7 @@ const ReportGenerator = ({ onClose, projectId }) => {
   const [availableDocs, setAvailableDocs] = useState([]);
   const [loadingDocs, setLoadingDocs] = useState(true);
   const [checkedDocs, setCheckedDocs] = useState([]);
+  const [activeTab, setActiveTab] = useState('upload');
 
   useEffect(() => {
     if (!projectId) return;
@@ -26,12 +43,11 @@ const ReportGenerator = ({ onClose, projectId }) => {
   };
 
   const handleClose = () => {
-    // Reset all states when closing
     setFiles([]);
     setReport('');
     setLoading(false);
     setError('');
-    onClose(); // Call the parent's close handler
+    onClose();
   };
 
   const generateReport = async () => {
@@ -44,16 +60,13 @@ const ReportGenerator = ({ onClose, projectId }) => {
     setError('');
     const formData = new FormData();
 
-    // Add uploaded files
     files.forEach(file => formData.append('files', file));
 
-    // Download checked docs and append to formData
     for (const docId of checkedDocs) {
       try {
         const res = await fetch(`http://127.0.0.1:8000/api/doc/download_direct/${docId}`);
         if (!res.ok) throw new Error('Failed to download document');
         const blob = await res.blob();
-        // Find the doc name for filename
         const docInfo = availableDocs.find(d => d.document_id === docId);
         let filename = docInfo?.document_name || `document_${docId}.pdf`;
         if (!filename.toLowerCase().endsWith('.pdf')) filename += '.pdf';
@@ -72,7 +85,6 @@ const ReportGenerator = ({ onClose, projectId }) => {
     try {
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/projects';
 
-      // Step 1: Generate vector store
       const vectorRes = await fetch(`${API_BASE}/generate-vector-store`, {
         method: 'POST',
         body: formData,
@@ -83,14 +95,13 @@ const ReportGenerator = ({ onClose, projectId }) => {
         throw new Error(errorData.detail || 'Vector store creation failed.');
       }
 
-      // Step 2: Generate report
       const reportRes = await fetch(`${API_BASE}/generate-report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          project_id: projectId  // Add the project ID here
+          project_id: projectId
         }),
       });
 
@@ -110,36 +121,23 @@ const ReportGenerator = ({ onClose, projectId }) => {
 
   const downloadAsPDF = () => {
     const doc = new jsPDF();
-
-    // Professional header
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text('PROJECT STATUS REPORT', 20, 20);
-
-    // Date and project info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 30);
     doc.text(`Project ID: ${projectId}`, 20, 35);
-
-    // Header line
     doc.setDrawColor(0, 0, 0);
     doc.line(20, 40, 190, 40);
-
-    // Report content with much better formatting
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
 
-    // Clean and format the report text - remove tables and complex formatting
     let cleanedReport = report.replace(/={60,}/g, '').trim();
+    cleanedReport = cleanedReport.replace(/\|[^|\n]*\|/g, '');
+    cleanedReport = cleanedReport.replace(/\|[-:\s]+\|/g, '');
 
-    // Remove table formatting (convert tables to simple text)
-    cleanedReport = cleanedReport.replace(/\|[^|\n]*\|/g, ''); // Remove table rows
-    cleanedReport = cleanedReport.replace(/\|[-:\s]+\|/g, ''); // Remove table separators
-
-    // Split into sections
     const sections = cleanedReport.split(/\n\s*\n/);
-
     let currentY = 50;
     const pageHeight = doc.internal.pageSize.height;
     const lineHeight = 6;
@@ -148,116 +146,40 @@ const ReportGenerator = ({ onClose, projectId }) => {
 
     sections.forEach((section) => {
       if (!section.trim()) return;
-
       const lines = section.split('\n');
-
       lines.forEach((line, index) => {
-        // Check if we need a new page
         if (currentY + lineHeight > pageHeight - 30) {
           doc.addPage();
           currentY = 20;
         }
-
-        // Skip empty lines
         if (!line.trim()) {
           currentY += lineHeight / 2;
           return;
         }
-
-        // Format different types of content
         if (line.match(/^[A-Z\s\d\.\-]+$/) && line.length < 50) {
-          // Section headers (all caps, short lines)
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(12);
-          currentY += 4; // Extra space before headers
+          currentY += 4;
         } else if (line.match(/^\d+\.\s+[A-Z]/) || line.includes('SUMMARY') || line.includes('STATUS')) {
-          // Numbered sections or key terms
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(11);
-        } else if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
-          // Bullet points
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(10);
-          line = '  ' + line; // Indent bullet points
-        } else if (line.includes(':') && line.split(':')[0].length < 30) {
-          // Key-value pairs (like "Budget Status: ...")
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(10);
-          // Make the key part bold
-          const [key, ...valueParts] = line.split(':');
-          const value = valueParts.join(':');
-
-          // Check if we need a new page
-          if (currentY + lineHeight > pageHeight - 30) {
-            doc.addPage();
-            currentY = 20;
-          }
-
-          // Print key in bold
-          doc.setFont('helvetica', 'bold');
-          doc.text(key + ':', margin, currentY);
-
-          // Print value in normal font
-          doc.setFont('helvetica', 'normal');
-          const keyWidth = doc.getTextWidth(key + ': ');
-
-          if (value.trim()) {
-            const valueLines = doc.splitTextToSize(value.trim(), maxWidth - keyWidth);
-            valueLines.forEach((valueLine, i) => {
-              if (i === 0) {
-                doc.text(valueLine, margin + keyWidth, currentY);
-              } else {
-                currentY += lineHeight;
-                if (currentY + lineHeight > pageHeight - 30) {
-                  doc.addPage();
-                  currentY = 20;
-                }
-                doc.text(valueLine, margin + 15, currentY); // Indent continuation
-              }
-            });
-          }
-
-          currentY += lineHeight + 2;
-          return; // Skip the normal processing for this line
         } else {
-          // Regular text
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(10);
         }
-
-        // Split long lines and add them
         const wrappedLines = doc.splitTextToSize(line, maxWidth);
-
         wrappedLines.forEach((wrappedLine) => {
           if (currentY + lineHeight > pageHeight - 30) {
             doc.addPage();
             currentY = 20;
           }
-
           doc.text(wrappedLine, margin, currentY);
           currentY += lineHeight;
         });
-
-        // Add extra spacing after headers
-        if (line.match(/^[A-Z\s\d\.\-]+$/) && line.length < 50) {
-          currentY += 3;
-        } else {
-          currentY += 1;
-        }
+        currentY += 1;
       });
-
-      currentY += 4; // Extra space between sections
+      currentY += 4;
     });
-
-    // Add page numbers and footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Page ${i} of ${pageCount}`, 180, pageHeight - 10, { align: 'right' });
-      doc.text('Generated by DoconAI Project Management System', 20, pageHeight - 10);
-    }
 
     doc.save(`project_${projectId}_status_report.pdf`);
   };
@@ -270,195 +192,258 @@ const ReportGenerator = ({ onClose, projectId }) => {
     );
   };
 
+  const getDocumentIcon = (category) => {
+    switch (category?.toLowerCase()) {
+      case 'meeting': return <Users className="h-4 w-4 text-blue-500" />;
+      case 'progress': return <TrendingUp className="h-4 w-4 text-green-500" />;
+      case 'planning': return <Target className="h-4 w-4 text-purple-500" />;
+      default: return <FileText className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Blur background */}
-      <div className="fixed inset-0 bg-white/30 backdrop-blur-md" onClick={handleClose}></div>
+      {/* Enhanced blur background */}
+      <div
+        className="fixed inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/20 backdrop-blur-lg"
+        onClick={handleClose}
+      ></div>
 
       {/* Modal container */}
       <div className="flex items-center justify-center min-h-screen p-4">
         {/* Modal content */}
         <div
-          className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 mx-auto border border-gray-100"
-          onClick={(e) => e.stopPropagation()} // Prevent click from closing modal
+          className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-8 mx-auto border border-gray-100 transform transition-all duration-300 scale-100"
+          onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-all duration-200"
             disabled={loading}
-            aria-label="Close report generator"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-5 w-5" />
           </button>
 
-          <h2 className="text-2xl font-bold mb-6 text-center text-blue-700">📄 Project Report Generator</h2>
-
-          {/* File upload section */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload PDF documents
-              <span className="text-red-500">*</span>
-            </label>
-            <div className="flex items-center gap-4">
-              <label className="flex-1 cursor-pointer">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-blue-500 transition-colors">
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-blue-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p className="text-sm text-gray-600">
-                      {files.length > 0
-                        ? `${files.length} file(s) selected`
-                        : 'Click to browse or drag and drop'}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">PDF files only</p>
-                  </div>
-                </div>
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  disabled={loading}
-                />
-              </label>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
+              <Sparkles className="h-8 w-8 text-white" />
             </div>
-            {error && !report && (
-              <p className="mt-2 text-sm text-red-600">{error}</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">AI Report Generator</h2>
+            <p className="text-gray-600">Transform your project documents into comprehensive reports</p>
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
+            <button
+              onClick={() => setActiveTab('upload')}
+              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-all duration-200 ${activeTab === 'upload'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                }`}
+            >
+              <Upload className="h-4 w-4" />
+              <span>Upload Files</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('existing')}
+              className={`flex-1 flex items-center justify-center space-x-2 py-2 px-4 rounded-md transition-all duration-200 ${activeTab === 'existing'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                }`}
+            >
+              <FileCheck className="h-4 w-4" />
+              <span>Project Documents</span>
+              {availableDocs.length > 0 && (
+                <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">
+                  {availableDocs.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="mb-8">
+            {activeTab === 'upload' && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Upload className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Upload New Documents</h3>
+                </div>
+
+                <label className="block cursor-pointer">
+                  <div className="border-2 border-dashed border-blue-300 rounded-xl p-8 hover:border-blue-500 hover:bg-blue-50/50 transition-all duration-200 group">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-200">
+                        <Upload className="h-8 w-8 text-white" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                        {files.length > 0 ? `${files.length} file(s) selected` : 'Drop files here or click to browse'}
+                      </h4>
+                      <p className="text-gray-600 mb-4">PDF files only, up to 10MB each</p>
+                      {files.length > 0 && (
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {files.map((file, index) => (
+                            <div key={index} className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                              <FileText className="h-4 w-4" />
+                              <span>{file.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    disabled={loading}
+                  />
+                </label>
+              </div>
+            )}
+
+            {activeTab === 'existing' && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2 mb-4">
+                  <FileCheck className="h-5 w-5 text-green-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Available Project Documents</h3>
+                </div>
+
+                {loadingDocs ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                    <span className="ml-2 text-gray-600">Loading documents...</span>
+                  </div>
+                ) : availableDocs.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No documents found for this project</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3 max-h-80 overflow-y-auto">
+                    {availableDocs.map(doc => (
+                      <label
+                        key={doc.document_id}
+                        className="flex items-center space-x-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-all duration-200 border border-transparent hover:border-blue-200"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checkedDocs.includes(doc.document_id)}
+                          onChange={() => handleCheckboxChange(doc.document_id)}
+                          className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <div className="flex-1 flex items-center space-x-3 min-w-0">
+                          {getDocumentIcon(doc.document_category)}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-gray-900 truncate">{doc.document_name}</h4>
+                            <p className="text-sm text-gray-500 capitalize">{doc.document_category}</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
+          {/* Error message */}
+          {error && !report && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
+
           {/* Action buttons */}
-          <div className="flex gap-3">
+          <div className="flex gap-4 mb-8">
             <button
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-50 flex items-center space-x-2"
             >
-              Cancel
+              <X className="h-4 w-4" />
+              <span>Cancel</span>
             </button>
             <button
               onClick={generateReport}
               disabled={(files.length === 0 && checkedDocs.length === 0) || loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-150 flex items-center justify-center gap-2"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Generating Report...</span>
                 </>
               ) : (
-                'Generate Report'
+                <>
+                  <Sparkles className="h-5 w-5" />
+                  <span>Generate AI Report</span>
+                </>
               )}
             </button>
           </div>
 
           {/* Report section */}
           {report && (
-            <div className="mt-8 border-t pt-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">📝 Generated Report</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={downloadAsPDF}
-                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm px-3 py-1 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download PDF
-                  </button>
+            <div className="border-t pt-8">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
+                  <h3 className="text-xl font-semibold text-gray-900">Generated Report</h3>
                 </div>
+                <button
+                  onClick={downloadAsPDF}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Download PDF</span>
+                </button>
               </div>
-              <div className="max-h-96 overflow-y-auto bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-800">
-                {(() => {
-                  // Split report into sections by --- or numbered headings
-                  const sections = report
-                    .split(/\n\s*---+\s*\n/) // split by --- lines
-                    .map(section => section.trim())
-                    .filter(Boolean);
 
-                  return (
-                    <div className="space-y-6">
-                      {sections.map((section, idx) => {
-                        // Try to extract a heading (e.g., "1. Project Scope & Objectives ...")
-                        const headingMatch = section.match(/^(\d+\.\s+)?([^\n]+)\n/);
-                        let heading = '';
-                        let content = section;
-                        if (headingMatch) {
-                          heading = headingMatch[2].trim();
-                          content = section.slice(headingMatch[0].length).trim();
-                        }
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 border border-gray-200 rounded-xl p-6 max-h-96 overflow-y-auto">
+                <div className="space-y-6">
+                  {report.split(/\n\s*---+\s*\n/).map((section, idx) => {
+                    const headingMatch = section.match(/^(\d+\.\s+)?([^\n]+)\n/);
+                    let heading = '';
+                    let content = section;
+                    if (headingMatch) {
+                      heading = headingMatch[2].trim();
+                      content = section.slice(headingMatch[0].length).trim();
+                    }
 
-                        // Format content as bullet points if it looks like a list, else as paragraphs
-                        const bulletLines = content.split('\n').filter(line => /^[-*•]/.test(line.trim()));
-                        const isList = bulletLines.length > 1;
-
-                        return (
-                          <div key={idx}>
-                          {heading && (
-                            <h4 className="text-lg font-semibold text-blue-700 mb-2">{heading}</h4>
-                          )}
-                          {isList ? (
-                            <ul className="list-disc list-inside space-y-1">
-                            {content.split('\n').map((line, i) => {
-                              if (/^[-*•]/.test(line.trim())) {
-                              return <li key={i}>{line.replace(/^[-*•]\s*/, '')}</li>;
-                              }
-                              return null;
-                            })}
-                            </ul>
-                          ) : (
-                            content.split('\n').map((para, i) => {
+                    return (
+                      <div key={idx} className="bg-white rounded-lg p-4 shadow-sm">
+                        {heading && (
+                          <h4 className="text-lg font-semibold text-blue-700 mb-3 flex items-center space-x-2">
+                            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                            <span>{heading}</span>
+                          </h4>
+                        )}
+                        <div className="prose prose-sm max-w-none">
+                          {content.split('\n').map((para, i) => {
                             if (para.trim()) {
-                              return <p className="mb-2" key={i}>{para.trim()}</p>;
+                              return (
+                                <p key={i} className="mb-2 text-gray-700 leading-relaxed">
+                                  {para.trim()}
+                                </p>
+                              );
                             }
                             return null;
-                            })
-                          )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
-
-          {/* --- Available documents section --- */}
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold mb-2 text-gray-700">Available Project Documents</h3>
-            {loadingDocs ? (
-              <p className="text-gray-500">Loading documents...</p>
-            ) : availableDocs.length === 0 ? (
-              <p className="text-gray-500">No documents found for this project.</p>
-            ) : (
-              <ul className="divide-y divide-gray-200">
-                {availableDocs.map(doc => (
-                  <li key={doc.document_id} className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={checkedDocs.includes(doc.document_id)}
-                        onChange={() => handleCheckboxChange(doc.document_id)}
-                      />
-                      <span className="font-medium text-gray-800">{doc.document_name}</span>
-                    </label>
-                    <span className="text-xs text-gray-500">{doc.document_category}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          {/* --- End available docs section --- */}
         </div>
       </div>
     </div>
