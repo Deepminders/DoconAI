@@ -49,6 +49,7 @@ export default function ProjectsDashboard() {
   const [isProjectPopupVisible, setIsProjectPopupVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
 
   useEffect(() => {
@@ -157,13 +158,27 @@ export default function ProjectsDashboard() {
   };
 
   const filteredProjects = useMemo(() => {
-    if (loading || !allProjects.length) return [];
-    return filter === "All Projects"
-      ? allProjects
-      : allProjects.filter(project =>
-        mapStatusToFilter(project.projectStatus) === filter
+    if (loading || !allProjects.length || !userInfo?.user_id) return [];
+    // Only projects for this user
+    let projects = allProjects.filter(
+      project => project.client_id === userInfo.user_id
+    );
+    // Status filter
+    if (filter !== "All Projects") {
+      projects = projects.filter(
+        project => mapStatusToFilter(project.projectStatus) === filter
       );
-  }, [allProjects, filter, loading]);
+    }
+    // Search filter
+    if (searchTerm) {
+      projects = projects.filter(
+        project =>
+          project.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          project.projectLead?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return projects;
+  }, [allProjects, loading, userInfo, filter, searchTerm]);
 
   const sortedProjects = useMemo(() => {
     return [...filteredProjects].sort((a, b) => {
@@ -172,14 +187,6 @@ export default function ProjectsDashboard() {
       return isReversed ? dateA - dateB : dateB - dateA;
     });
   }, [filteredProjects, isReversed]);
-
-  // Filter projects based on search term
-  const searchFilteredProjects = useMemo(() => {
-    return sortedProjects.filter(project =>
-      project.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.projectLead?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [sortedProjects, searchTerm]);
 
   // Fetch user info from token
   useEffect(() => {
@@ -191,8 +198,10 @@ export default function ProjectsDashboard() {
         if (!res.ok) throw new Error("Failed to fetch user info");
         const user = await res.json();
         setUserRole(user?.user_role || null);
+        setUserInfo(user); // Save the full user object
       } catch (err) {
         setUserRole(null);
+        setUserInfo(null);
       }
     };
     fetchUserInfo();
@@ -264,7 +273,7 @@ export default function ProjectsDashboard() {
         />
 
         <ProjectList
-          projects={searchFilteredProjects}
+          projects={filteredProjects}
           filter={filter}
           isMobile={isMobile}
         />
@@ -283,6 +292,8 @@ export default function ProjectsDashboard() {
           onSubmit={handleNewProjectSubmit}
           onRefresh={refreshProjects}
           isLoading={loading}
+          defaultClient={userInfo?.username || ""}
+          clientId={userInfo?.user_id || ""}
         />
       )}
     </div>
