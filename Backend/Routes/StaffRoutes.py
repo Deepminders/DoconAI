@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from bson import ObjectId
-from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project,get_project,fetchUserProjects
+from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project,get_project,fetchUserProjects,fetchOwnerProjects
 from Models.StaffModel import StaffModel
 
 router = APIRouter(prefix="/staff",tags=["Staff_Member"])
@@ -55,3 +55,22 @@ async def get_user_projects(user_id: str):
     Example: GET /api/doc/user/681c944f8dfa6f904a04ffec/projects
     """
     return await fetchUserProjects(user_id)
+
+@router.get("/owner/{user_id}/projects")
+async def get_owner_projects(user_id: str): 
+    """
+    Fetch all projects owned by a specific user.
+    
+    Returns project IDs and names for project selection during document upload.
+    
+    Parameters:
+    - user_id: The MongoDB ObjectId of the user (from staff collection)
+    
+    Returns:
+    - projects: List of owned projects with id, name, and description
+    - user_id: The user ID that was queried
+    - count: Total number of owned projects
+    
+    Example: GET /api/doc/owner/681c944f8dfa6f904a04ffec/projects
+    """
+    return await fetchOwnerProjects(user_id)

@@ -1,4 +1,5 @@
 import base64
+import datetime
 from fastapi import HTTPException
 from Config.db import staff_collection, project_collection,user_collection
 from Models.StaffModel import StaffModel
@@ -183,6 +184,59 @@ async def fetchUserProjects(user_id: str):
                 "project_status": project.get("projectStatus", "Unknown Status"),
                 "start_date": project.get("startDate", "N/A"),
                 "end_date": project.get("endDate", "N/A"),
+                "client": project.get("Client", "N/A")
+            })
+        
+        
+        return JSONResponse({
+            "status": "success",
+            "projects": project_list,
+            "user_id": user_id,
+            "count": len(project_list)
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch user projects: {str(e)}")
+    
+    
+async def fetchOwnerProjects(user_id: str):
+    """
+    Fetches all projects assigned to a specific user from staff collection.
+    Returns project IDs and names for project selection in upload.
+    """
+    try:
+        # Find the user in staff collection
+        projects = await project_collection.find({"client_id": ObjectId(user_id)},{"_id": 1, "projectName": 1, "projectStatus":1,"startDate":1, "endDate":1, "Client":1}).to_list(length=None)
+        
+        if not projects:
+            return JSONResponse({
+                "status": "success",
+                "projects": [],
+                "user_id": user_id,
+                "count": 0,
+                "message": "No projects assigned to this user"
+            })
+        
+        
+        # Format response for frontend
+        project_list = []
+        for project in projects:
+            start_date = project.get("startDate", "N/A")
+            end_date = project.get("endDate", "N/A")
+
+            # Convert datetime objects to ISO 8601 strings if they exist
+            if isinstance(start_date, datetime.datetime):
+                start_date = start_date.isoformat()
+            if isinstance(end_date, datetime.datetime):
+                end_date = end_date.isoformat()
+            project_list.append({
+                "project_id": str(project["_id"]),
+                "project_name": project.get("projectName", "Unnamed Project"),
+                "project_status": project.get("projectStatus", "Unknown Status"),
+                "start_date": start_date,
+                "end_date": end_date,
                 "client": project.get("Client", "N/A")
             })
         
