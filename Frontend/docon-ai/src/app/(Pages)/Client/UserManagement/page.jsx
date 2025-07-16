@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useNotifications } from '../../../Components/Common/NotificationSystem';
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
-
+import UserProfileMenu from '../../../Components/Common/UserProfileMenu';
 export default function UserManagementPage() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Site Engineer');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [users, setUsers] = useState([]);
   const [tempUserInfo, setTempUserInfo] = useState(null);
   const notify = useNotifications();
@@ -62,7 +64,7 @@ export default function UserManagementPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`, // send token so backend knows who added the staff
         },
-        body: JSON.stringify({ email, user_role: role }),
+        body: JSON.stringify({ email, user_role: role, first_name:firstName, last_name:lastName }),
       });
       const result = await res.json();
       if (res.ok) {
@@ -88,7 +90,11 @@ export default function UserManagementPage() {
       />
 
       <main className="flex-1 p-6">
-        <h1 className="text-3xl mb-6 text-gray-900">User Management</h1>
+        <div className="flex justify-between items-center mb-6">
+    <h1 className="text-3xl text-gray-900">User Management</h1>
+    <UserProfileMenu />
+  </div>
+
 
         <div className="border border-gray-300 bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto mb-8">
           <form onSubmit={handleAdd} className="space-y-4">
@@ -102,6 +108,30 @@ export default function UserManagementPage() {
                 className="w-full p-2 rounded border border-gray-300 text-black placeholder-gray-500"
               />
             </div>
+           <div className="flex gap-x-4">
+  <div className="flex-1">
+    <label className="block text-sm mb-1">First Name</label>
+    <input
+      type="text"
+      placeholder="Enter first name"
+      value={firstName}
+      onChange={e => setFirstName(e.target.value)}
+      className="w-full p-2 rounded border border-gray-300 text-black placeholder-gray-500"
+    />
+  </div>
+  <div className="flex-1">
+    <label className="block text-sm mb-1">Last Name</label>
+    <input
+      type="text"
+      placeholder="Enter last name"
+      value={lastName}
+      onChange={e => setLastName(e.target.value)}
+      className="w-full p-2 rounded border border-gray-300 text-black placeholder-gray-500"
+    />
+  </div>
+</div>
+
+
             <div>
               <label className="block text-sm mb-1">User Role</label>
               <select

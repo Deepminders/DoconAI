@@ -1,15 +1,45 @@
-// Client/Contactus/page.jsx
 "use client";
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle, MessageCircle, Globe, Users } from 'lucide-react';
-import Header from '../../../Components/common/Header';
-import Footer from '../../../Components/common/Footer';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, MessageCircle, Globe, Users, XCircle } from 'lucide-react'; // Added XCircle for error
+// Assuming Header and Footer paths are correct relative to this file
+// import Header from '../../../Components/common/Header'; 
+// import Footer from '../../../Components/common/Footer'; 
+
+// Placeholder for Header and Footer components if they are not available in this environment
+const Header = () => (
+  <header className="bg-white shadow-sm py-4 px-6 fixed top-0 w-full z-10">
+    <div className="max-w-6xl mx-auto flex justify-between items-center">
+      <h1 className="text-2xl font-bold text-blue-600">DoconAI</h1>
+      <nav>
+        <ul className="flex space-x-6">
+          <li><a href="/" className="text-slate-700 hover:text-blue-600 transition-colors">Home</a></li>
+          <li><a href="/features" className="text-slate-700 hover:text-blue-600 transition-colors">Features</a></li>
+          <li><a href="/pricing" className="text-slate-700 hover:text-blue-600 transition-colors">Pricing</a></li>
+          <li><a href="/contact" className="text-blue-600 font-semibold">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+);
+
+const Footer = () => (
+  <footer className="bg-slate-800 text-white py-10 px-6">
+    <div className="max-w-6xl mx-auto text-center">
+      <p>&copy; {new Date().getFullYear()} DoconAI. All rights reserved.</p>
+      <div className="flex justify-center space-x-4 mt-4">
+        <a href="#" className="text-slate-400 hover:text-white transition-colors">Privacy Policy</a>
+        <a href="#" className="text-slate-400 hover:text-white transition-colors">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+);
+
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    email: '', // This is now the ONLY email field, for the user's email
     company: '',
     phone: '',
     subject: '',
@@ -17,6 +47,7 @@ const ContactPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState(null); // New state for error messages
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -29,25 +60,46 @@ const ContactPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    
-    // Reset form after success
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({
-        name: '',
-        email: '',
-        company: '',
-        phone: '',
-        subject: '',
-        message: ''
+    setSubmitError(null); // Clear previous errors
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/contact/send-email', { // Adjust URL if your FastAPI is on a different port/host
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
-    }, 3000);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Something went wrong on the server.');
+      }
+
+      const result = await response.json();
+      console.log('Success:', result);
+      setIsSubmitted(true);
+      
+      // Reset form after success
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setFormData({
+          name: '',
+          email: '',
+          company: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+      }, 3000); // Display success message for 3 seconds
+
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setSubmitError(error.message); // Set the error message
+      setIsSubmitted(false); // Ensure success state is false
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -100,7 +152,7 @@ const ContactPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 font-inter">
       <Header />
       
       {/* Compact Hero Section */}
@@ -193,7 +245,7 @@ const ContactPage = () => {
                     </div>
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-                        Email Address *
+                        Your Email Address *
                       </label>
                       <input
                         type="email"
@@ -276,14 +328,26 @@ const ContactPage = () => {
                     />
                   </div>
 
+                  {submitError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center p-3 text-sm text-red-800 rounded-lg bg-red-50"
+                      role="alert"
+                    >
+                      <XCircle className="w-5 h-5 mr-2" />
+                      <div>{submitError}</div>
+                    </motion.div>
+                  )}
+
                   <motion.button
                     type="submit"
                     disabled={isSubmitting || isSubmitted}
-                    whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
-                    whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                    whileHover={{ scale: isSubmitting || isSubmitted ? 1 : 1.02 }}
+                    whileTap={{ scale: isSubmitting || isSubmitted ? 1 : 0.98 }}
                     className={`w-full py-4 rounded-lg font-semibold text-lg transition-all duration-300 flex items-center justify-center ${
                       isSubmitted
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-green-500 text-white cursor-not-allowed'
                         : isSubmitting
                         ? 'bg-slate-400 text-white cursor-not-allowed'
                         : 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:shadow-lg'
@@ -453,3 +517,4 @@ const ContactPage = () => {
 };
 
 export default ContactPage;
+

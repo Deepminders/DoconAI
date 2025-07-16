@@ -17,13 +17,15 @@
     "lucide": "^0.525.0",
     "lucide-react": "^0.483.0",
     "next": "15.2.2",
+    "nodemailer": "^7.0.5",
     "raf": "^3.4.1",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-markdown": "^10.1.0",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "react-widgets": "^5.8.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

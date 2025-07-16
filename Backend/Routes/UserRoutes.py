@@ -1,9 +1,8 @@
-from Controllers.UserController import add_user, get_users,find_user,update_user,delete_user, addprojectmanager, authenticate_user, create_access_token, request_password_reset, reset_password, create_staff_user, list_staff_created_by_user, get_current_user,get_user_from_token
+from Controllers.UserController import add_user, get_users,find_user,update_user,delete_user, addprojectmanager, authenticate_user, create_access_token, request_password_reset, reset_password, create_staff_user, list_staff_created_by_user, get_current_user,get_user_from_token,save_profile_picture, force_reset_password
 from Models.UserModel import UserModel,UserUpdate, TokenResponse, PasswordResetRequest, PasswordResetPayload,StaffCreateRequest
 from bson import ObjectId
-
-from fastapi import APIRouter, Depends, HTTPException, Request,Query
-
+from fastapi import APIRouter, Depends, HTTPException, Request,Query, UploadFile, File,Body
+from typing import Dict
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 router = APIRouter(prefix="/user",tags=["User"])
 
@@ -56,7 +55,13 @@ async def login(form_data: OAuth2PasswordRequestForm=Depends()):
     user=await authenticate_user(form_data.username, form_data.password)
     token_data={"sub":str(user["_id"]), "username": user["username"]}
     token= await create_access_token(token_data)
-    return {"access_token":token,"token_type":"bearer"}
+    must_change = user.get("must_change_password", False)
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "must_change_password": must_change  # ✅ Include in response
+    }
 
 @router.post("/request-password-reset")
 async def request_reset_password_route(data: PasswordResetRequest):
@@ -71,7 +76,13 @@ async def add_staff(req: StaffCreateRequest,request: Request, user: dict = Depen
     """Project Owner adds a staff by email; returns temp password"""
     print("Headers received:", request.headers)
     print("Received:", req.model_dump())
-    return await create_staff_user(req.email, req.user_role, created_by=user["_id"])
+    return await create_staff_user(
+        email=req.email,
+        user_role=req.user_role,
+        first_name=req.first_name,
+        last_name=req.last_name,
+        created_by=user["_id"]
+    )
 
 
 "/-------------------------This Route is Added By Sehara-----------------------/"
@@ -84,3 +95,40 @@ async def decode_user_token(token: str = Query(..., description="JWT token to de
     """
     return await get_user_from_token(token)
 
+@router.get("/profile")
+async def get_user_profile(user: dict = Depends(get_current_user)):
+    """
+    Returns authenticated user's profile (company, firstname, lastname, etc.)
+    """
+    print("User passed to profile route:", user)
+    return {
+       "company": user.get("company_name", ""),
+        "firstname": user.get("first_name", ""),
+        "lastname": user.get("last_name", ""),
+        "email": user.get("email", ""),
+        "username": user.get("username", ""),
+        "phone": user.get("phone_number", ""),
+        "gender": user.get("gender", ""),
+        "user_role": user.get("user_role", ""),
+        "profile_image_url": user.get("profile_image_url", "") 
+    }
+
+@router.put("/profile")
+async def update_user_profile(user_update: UserUpdate, user: dict = Depends(get_current_user)):
+    return await update_user(user["_id"], user_update)
+
+@router.post("/upload-profile-picture")
+async def upload_profile_picture(user: dict = Depends(get_current_user), file: UploadFile = File(...)):
+    try:
+        image_url = await save_profile_picture(user["_id"], file)
+        return {"profile_image_url": image_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/force-reset-password")
+async def force_reset_password_route(
+    data: Dict = Body(...),
+    user: dict = Depends(get_current_user)
+):
+    new_password = data.get("new_password")
+    return await force_reset_password(user, new_password)

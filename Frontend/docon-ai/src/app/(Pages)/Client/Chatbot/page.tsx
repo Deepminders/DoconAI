@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "../../../Components/Chatbot/sidebar";
 import ChatInput from "../../../Components/Chatbot/ChatInput";
 import ChatMessages from "../../../Components/Chatbot/ChatMessages";
-
+import UserProfileMenu from "../../../Components/Common/UserProfileMenu";
 interface Session {
   session_id: string;
   title: string;
@@ -48,8 +48,11 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-100">
+      <div className="fixed top-4 right-4 z-50">
+        <UserProfileMenu />
+      </div>
       <Sidebar
-        userId={userId}
+      
         setSessionId={setSessionId}
         setChatLog={setChatLog}
         setChatSessions={setChatSessions}

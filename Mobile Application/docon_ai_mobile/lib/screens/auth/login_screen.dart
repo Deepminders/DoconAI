@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_widgets.dart';
 import '../../theme/app_theme.dart';
+import '../../models/user_model.dart';
 import 'signup_screen.dart';
 import '../home/dashboard_screen.dart';
+import '../main_navigation.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -45,12 +47,25 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result['success']) {
+        // Store the token in AuthService
+        AuthService.setToken(result['token']);
+        
         _showSnackBar('Login successful!', isError: false);
-        // Navigate to dashboard
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => DashboardScreen()),
-        );
+        
+        // Get user data and navigate to main navigation
+        final userResult = await AuthService.getCurrentUser();
+        if (userResult['success']) {
+          final user = UserModel.fromJson(userResult['user']);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => MainNavigation()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => DashboardScreen()),
+          );
+        }
       } else {
         _showSnackBar(result['message'], isError: true);
       }

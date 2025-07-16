@@ -42,7 +42,19 @@ const NotificationItem = ({ notification, onRemove }) => {
         <div className="flex-shrink-0">{getIcon()}</div>
         <div className="ml-3 flex-1">
           {notification.title && <h4 className="text-sm font-semibold text-gray-900 mb-1">{notification.title}</h4>}
-          <p className="text-sm text-gray-700">{notification.message}</p>
+          <p className="text-sm text-gray-700">
+  {Array.isArray(notification.message) ? (
+    notification.message.map((err, i) => (
+      <span key={i} className="block">
+        {err?.loc?.slice(1).join('.')}: {err?.msg}
+      </span>
+    ))
+  ) : typeof notification.message === 'string' ? (
+    notification.message
+  ) : (
+    JSON.stringify(notification.message)
+  )}
+</p>
         </div>
         <div className="ml-4 flex-shrink-0">
           <button onClick={handleRemove} className="inline-flex text-gray-400 hover:text-gray-600"><X className="h-4 w-4" /></button>

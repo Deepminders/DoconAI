@@ -5,9 +5,10 @@ from Models.UserModel import (
     PasswordResetRequest, PasswordResetPayload,TokenData
 )
 from bson import ObjectId
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 import random
 import string
+import shutil
 import os
 import smtplib
 from email.mime.text import MIMEText
@@ -91,12 +92,36 @@ If you did not request this, please ignore this message.
             print(f"[EMAIL SENT] Reset email sent to {email}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Email send failed: {str(e)}")
+async def generate_default_avatar(first_name: str) -> str:
+    color = ''.join(random.choices('0123456789ABCDEF', k=6))
+    initial = first_name[0].upper()
+    return f"https://ui-avatars.com/api/?name={initial}&background={color}&color=fff&size=256"
+async def save_profile_picture(user_id: str, file: UploadFile) -> str:
+    file_extension = file.filename.split(".")[-1]
+    filename = f"{user_id}_profile.{file_extension}"
+    directory = "static/profile_images"
+    file_path = os.path.join(directory, filename)
 
+    os.makedirs(directory, exist_ok=True)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    image_url = f"/static/profile_images/{filename}"
+
+    # Update user's profile_image_url
+    await user_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"profile_image_url": image_url}}
+    )
+
+    return image_url
 # ===================== MAIN USER FUNCTIONS =====================
 async def add_user(user: dict) -> dict:
     # Assume user already contains: company_name, first_name, last_name, etc.
     user["password"] = get_password_hash(user["password"])
     user["username"] = f"{user['first_name'].lower()}.{user['last_name'].lower()}.{uuid4().hex[:6]}"
+    user["profile_image_url"] = generate_default_avatar(user["first_name"])
 
     try:
         
@@ -150,15 +175,14 @@ async def find_user(id: ObjectId) -> dict:
 
 async def update_user(user_id: str, user_update: UserUpdate):
     update_data = user_update.model_dump(exclude_unset=True)
-    student = await user_collection.find_one({"_id": ObjectId(user_id)})
-    if student:
-        updated_student = await user_collection.update_one(
-            {"_id": ObjectId(user_id)}, {"$set": update_data}
-        )
-        if updated_student.modified_count > 0:
-            return {"success": True, "message": "User updated successfully"}
-        return {"success": False, "message": "No changes were made"}
-    return {"success": False, "message": "User not found"}
+    print("[DEBUG] Update payload:", update_data)
+    updated_student = await user_collection.update_one(
+        {"_id": ObjectId(user_id)}, {"$set": update_data}
+    )
+
+    if updated_student.modified_count > 0:
+        return {"success": True, "message": "User updated successfully"}
+    return {"success": False, "message": "No changes were made"}
 
 async def delete_user(user_id: str):
     result = await user_collection.delete_one({"_id": ObjectId(user_id)})
@@ -188,18 +212,25 @@ async def addprojectmanager(uname: str):
 
     return {"message": "Project Manager created successfully", "username": uname}
 
-async def create_staff_user(email: str, user_role: str = "Staff", created_by: str = ""):
-    # Check if user exists
+async def create_staff_user(
+    email: str,
+    user_role: str = "Staff",
+    created_by: str = "",
+    first_name: str = "",
+    last_name: str = ""
+):
+    # Check if user already exists
     if await user_collection.find_one({"email": email}):
+        print(f"User with email {email} already exists.")
         raise HTTPException(400, "User already exists")
 
-    temp_pwd = generate_temporary_password()
+    temp_pwd = "doconai23"
     hashed = hash_password(temp_pwd)
 
     user_doc = {
         "company_name": "",
-        "first_name": "",
-        "last_name": "",
+        "first_name": first_name,
+        "last_name": last_name,
         "username": email.split("@")[0],
         "email": email,
         "phone_number": "",
@@ -207,19 +238,32 @@ async def create_staff_user(email: str, user_role: str = "Staff", created_by: st
         "user_role": user_role,
         "password": hashed,
         "created_at": datetime.now(timezone.utc),
-        "created_by": created_by,  # 👈 Add this line
+        "created_by": created_by,
+        "must_change_password": True,
     }
 
     result = await user_collection.insert_one(user_doc)
+
     staff_doc = {
         "user_id": result.inserted_id,
         "email": email,
         "role": user_role,
+        "first_name": first_name,
+        "last_name": last_name,
         "created_by": created_by,
-        "created_at": datetime.now(timezone.utc)
+        "created_at": datetime.now(timezone.utc),
     }
+
     await staff_collection.insert_one(staff_doc)
-    return {"id": str(result.inserted_id), "email": email, "temporary_password": temp_pwd}
+
+    return  {
+        "id": str(result.inserted_id),
+        "email": email,
+        "first_name": first_name,
+        "last_name": last_name,
+        "temporary_password": temp_pwd
+    }
+
 
 # ===================== PASSWORD RESET HANDLERS =====================
 async def request_password_reset(data: PasswordResetRequest):
@@ -248,7 +292,7 @@ async def reset_password(data: PasswordResetPayload):
         hashed_pwd = hash_password(data.new_password)
         updated = await user_collection.update_one(
             {"_id": ObjectId(user_id)},
-            {"$set": {"password": hashed_pwd}}
+            {"$set": {"password": hashed_pwd,  "must_change_password": False}}
         )
 
         if updated.modified_count == 0:
@@ -257,6 +301,39 @@ async def reset_password(data: PasswordResetPayload):
         return {"message": "Password reset successful"}
     except JWTError:
         raise HTTPException(status_code=401, detail="Token is invalid or expired")
+# In UserController.py
+
+from fastapi import HTTPException
+from passlib.context import CryptContext
+from bson import ObjectId
+from Config.db import user_collection
+from Models.UserModel import UserUpdate
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(pwd): 
+    return pwd_context.hash(pwd)
+
+async def force_reset_password(user: dict, new_password: str):
+    if not new_password:
+        raise HTTPException(status_code=400, detail="Password is required")
+
+    hashed_pwd = hash_password(new_password)
+
+    updated = await user_collection.update_one(
+        {"_id": ObjectId(user["_id"])},
+        {
+            "$set": {
+                "password": hashed_pwd,
+                "must_change_password": False  # ✅ clear flag
+            }
+        }
+    )
+
+    if updated.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Password update failed")
+
+    return {"message": "Password updated successfully"}
 
 async def get_user_by_id(user_id: str):
     # Example: query MongoDB to get user dict by user_id
@@ -265,6 +342,7 @@ async def get_user_by_id(user_id: str):
         user["id"] = str(user["_id"])
         return user
     return None
+
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     print("Token received:", token)
     credentials_exception = HTTPException(

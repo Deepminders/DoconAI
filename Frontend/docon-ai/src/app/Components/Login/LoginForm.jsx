@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from './Header';
-import { useNotifications } from '../Common/NotificationSystem'; // <-- Update path accordingly
+import { useNotifications } from '../Common/NotificationSystem';
 
 export default function LoginForm() {
   const [loginData, setLoginData] = useState({
@@ -10,8 +10,6 @@ export default function LoginForm() {
     password: '',
   });
   const router = useRouter();
-
-  // Initialize notification helpers
   const { success, error, warning } = useNotifications();
 
   const handleChange = (e) => {
@@ -43,10 +41,14 @@ export default function LoginForm() {
       const data = await response.json();
 
       if (response.ok) {
-        console.log('Login successful:', data);
         localStorage.setItem('token', data.access_token);
         success('Login successful!');
-        router.push('http://localhost:3000/Client/Dashboard');
+        console.log("Must Change Password:", data.must_change_password);
+        if (data.must_change_password === true) {
+            router.push('/Client/ForceResetPassword');
+        } else {
+            router.push('/Client/Dashboard');
+      }
       } else {
         error(data.detail || 'Login failed');
       }
@@ -61,7 +63,7 @@ export default function LoginForm() {
       <Header />
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="username" className="block text-sm font-medium text-gray-900">
             Username
           </label>
           <input
@@ -70,12 +72,14 @@ export default function LoginForm() {
             value={loginData.username}
             onChange={handleChange}
             placeholder="Enter your username"
-            className="w-full mt-1 px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+            className="w-full mt-1 px-4 py-2 border rounded-md 
+              text-gray-800 placeholder-gray-400 
+              focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-900">
             Password
           </label>
           <input
@@ -84,7 +88,9 @@ export default function LoginForm() {
             value={loginData.password}
             onChange={handleChange}
             placeholder="Password123"
-            className="w-full mt-1 px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+            className="w-full mt-1 px-4 py-2 border rounded-md 
+              text-gray-800 placeholder-gray-400 
+              focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 

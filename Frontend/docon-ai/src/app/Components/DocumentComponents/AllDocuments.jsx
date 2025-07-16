@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { BookOpen, Download, Edit, Eye, Search, Grid3X3, List, Calendar, User, FileText, FolderOpen, X, Trash2, LogOut, ChevronDown, Users, Folder } from 'lucide-react';
+// Add Brain icon to your imports
+
+import { BookOpen, Download, Edit, Eye, Search, Grid3X3, List, Calendar, User, FileText, FolderOpen, X, Trash2, LogOut, ChevronDown, Users, Folder, Brain, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '../Common/NotificationSystem';
 import UploadDocument from './UploadDocument';
@@ -23,6 +25,14 @@ export default function AllDocuments() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [documentView, setDocumentView] = useState('project'); // 'project' or 'own'
+  const [isSummarySidebarOpen, setIsSummarySidebarOpen] = useState(false);
+  const [documentSummary, setDocumentSummary] = useState(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState(null);
+  const [isInfoSidebarOpen, setIsInfoSidebarOpen] = useState(false);
+  const [documentInfo, setDocumentInfo] = useState(null);
+  const [isInfoLoading, setIsInfoLoading] = useState(false);
+  const [infoError, setInfoError] = useState(null);
 
   // Initialize hooks
   const router = useRouter();
@@ -44,6 +54,49 @@ export default function AllDocuments() {
     console.log('🔒 User initiated logout, opening confirmation modal');
     setIsLogoutModalOpen(true);
     setIsProfileDropdownOpen(false);
+  };
+
+  const handleSummarize = async (doc) => {
+    setIsSummaryLoading(true);
+    setSummaryError(null);
+    setDocumentSummary(null);
+    setIsSummarySidebarOpen(true);
+
+    try {
+      console.log('📄 Summarizing document:', doc.document_id);
+      const response = await fetch(`http://127.0.0.1:8000/api/doc/summarize/${doc.document_id}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Summary data:', data);
+
+      if (data.status === 'success') {
+        setDocumentSummary(data);
+        notify.success('Document summarized successfully!', {
+          title: 'AI Summary Generated',
+          duration: 2000
+        });
+      } else {
+        throw new Error(data.message || 'Failed to generate summary');
+      }
+    } catch (error) {
+      console.error('❌ Error summarizing document:', error);
+      setSummaryError(error.message);
+      notify.error('Failed to generate summary. Please try again.', {
+        title: 'Summarization Error'
+      });
+    } finally {
+      setIsSummaryLoading(false);
+    }
+  };
+
+  const closeSummarySidebar = () => {
+    setIsSummarySidebarOpen(false);
+    setDocumentSummary(null);
+    setSummaryError(null);
   };
 
   const confirmLogout = () => {
@@ -291,6 +344,129 @@ export default function AllDocuments() {
     setDocumentToDelete(null);
   };
 
+  const handleDocumentInfo = async (doc) => {
+    setIsInfoLoading(true);
+    setInfoError(null);
+    setDocumentInfo(null);
+    setIsInfoSidebarOpen(true);
+
+    try {
+      console.log('📋 Getting document info for:', doc.document_id);
+      // Use your existing route
+      const response = await fetch(`http://127.0.0.1:8000/api/doc/info/${doc.document_id}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Raw document info data:', data);
+
+      if (data.status === 'success') {
+        // Transform the raw data to match our frontend expectations
+        const transformedData = transformDocumentData(data.document);
+        setDocumentInfo(transformedData);
+        notify.success('Document information loaded successfully!', {
+          title: 'Document Info',
+          duration: 1500
+        });
+      } else {
+        throw new Error(data.message || 'Failed to get document information');
+      }
+    } catch (error) {
+      console.error('❌ Error getting document info:', error);
+      setInfoError(error.message);
+      notify.error('Failed to load document information. Please try again.', {
+        title: 'Information Error'
+      });
+    } finally {
+      setIsInfoLoading(false);
+    }
+  };
+
+  const closeInfoSidebar = () => {
+    setIsInfoSidebarOpen(false);
+    setDocumentInfo(null);
+    setInfoError(null);
+  };
+  // Add this transformation function in your component
+  const transformDocumentData = (rawDoc) => {
+    console.log('🔄 Transforming document data:', rawDoc);
+
+    // Process versions data
+    const versions_info = [];
+    if (rawDoc.versions && Array.isArray(rawDoc.versions)) {
+      rawDoc.versions.forEach((version, index) => {
+        const version_info = {
+          version_number: version.version || (index + 1),
+          upload_date: version.upload_date,
+          uploaded_by: version.uploaded_by || "Unknown",
+          file_size: version.document_size || 0, // Your DB uses 'document_size'
+          original_filename: version.original_filename || "",
+          file_type: version.file_type || "",
+          download_link: version.download_link || "",
+          document_link: version.document_link || "",
+          google_drive_id: version.google_drive_id || "",
+          page_count: version.page_count,
+          last_modified_date: version.last_modified_date,
+          is_latest: index === rawDoc.versions.length - 1
+        };
+        versions_info.push(version_info);
+      });
+    }
+
+    // Get project information (if available, you might need to fetch this separately)
+    const project_info = rawDoc.project_id ? {
+      project_id: rawDoc.project_id,
+      project_name: "Project Information", // You can enhance this later
+      project_description: ""
+    } : null;
+
+    // Calculate total file size across all versions
+    const total_size = versions_info.reduce((sum, version) => sum + (version.file_size || 0), 0);
+
+    // Get latest version info
+    const latest_version_data = versions_info.length > 0 ? {
+      version_number: versions_info[versions_info.length - 1].version_number,
+      uploaded_by: versions_info[versions_info.length - 1].uploaded_by,
+      upload_date: versions_info[versions_info.length - 1].upload_date,
+      file_type: versions_info[versions_info.length - 1].file_type,
+      file_size: versions_info[versions_info.length - 1].file_size,
+      page_count: versions_info[versions_info.length - 1].page_count,
+      original_filename: versions_info[versions_info.length - 1].original_filename
+    } : {
+      version_number: 1,
+      uploaded_by: "Unknown",
+      upload_date: rawDoc.current_version || new Date().toISOString(),
+      file_type: "",
+      file_size: 0
+    };
+
+    // Return transformed data structure
+    return {
+      document_id: rawDoc.document_id,
+      document_name: rawDoc.document_name || "Untitled",
+      document_category: rawDoc.document_category || "Uncategorized",
+      created_date: rawDoc.current_version,
+      last_modified_date: rawDoc.last_modified_date,
+      document_link: rawDoc.document_link,
+      download_link: rawDoc.download_link,
+      total_versions: versions_info.length,
+      total_size: total_size,
+      latest_version: latest_version_data,
+      project: project_info,
+      versions: versions_info,
+      document_metadata: {
+        current_version: rawDoc.current_version,
+        processing_status: "completed",
+        total_pages: latest_version_data.page_count,
+        primary_file_type: latest_version_data.file_type
+      }
+    };
+  };
+
+
+
   const handleDocumentUpdate = useCallback(async (updatedDocumentId = null) => {
     if (updatedDocumentId) {
       try {
@@ -404,7 +580,29 @@ export default function AllDocuments() {
           <span>{new Date(doc.last_modified_date).toLocaleDateString()}</span>
         </div>
       </div>
-      <div className="flex items-center justify-end p-2 border-t border-gray-100 bg-gray-50/50">
+      <div className="flex items-center justify-between p-2 border-t border-gray-100 bg-gray-50/50">
+        {/* Left side buttons */}
+        <div className="flex items-center space-x-1">
+          {/* Summarize button */}
+          <button
+            onClick={() => handleSummarize(doc)}
+            className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-colors"
+            title="Summarize with AI"
+          >
+            <Brain className="h-4 w-4" />
+          </button>
+
+          {/* Info button */}
+          <button
+            onClick={() => handleDocumentInfo(doc)}
+            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+            title="Document Information"
+          >
+            <Info className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Right side action buttons */}
         <div className="flex items-center space-x-1">
           {canView() && (
             <button onClick={() => window.open(doc.document_link, '_blank')} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="View">
@@ -430,7 +628,6 @@ export default function AllDocuments() {
       </div>
     </div>
   );
-
   const DocumentListItem = ({ doc }) => (
     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 p-3 flex items-center space-x-4">
       <div className="flex-shrink-0">{getFileIcon(doc.versions && doc.versions[0] ? doc.versions[0].original_filename : doc.document_name)}</div>
@@ -443,6 +640,15 @@ export default function AllDocuments() {
         <p>{new Date(doc.last_modified_date).toLocaleDateString()}</p>
       </div>
       <div className="flex items-center space-x-1">
+        {/* Left side buttons */}
+        <button onClick={() => handleSummarize(doc)} className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-colors" title="Summarize with AI">
+          <Brain className="h-4 w-4" />
+        </button>
+
+        <button onClick={() => handleDocumentInfo(doc)} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Document Information">
+          <Info className="h-4 w-4" />
+        </button>
+
         {canView() && (
           <button onClick={() => window.open(doc.document_link, '_blank')} className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="View">
             <Eye className="h-4 w-4" />
@@ -616,8 +822,8 @@ export default function AllDocuments() {
                 <button
                   onClick={() => handleViewChange('project')}
                   className={`flex items-center px-3 py-1 rounded-md text-sm font-medium transition-colors ${documentView === 'project'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
                     }`}
                 >
                   <Users className="h-4 w-4 mr-1" />
@@ -626,8 +832,8 @@ export default function AllDocuments() {
                 <button
                   onClick={() => handleViewChange('own')}
                   className={`flex items-center px-3 py-1 rounded-md text-sm font-medium transition-colors ${documentView === 'own'
-                      ? 'bg-white text-blue-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
                     }`}
                 >
                   <Folder className="h-4 w-4 mr-1" />
@@ -757,6 +963,313 @@ export default function AllDocuments() {
           </div>
         </div>
       )}
+
+      {/* Summary Sidebar */}
+      {isSummarySidebarOpen && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={closeSummarySidebar} />
+          <div className={`fixed top-0 right-0 h-full w-[600px] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out translate-x-0`}>
+            <div className="p-6 h-full border-l border-gray-200 flex flex-col">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6 flex-shrink-0">
+                <div className="flex items-center">
+                  <Brain className="h-6 w-6 text-orange-600 mr-3" />
+                  <h2 className="text-xl font-bold text-gray-900">AI Document Summary</h2>
+                </div>
+                <button onClick={closeSummarySidebar} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-grow overflow-y-auto">
+                {isSummaryLoading ? (
+                  <div className="flex flex-col items-center justify-center h-64">
+                    <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent mb-4"></div>
+                    <p className="text-gray-600 text-center">Analyzing document content...</p>
+                    <p className="text-sm text-gray-500 text-center mt-2">This may take a few moments</p>
+                  </div>
+                ) : summaryError ? (
+                  <div className="flex flex-col items-center justify-center h-64">
+                    <div className="text-red-500 mb-4">
+                      <FileText className="h-12 w-12" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Summary Failed</h3>
+                    <p className="text-sm text-gray-500 text-center mb-4">{summaryError}</p>
+                    <button
+                      onClick={() => documentSummary && handleSummarize({ document_id: documentSummary.document_id })}
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : documentSummary ? (
+                  <div className="space-y-6">
+                    {/* Document Info */}
+                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 text-lg mb-2">{documentSummary.document_name}</h3>
+                      <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                        <span className="bg-white px-2 py-1 rounded-md border">{documentSummary.document_category}</span>
+                        <span className="bg-white px-2 py-1 rounded-md border">Version {documentSummary.version}</span>
+                        <span className="bg-white px-2 py-1 rounded-md border">{Math.round(documentSummary.content_length / 1000)}k chars</span>
+                      </div>
+                    </div>
+
+                    {/* Summary Content */}
+                    <div className="prose prose-sm max-w-none">
+                      <div
+                        className="text-gray-700 leading-relaxed"
+                        dangerouslySetInnerHTML={{
+                          __html: documentSummary.summary
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/^## (.*$)/gm, '<h2 class="text-lg font-semibold text-gray-900 mt-6 mb-3">$1</h2>')
+                            .replace(/^### (.*$)/gm, '<h3 class="text-md font-medium text-gray-800 mt-4 mb-2">$1</h3>')
+                            .replace(/^- (.*$)/gm, '<li class="ml-4 mb-1">$1</li>')
+                            .replace(/\n\n/g, '<br><br>')
+                            .replace(/\n/g, '<br>')
+                        }}
+                      />
+                    </div>
+
+                    {/* Generation Info */}
+                    <div className="border-t border-gray-200 pt-4 text-xs text-gray-500">
+                      <p>Generated on {new Date(documentSummary.generated_at).toLocaleString()}</p>
+                      <p>Processing method: {documentSummary.processing_info?.extraction_method}</p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Footer */}
+              {documentSummary && !isSummaryLoading && (
+                <div className="flex-shrink-0 border-t border-gray-200 pt-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Brain className="h-4 w-4 mr-1" />
+                      <span>Powered by AI</span>
+                    </div>
+                    <button
+                      onClick={() => handleSummarize({ document_id: documentSummary.document_id })}
+                      className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
+                    >
+                      Regenerate Summary
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+      {/* Document Info Sidebar - Updated version with better error handling */}
+      {isInfoSidebarOpen && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={closeInfoSidebar} />
+          <div className={`fixed top-0 right-0 h-full w-[500px] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out translate-x-0`}>
+            <div className="p-6 h-full border-l border-gray-200 flex flex-col">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6 flex-shrink-0">
+                <div className="flex items-center">
+                  <Info className="h-6 w-6 text-blue-600 mr-3" />
+                  <h2 className="text-xl font-bold text-gray-900">Document Information</h2>
+                </div>
+                <button onClick={closeInfoSidebar} className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="flex-grow overflow-y-auto">
+                {isInfoLoading ? (
+                  <div className="flex flex-col items-center justify-center h-64">
+                    <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mb-4"></div>
+                    <p className="text-gray-600 text-center">Loading document information...</p>
+                  </div>
+                ) : infoError ? (
+                  <div className="flex flex-col items-center justify-center h-64">
+                    <div className="text-red-500 mb-4">
+                      <FileText className="h-12 w-12" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Information Failed</h3>
+                    <p className="text-sm text-gray-500 text-center mb-4">{infoError}</p>
+                    <button
+                      onClick={() => documentInfo && handleDocumentInfo({ document_id: documentInfo.document_id })}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : documentInfo ? (
+                  <div className="space-y-6">
+                    {/* Document Overview */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900 text-lg mb-2">{documentInfo.document_name}</h3>
+                      <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                        <span className="bg-white px-2 py-1 rounded-md border">{documentInfo.document_category}</span>
+                        <span className="bg-white px-2 py-1 rounded-md border">{documentInfo.total_versions} version{documentInfo.total_versions !== 1 ? 's' : ''}</span>
+                        <span className="bg-white px-2 py-1 rounded-md border">{(documentInfo.total_size / 1024 / 1024).toFixed(2)} MB total</span>
+                      </div>
+                    </div>
+
+                    {/* Project Information */}
+                    {documentInfo.project && (
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                          <FolderOpen className="h-4 w-4 mr-2" />
+                          Project Information
+                        </h4>
+                        <p className="text-sm font-medium text-gray-800">{documentInfo.project.project_name}</p>
+                        <p className="text-xs text-gray-600 mt-1">Project ID: {documentInfo.project.project_id}</p>
+                        {documentInfo.project.project_description && (
+                          <p className="text-xs text-gray-600 mt-1">{documentInfo.project.project_description}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Latest Version Info */}
+                    {documentInfo.latest_version && (
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Latest Version
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Version:</span>
+                            <span className="font-medium">v{documentInfo.latest_version.version_number}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Uploaded by:</span>
+                            <span className="font-medium">{documentInfo.latest_version.uploaded_by}</span>
+                          </div>
+                          {documentInfo.latest_version.upload_date && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Upload date:</span>
+                              <span className="font-medium">{new Date(documentInfo.latest_version.upload_date).toLocaleDateString()}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">File size:</span>
+                            <span className="font-medium">{(documentInfo.latest_version.file_size / 1024 / 1024).toFixed(2)} MB</span>
+                          </div>
+                          {documentInfo.latest_version.page_count && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Pages:</span>
+                              <span className="font-medium">{documentInfo.latest_version.page_count}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Version History */}
+                    {documentInfo.versions && documentInfo.versions.length > 0 && (
+                      <div className="border border-gray-200 rounded-lg p-4">
+                        <h4 className="font-medium text-gray-900 mb-3 flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Version History ({documentInfo.total_versions} version{documentInfo.total_versions !== 1 ? 's' : ''})
+                        </h4>
+                        <div className="space-y-3 max-h-64 overflow-y-auto">
+                          {documentInfo.versions.map((version, index) => (
+                            <div key={index} className={`border rounded-lg p-3 ${version.is_latest ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex items-center">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${version.is_latest ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                    v{version.version_number}
+                                  </span>
+                                  {version.is_latest && (
+                                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      Latest
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex space-x-1">
+                                  {version.document_link && (
+                                    <button
+                                      onClick={() => window.open(version.document_link, '_blank')}
+                                      className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                                      title="View"
+                                    >
+                                      <Eye className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                  {version.download_link && (
+                                    <button
+                                      onClick={() => window.open(version.download_link, '_blank')}
+                                      className="p-1 text-gray-500 hover:text-green-600 hover:bg-green-100 rounded transition-colors"
+                                      title="Download"
+                                    >
+                                      <Download className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-600 space-y-1">
+                                <div className="flex justify-between">
+                                  <span>Uploaded by:</span>
+                                  <span className="font-medium">{version.uploaded_by}</span>
+                                </div>
+                                {version.upload_date && (
+                                  <div className="flex justify-between">
+                                    <span>Date:</span>
+                                    <span>{new Date(version.upload_date).toLocaleDateString()}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between">
+                                  <span>Size:</span>
+                                  <span>{(version.file_size / 1024 / 1024).toFixed(2)} MB</span>
+                                </div>
+                                {version.page_count && (
+                                  <div className="flex justify-between">
+                                    <span>Pages:</span>
+                                    <span>{version.page_count}</span>
+                                  </div>
+                                )}
+                                {version.original_filename && (
+                                  <div className="mt-2">
+                                    <span className="text-gray-500">File:</span>
+                                    <p className="text-gray-700 text-xs mt-1 truncate">{version.original_filename}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Document Metadata */}
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h4 className="font-medium text-gray-900 mb-3">Document Details</h4>
+                      <div className="space-y-2 text-sm">
+                        {documentInfo.created_date && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Created:</span>
+                            <span className="font-medium">{new Date(documentInfo.created_date).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        {documentInfo.last_modified_date && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Last Modified:</span>
+                            <span className="font-medium">{new Date(documentInfo.last_modified_date).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Document ID:</span>
+                          <span className="font-mono text-xs">{documentInfo.document_id}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+
+
     </div>
   );
 }
