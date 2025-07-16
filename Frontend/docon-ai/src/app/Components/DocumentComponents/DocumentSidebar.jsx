@@ -1,4 +1,4 @@
-import { Book, BoxIcon, Home, LayoutDashboardIcon, Library, LibraryBig, MessageCircle, Menu, FileText,X } from 'lucide-react';
+import { Book, BoxIcon, Home, LayoutDashboardIcon, Library, LibraryBig, MessageCircle, Menu,FileText,X,FileStack } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -138,7 +138,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
                         onClick={onToggle}
     />
     <SidebarItem 
-                        icon={<MessageCircle size={24} />} 
+                        icon={<FileStack size={24} />} 
                         label="Document Comparator" 
                         isActive={activeStatus === 'documentComparator'?true:false}
                         route="/Client/DocumentComparator"

@@ -11,7 +11,7 @@ def getIndividualStaff(staff: dict) -> dict:
         "gender": staff.get("gender"),
         "email": staff.get("email"),
         "phone_number": staff.get("phone_number"),
-        "staff_image_url": staff.get("staff_image_url"),
+        "profile_image_url": staff.get("profile_image_url"),
         # Staff-specific fields
         "assigned_projects": [str(p) for p in staff.get("assigned_projects", [])]
         

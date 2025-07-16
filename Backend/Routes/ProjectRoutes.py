@@ -1,6 +1,7 @@
 from Controllers.ProjectController import (
     add_project,
-    get_projects,
+    get_projects_by_owner,
+    assign_staff_to_project,
     find_project,
     update_project,
     delete_project,
@@ -9,6 +10,11 @@ from Controllers.ProjectController import (
 )
 from Models.ProjectModel import ProjectModel, ProjectUpdateModel, RemoveProjectRequest
 from bson import ObjectId
+from fastapi import APIRouter, Depends, HTTPException
+from Controllers import UserController
+from fastapi import Body
+from typing import List
+from fastapi.responses import JSONResponse
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from Models.report_components import (
     generate_vector_store as summarizer_generate_vector_store,
@@ -16,17 +22,46 @@ from Models.report_components import (
     SummaryRequest,
 )
 
-routerproject = APIRouter(prefix="/project", tags=["Project"])
+routerproject = APIRouter(prefix="/projects", tags=["Project"])
 
 
-@routerproject.post("/addproject")
-async def add_project_route(project: ProjectModel):
-    return await add_project(project)
+@routerproject.post("/{owner_id}/add")
+async def create_project(
+    owner_id: str,
+    project: ProjectModel,
+    user=Depends(UserController.get_current_user)
+):
+    if user["user_role"].lower() != "project owner":
+        raise HTTPException(status_code=403, detail="Only Project Owners can add projects")
+    return await add_project(project, owner_id)
 
 
-@routerproject.get("/getproject")
-async def get_project_route():
-    return await get_projects()
+
+@routerproject.get("/by-owner/{owner_id}")
+async def get_projects_by_owner(
+    owner_id: str,
+    user=Depends(UserController.get_current_user)
+):
+    if user["user_role"].lower() != "project owner":
+        raise HTTPException(status_code=403, detail="Only Project Owners can view their projects")
+    return await get_projects_by_owner(owner_id)
+
+@routerproject.post("/{project_id}/assign")
+async def assign_staff_to_project(
+    project_id: str,
+    staff_ids: List[str] = Body(..., embed=True),
+    user=Depends(UserController.get_current_user)
+):
+    if user["user_role"].lower() != "project owner":
+        raise HTTPException(status_code=403, detail="Only Project Owners can assign staff")
+    return await assign_staff_to_project(project_id, staff_ids)
+
+@routerproject.get("/{project_id}/members")
+async def get_project_members(
+    project_id: str,
+    user=Depends(UserController.get_current_user)
+):
+    return await get_staff_by_project(project_id)
 
 
 @routerproject.get("/findProject/{project_id}")
