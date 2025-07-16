@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
+#import whisper
+#import tempfile
 from datetime import datetime,timezone
 from Config.db import session_collection
 from Models.Chatbotmodel import ChatRequest, ChatResponse, NewSessionRequest, SessionIDResponse
@@ -11,7 +13,7 @@ from fastapi import Depends
 router = APIRouter(prefix="/chatbot", tags=["Chatbot"])
 
 from Config.db import chat_collection
-
+#model = whisper.load_model("base")
 @router.post("/start-session", response_model=SessionIDResponse)
 async def start_session(req: NewSessionRequest, current_user: UserModel = Depends(get_current_user)):
     from uuid import uuid4
@@ -29,17 +31,20 @@ async def start_session(req: NewSessionRequest, current_user: UserModel = Depend
     return SessionIDResponse(session_id=session_id)
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(chat_request: ChatRequest):
-    # Call handle_chat, which includes RAG + fallback logic
+async def chat(
+    chat_request: ChatRequest,
+    current_user: UserModel = Depends(get_current_user),  # <-- add dependency
+):
     try:
+        user_id = str(current_user["_id"]) if isinstance(current_user["_id"], ObjectId) else current_user["_id"]
+
         reply = await handle_chat(
-            chat_request.user_id,
+            user_id,
             chat_request.session_id,
             chat_request.message
         )
         return ChatResponse(reply=reply)
     except Exception as e:
-  
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Chatbot failed: {str(e)}")
 
@@ -47,7 +52,7 @@ async def chat(chat_request: ChatRequest):
 async def list_sessions(current_user: UserModel = Depends(get_current_user)):
     user_id = str(current_user["_id"]) if isinstance(current_user["_id"], ObjectId) else current_user["_id"]
 # or current_user["_id"] if it's a dict
-    sessions_cursor = session_collection.find({"user_id": user_id}).sort("created_time", -1)
+    sessions_cursor =session_collection.find({"user_id": user_id}).sort("created_time", -1)
     result = []
     async for s in sessions_cursor:
         result.append({
@@ -74,9 +79,12 @@ async def get_chat_history(session_id: str, current_user: UserModel = Depends(ge
     return history
 
 
-@router.delete("/delete-empty-sessions/{user_id}")
-async def delete_empty_sessions(user_id: str):
+@router.delete("/delete-empty-sessions")
+async def delete_empty_sessions(current_user: UserModel = Depends(get_current_user)):
     try:
+        user_id = (
+            str(current_user["_id"]) if isinstance(current_user["_id"], ObjectId) else current_user["_id"]
+        )
         # Get all sessions of the user
         session_docs = await session_collection.find({"user_id": user_id}).to_list(None)
         session_ids = [s["session_id"] for s in session_docs]
@@ -93,6 +101,7 @@ async def delete_empty_sessions(user_id: str):
         return {"deleted_count": result.deleted_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete empty sessions: {str(e)}")
+
 
 @router.get("/history/{user_id}/{session_id}")
 async def get_chat_history(user_id: str, session_id: str):
@@ -111,3 +120,11 @@ async def get_chat_history(user_id: str, session_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching history: {str(e)}")
 
+#@router.post("/voice-to-text")
+#async def transcribe_audio(file: UploadFile = File(...)):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
+        contents = await file.read()
+        temp_audio.write(contents)
+        temp_audio.flush()
+        result = model.transcribe(temp_audio.name)
+        return {"text": result["text"]}

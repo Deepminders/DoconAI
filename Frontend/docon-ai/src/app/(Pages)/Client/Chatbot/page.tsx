@@ -4,6 +4,7 @@ import Sidebar from "../../../Components/Chatbot/sidebar";
 import ChatInput from "../../../Components/Chatbot/ChatInput";
 import ChatMessages from "../../../Components/Chatbot/ChatMessages";
 import UserProfileMenu from "../../../Components/Common/UserProfileMenu";
+
 interface Session {
   session_id: string;
   title: string;
@@ -14,37 +15,82 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [chatSessions, setChatSessions] = useState<Session[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const userId = "6818345c2304d86da0d35376"; // Replace with actual auth value
+  const [token, setToken] = useState<string | null>(null);
 
-  // Load sessions once on mount
+  // Load token from localStorage on mount
   useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) setToken(storedToken);
+  }, []);
+
+  // Fetch sessions (with auth) once token is available
+  useEffect(() => {
+    if (!token) return;
+
     const fetchSessions = async () => {
       try {
-      // Clean up empty sessions first
-      await fetch(`http://localhost:8000/chatbot/delete-empty-sessions/${userId}`, {
-        method: "DELETE",
-      });
+        // Clean up empty sessions first
+        await fetch(`http://localhost:8000/chatbot/delete-empty-sessions`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      // Then fetch valid sessions
-      const res = await fetch(`http://localhost:8000/chatbot/sessions/${userId}`);
-      const data = await res.json();
-      setChatSessions(data);
+        // Fetch valid sessions
+        const res = await fetch(`http://localhost:8000/chatbot/sessions`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        setChatSessions(data);
       } catch (error) {
         console.error("Failed to fetch sessions:", error);
       }
     };
+
     fetchSessions();
-  }, [userId]);
+  }, [token]);
 
-  const hasMessages = chatLog.length > 0;
+  // Fetch chat history when selectedChat changes
+  useEffect(() => {
+    if (!token || !selectedChat) {
+      setChatLog([]);
+      setSessionId(null);
+      return;
+    }
 
+    const fetchChatHistory = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/chatbot/history/${selectedChat}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const history = await res.json();
+        setChatLog(history);
+        setSessionId(selectedChat);
+      } catch (error) {
+        console.error("Failed to fetch chat history:", error);
+      }
+    };
+
+    fetchChatHistory();
+  }, [selectedChat, token]);
+
+  // Add new session to the top and select it
   const handleUpdateSessions = (newSessionId: string) => {
     setChatSessions((prev) => [
       { session_id: newSessionId, title: "Untitled" },
-      ...prev,
+      ...prev.filter((s) => s.session_id !== newSessionId),
     ]);
     setSelectedChat(newSessionId);
   };
+
+  const hasMessages = chatLog.length > 0;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-100">
@@ -52,7 +98,6 @@ export default function ChatPage() {
         <UserProfileMenu />
       </div>
       <Sidebar
-      
         setSessionId={setSessionId}
         setChatLog={setChatLog}
         setChatSessions={setChatSessions}
@@ -77,7 +122,6 @@ export default function ChatPage() {
                   setChatLog={setChatLog}
                   sessionId={sessionId}
                   setSessionId={setSessionId}
-                  userId={userId}
                   updateSessions={handleUpdateSessions}
                 />
               </div>
@@ -96,7 +140,6 @@ export default function ChatPage() {
                 setChatLog={setChatLog}
                 sessionId={sessionId}
                 setSessionId={setSessionId}
-                userId={userId}
                 updateSessions={handleUpdateSessions}
               />
             </div>
