@@ -121,7 +121,7 @@ async def add_user(user: dict) -> dict:
     # Assume user already contains: company_name, first_name, last_name, etc.
     user["password"] = get_password_hash(user["password"])
     user["username"] = f"{user['first_name'].lower()}.{user['last_name'].lower()}.{uuid4().hex[:6]}"
-    user["profile_image_url"] = generate_default_avatar(user["first_name"])
+    user["profile_image_url"] = await generate_default_avatar(user["first_name"])
 
     try:
         
