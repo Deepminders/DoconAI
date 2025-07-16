@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from bson import ObjectId
-from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project,get_project,fetchUserProjects,fetchOwnerProjects
+from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project,get_project,fetchUserProjects,fetchOwnerProjects,get_assigned_staff_project
 from Models.StaffModel import StaffModel
 from Controllers import UserController
 
@@ -86,3 +86,7 @@ async def get_owner_projects(user_id: str):
     Example: GET /api/doc/owner/681c944f8dfa6f904a04ffec/projects
     """
     return await fetchOwnerProjects(user_id)
+
+@router.get("/projects/{project_id}/assigned-staff")
+async def get_assigned_staff_for_project(project_id: str):
+    return get_assigned_staff_project(project_id)

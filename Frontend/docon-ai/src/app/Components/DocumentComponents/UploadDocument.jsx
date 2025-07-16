@@ -34,7 +34,7 @@ export default function UploadDocument({ onUpload }) {
   const fetchUserProjects = async (userId, userRole) => {
     setIsProjectsLoading(true);
     try {
-      console.log('📡 Fetching projects for user:', userId);
+      console.log('📡 Fetching projects for user:', userId, userRole);
       if (userRole != 'Project Manager' && userRole != 'Project Owner') {
         const response = await fetch(`http://127.0.0.1:8000/staff/user/${userId}/projects`);
 

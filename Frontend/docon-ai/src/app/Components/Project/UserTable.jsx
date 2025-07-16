@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 import UserRow from "./UserRow";
 import AssignUserModal from "./AssignUserModel";
-import StaffModalWithTrigger  from "./AssignProjects";
+import StaffModalWithTrigger from "./AssignProjects";
 //import { toast } from "react-toastify"; // Optional for notifications
 
 const UsersTable = ({
   users = [],
-  onRemoveFromProject = () => {},
+  onRemoveFromProject = () => { },
   isProjectView = false,
   projectId = null,
 }) => {
@@ -25,10 +25,17 @@ const UsersTable = ({
 
     // Use staff_id as the primary identifier
     return (
-      user.staff_id ||
-      user._id ||
-      user.id ||
-      `temp-${Math.random().toString(36).substr(2, 9)}`
+      // "user_id"=user.staff_id ||
+      // user._id ||
+      // user.id ||
+      // `temp-${Math.random().toString(36).substr(2, 9)}`,
+      // "user_role"=user.user_role,
+      // "staff_fname"=user.first_fname
+      {
+        "user_id": user.user_id || user.staff_id || user.id,
+        "user_role": user.user_role,
+        "staff_fname": user.first_fname
+      }
     );
   };
 
@@ -46,7 +53,7 @@ const UsersTable = ({
       setIsAssigning(false);
     }
   };
-
+  
   return (
     <div className="mt-8">
       <h1 className="relative flex items-center justify-center text-2xl font-light mb-4 text-sky-700">
@@ -57,7 +64,7 @@ const UsersTable = ({
         <span className="flex-[2] border-t-3 border-sky-700 ml-4"></span>
       </h1>
 
-      <StaffModalWithTrigger projectid = {projectId}/>
+      <StaffModalWithTrigger projectid={projectId} />
       {/* Error message display */}
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
@@ -84,7 +91,7 @@ const UsersTable = ({
           <tbody className="divide-y divide-gray-200">
             {users.map((user) => {
               const userId = getUserId(user);
-
+              console.log("Rendering user:", userId, user);
               if (
                 !user ||
                 typeof user !== "object" ||
@@ -95,13 +102,15 @@ const UsersTable = ({
               }
 
               return (
-                <UserRow
-                  key={userId}
-                  user={user}
-                  onRemoveFromProject={onRemoveFromProject}
-                  isProjectView={isProjectView}
-                  projectId={projectId}
-                />
+                users.map((user) => {
+                  <UserRow
+                    key={userId}
+                    user={user}
+                    onRemoveFromProject={onRemoveFromProject}
+                    isProjectView={isProjectView}
+                    projectId={projectId}
+                  />
+                })
               );
             })}
           </tbody>

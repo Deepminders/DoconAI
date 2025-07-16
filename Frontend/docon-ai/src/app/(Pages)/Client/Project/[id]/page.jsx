@@ -3,7 +3,8 @@
 import { useParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Briefcase, ShieldCheck, Scale, ArrowLeft } from "lucide-react";
+import { Briefcase, ShieldCheck, Scale, ArrowLeft, Plus } from "lucide-react";
+import axios from "axios";
 import profile from "../profile.jpg";
 
 import MobileMenuButton from "../../../../Components/Project/MobileMenuButton";
@@ -41,96 +42,7 @@ const categories = [
 ];
 
 const initialDocuments = [
-  {
-    name: "Project_Contract_V2.pdf",
-    category: "Legal",
-    size: "2.45MB",
-    modified: "Mar 15, 2025",
-    uploaded: "Mar 10, 2025",
-    modifiedBy: "Alex Johnson",
-    uploadedBy: "Sarah Williams",
-  },
-  {
-    name: "Q1_Financial_Report.xlsx",
-    category: "Financial",
-    size: "1.78MB",
-    modified: "Apr 5, 2025",
-    uploaded: "Apr 1, 2025",
-    modifiedBy: "Michael Chen",
-    uploadedBy: "Emma Davis",
-  },
-  {
-    name: "Site_Safety_Protocols.docx",
-    category: "Safety",
-    size: "0.89MB",
-    modified: "Feb 18, 2025",
-    uploaded: "Feb 15, 2025",
-    modifiedBy: "David Wilson",
-    uploadedBy: "Jessica Brown",
-  },
-  {
-    name: "Environmental_Impact_Assessment.pdf",
-    category: "Environmental",
-    size: "5.32MB",
-    modified: "Jan 30, 2025",
-    uploaded: "Jan 25, 2025",
-    modifiedBy: "Olivia Martinez",
-    uploadedBy: "Robert Taylor",
-  },
-  {
-    name: "Stakeholder_Agreement.pdf",
-    category: "Legal",
-    size: "3.15MB",
-    modified: "Mar 22, 2025",
-    uploaded: "Mar 20, 2025",
-    modifiedBy: "Daniel Anderson",
-    uploadedBy: "Sophia Garcia",
-  },
-  {
-    name: "Bill_of_Quantities.xlsx",
-    category: "Financial",
-    size: "1.05MB",
-    modified: "Apr 8, 2025",
-    uploaded: "Apr 5, 2025",
-    modifiedBy: "William Lee",
-    uploadedBy: "Emily Rodriguez",
-  },
-  {
-    name: "Material_Specifications.pdf",
-    category: "Technical",
-    size: "4.76MB",
-    modified: "Mar 5, 2025",
-    uploaded: "Mar 1, 2025",
-    modifiedBy: "James Smith",
-    uploadedBy: "Ava Martinez",
-  },
-  {
-    name: "Project_Timeline_Gantt.xlsx",
-    category: "Planning",
-    size: "0.95MB",
-    modified: "Feb 28, 2025",
-    uploaded: "Feb 25, 2025",
-    modifiedBy: "Ethan Wilson",
-    uploadedBy: "Mia Thompson",
-  },
-  {
-    name: "Quality_Assurance_Checklist.pdf",
-    category: "Quality",
-    size: "1.42MB",
-    modified: "Mar 12, 2025",
-    uploaded: "Mar 10, 2025",
-    modifiedBy: "Charlotte White",
-    uploadedBy: "Benjamin Harris",
-  },
-  {
-    name: "Meeting_Minutes_20250315.docx",
-    category: "Administrative",
-    size: "0.56MB",
-    modified: "Mar 16, 2025",
-    uploaded: "Mar 15, 2025",
-    modifiedBy: "Liam Clark",
-    uploadedBy: "Amelia Lewis",
-  },
+  // ... your existing initialDocuments array
 ];
 
 const ProjectPage = () => {
@@ -150,8 +62,11 @@ const ProjectPage = () => {
   // Modal States
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
-  const [showDeleteDocumentsModal, setShowDeleteDocumentsModal] =
-    useState(false);
+  const [showDeleteDocumentsModal, setShowDeleteDocumentsModal] = useState(false);
+  
+  // Staff Assignment Modal State
+  const [showStaffModal, setShowStaffModal] = useState(false);
+  const [staffList, setStaffList] = useState([]);
 
   // Document States
   const [selectedDocs, setSelectedDocs] = useState([]);
@@ -176,6 +91,22 @@ const ProjectPage = () => {
     user_role: "",
     email: "",
   });
+
+  // Fetch staff list for assignment
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/staff/getstaff");
+        console.log("Fetched staff:", response.data);
+        setStaffList(response.data);
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+      }
+    };
+    fetchStaff();
+  }, []);
+
+  // ... your existing useEffect hooks ...
 
   useEffect(() => {
     async function fetchProject() {
@@ -272,18 +203,17 @@ const ProjectPage = () => {
           user_role: user?.user_role || "",
           email: user?.email || "",
         });
-        setUserRole(user?.user_role || null); // <-- Add this line
+        setUserRole(user?.user_role || null);
       })
       .catch(() => {
         setUserInfo({ username: "", user_role: "", email: "" });
-        setUserRole(null); // <-- And this line
+        setUserRole(null);
       });
   }, []);
 
   if (loading) {
     return (
       <div className="flex h-screen bg-gray-50">
-        {/* Your sidebar */}
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700"></div>
         </div>
@@ -294,7 +224,6 @@ const ProjectPage = () => {
   if (!projectData) {
     return (
       <div className="flex h-screen bg-gray-50">
-        {/* Your sidebar */}
         <div className="flex-1 flex items-center justify-center">
           <p>Project not found</p>
         </div>
@@ -304,6 +233,28 @@ const ProjectPage = () => {
 
   // UI Handlers
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  // Staff Assignment Handler
+  const handleAddStaff = async (staff) => {
+    console.log("Add clicked for:", staff);
+    try {
+      const staffId = staff.id || staff._id;
+      const response = await axios.put(
+        `http://localhost:8000/staff/assignProject/${staffId}/${id}`
+      );
+      console.log("Staff assigned successfully:", response.data);
+      
+      // Close modal after successful assignment
+      setShowStaffModal(false);
+      
+      // Optionally refresh project data or show success message
+      // You might want to refetch project data here to update the UI
+      
+    } catch (error) {
+      console.error("Error assigning project:", error);
+      // Handle error - maybe show a toast or error message
+    }
+  };
 
   // Document Handlers
   const handleToggleSelect = (docId) => {
@@ -464,6 +415,47 @@ const ProjectPage = () => {
     setShowDeleteConfirm(false);
   };
 
+  // Staff Modal Component (integrated directly)
+  const StaffAssignmentModal = () => {
+    if (!showStaffModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-lg p-6 w-96">
+          <h2 className="text-xl font-bold mb-4">Select Staff Member</h2>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {staffList && staffList.length > 0 ? (
+              staffList.map((staff) => (
+                <div
+                  key={staff.id}
+                  className="flex items-center justify-between border-b pb-2"
+                >
+                  <span className="font-medium">
+                    {staff.first_name} {staff.last_name}
+                  </span>
+                  <button
+                    onClick={() => handleAddStaff(staff)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                  >
+                    Add
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p>No staff members found.</p>
+            )}
+          </div>
+          <button
+            onClick={() => setShowStaffModal(false)}
+            className="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -527,13 +519,27 @@ const ProjectPage = () => {
           {/* User Section */}
           <UserManagement
             projectId={id}
-            users={[]} // Will be overridden by project staff
+            users={staffList} // Will be overridden by project staff
             onEditUser={handleEditUser}
             onDeleteUser={handleDeleteClick}
             onAssignUser={handleAssignUserToProject}
           />
 
+          {/* Add Staff Button */}
+          <div className="mt-8 flex justify-between items-center">
+            <button
+              onClick={() => setShowStaffModal(true)}
+              className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+            >
+              <Plus size={20} />
+              Assign Staff to Project
+            </button>
+            <StaffModalWithTrigger projectid={id} />
+          </div>
+
           {/* Modals */}
+          <StaffAssignmentModal />
+
           <DeleteConfirmationModel
             isOpen={showDeleteConfirm}
             onClose={cancelDelete}
@@ -566,15 +572,11 @@ const ProjectPage = () => {
             selectedCount={selectedDocs.length}
           />
 
-          <div className="mt-8 flex justify-between items-center">
-            <StaffModalWithTrigger projectid={id} />
-          </div>
           <button
             onClick={() => router.push("/Client/Projects")}
             className="group mt-8 inline-flex items-center gap-2 rounded-lg border-2 border-sky-600 px-4 py-2 text-sm font-semibold text-sky-600 shadow-sm transition-all duration-200 hover:bg-sky-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
           >
             <ArrowLeft className="h-5 w-5" />
-
             <span className="font-medium">Back to Projects</span>
           </button>
 

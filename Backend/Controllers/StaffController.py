@@ -85,18 +85,18 @@ async def delete_staff(staff_id:ObjectId)->dict:
         }
 
 
-# async def update_staff(staff_id:ObjectId,staff_data)->dict:
-#     try:
-#         result = await staff_collection.update_one({"_id":staff_id},{"$set": staff_data})
-#         return{
-#             "Message":"Updated Successfully"
-#         }
+async def update_staff(staff_id:ObjectId,staff_data)->dict:
+    try:
+        result = await staff_collection.update_one({"_id":staff_id},{"$set": staff_data})
+        return{
+            "Message":"Updated Successfully"
+        }
 
-#     except Exception as e:
-#         return {
-#             "Error": "Staff not Updated",
-#             "Details": str(e)  
-#         }
+    except Exception as e:
+        return {
+            "Error": "Staff not Updated",
+            "Details": str(e)  
+        }
 
 async def assign_project(s_id:str, p_id:str) -> dict:
     try:
@@ -143,7 +143,7 @@ async def fetchUserProjects(user_id: str):
     """
     try:
         # Find the user in staff collection
-        staff_member = await staff_collection.find_one({"_id": ObjectId(user_id)})
+        staff_member = await staff_collection.find_one({"user_id": ObjectId(user_id)})
         
         if not staff_member:
             raise HTTPException(status_code=404, detail="Staff member not found")
@@ -249,3 +249,64 @@ async def fetchOwnerProjects(user_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch user projects: {str(e)}")
+    
+    
+async def get_assigned_staff_project(project_id: str):
+    """
+    Fetches staff members who have the given project_id in their 'assigned_projects' array.
+    """
+    try:
+        # Validate and convert project_id to ObjectId
+        try:
+            project_obj_id = ObjectId(project_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid project ID format.")
+
+        # Query staff_collection:
+        # Find staff documents where:
+        # 1. 'assigned_projects' field exists (implicitly handled by $in)
+        # 2. 'assigned_projects' array contains the specific project_obj_id
+        cursor = staff_collection.find(
+            {"assigned_projects": {"$in": [project_obj_id]}}
+        )
+
+        # Convert cursor to a list of staff documents
+        assigned_staff_documents = await cursor.to_list(length=None)
+
+        # Format staff details for response
+        formatted_staff_list = []
+        for staff_member in assigned_staff_documents:
+            staff_id_str = str(staff_member["_id"]) # Convert ObjectId to string
+
+            # Handle datetime objects if they exist in staff_collection documents
+            # (e.g., 'createdAt', 'updatedAt' if your staff docs have them)
+            created_at = staff_member.get("createdAt")
+            if isinstance(created_at, datetime.datetime):
+                created_at = created_at.isoformat()
+
+            updated_at = staff_member.get("updatedAt")
+            if isinstance(updated_at, datetime.datetime):
+                updated_at = updated_at.isoformat()
+
+            formatted_staff_list.append({
+                "id": staff_id_str, # Use 'id' for frontend consistency
+                "first_name": staff_member.get("first_name", ""),
+                "last_name": staff_member.get("last_name", ""),
+                "email": staff_member.get("email", ""),
+                "user_role": staff_member.get("user_role", ""), # Assuming staff docs have this
+                # Add any other relevant fields from staff_collection that the frontend needs
+                "createdAt": created_at,
+                "updatedAt": updated_at,
+            })
+
+        return JSONResponse({
+            "status": "success",
+            "staff_members": formatted_staff_list,
+            "count": len(formatted_staff_list)
+        })
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Error fetching assigned staff for project {project_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch assigned staff: {str(e)}")

@@ -3,15 +3,12 @@ from pydantic import BaseModel
 def getIndividualStaff(staff: dict) -> dict:
     return {
         "id": str(staff["_id"]),
-        "company_name": staff.get("company_name"),
+        "user_id": str(staff.get("user_id")),
         "first_name": staff.get("first_name"),
         "last_name": staff.get("last_name"),
         "username": staff.get("username"),
-        "user_role": staff.get("user_role"),
-        "gender": staff.get("gender"),
+        "role": staff.get("role"),
         "email": staff.get("email"),
-        "phone_number": staff.get("phone_number"),
-        "profile_image_url": staff.get("profile_image_url"),
         # Staff-specific fields
         "assigned_projects": [str(p) for p in staff.get("assigned_projects", [])]
         

@@ -11,8 +11,8 @@ const UserRow = ({
   const [isVisible, setIsVisible] = useState(true);
 
   const userData = {
-    id: user.staff_id || user._id || user.id,
-    name: user.name || `${user.staff_fname || ''} ${user.staff_lname || ''}`.trim(),
+    id: user.user_id || user._id || user.id,
+    name: user.first_name || `${user.staff_fname || ''} ${user.staff_lname || ''}`.trim(),
     email: user.email || user.staff_email,
     role: user.role || user.staff_role,
   };
