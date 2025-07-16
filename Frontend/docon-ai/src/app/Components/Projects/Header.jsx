@@ -91,7 +91,7 @@ const Header = ({
   }, [projects]);
 
   return (
-    <div className="fixed top-0 left-0 lg:left-60 right-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-200 transition-all duration-300">
+    <div className="fixed top-0 left-0 lg:left-80 right-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-200 transition-all duration-300">
       {/* Main Header Content */}
       <div className="px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-6">
