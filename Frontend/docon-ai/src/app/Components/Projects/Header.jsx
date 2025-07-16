@@ -91,9 +91,9 @@ const Header = ({
   }, [projects]);
 
   return (
-    <div className="fixed top-0 left-0 lg:left-60 right-0 z-40 bg-white/95 backdrop-blur-lg border-b border-gray-200 transition-all duration-300">
+    <div className="fixed top-0 left-0 lg:left-60 right-0 z-20 bg-white/95 backdrop-blur-lg border-b border-gray-200 transition-all duration-300">
       {/* Main Header Content */}
-      <div className="px-4 sm:px-6 lg:px-8 py-4">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 ml-10">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-6">
 
           {/* Left Section - Title & Breadcrumb */}
@@ -226,7 +226,7 @@ const Header = ({
           {/* Left Actions */}
           <div className="flex flex-wrap items-center gap-2">
             <button
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg 
+              className="inline-flex items-center ml-10 space-x-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg 
                 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 
                 transition-all duration-200 shadow-sm"
               onClick={onFilterClick}

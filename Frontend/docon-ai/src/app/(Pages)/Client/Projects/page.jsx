@@ -239,63 +239,58 @@ export default function ProjectsDashboard() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <div className="min-h-screen bg-gray-50 flex">
-        {/* Sidebar */}
-        <DocumentSidebar
-          isOpen={isSidebarOpen}
-          onToggle={toggleSidebar}
-          isMobile={isMobile}
-          active={'documents'}
-        />
-
-        {/* Main Content Area */}
-        <div className={`
-          flex-1 flex flex-col
-          transition-all duration-300 ease-in-out
-          ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}
-          lg:-ml-75
-          min-h-screen
-        `}>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto pt-[150px] max-[600px]:pt-[150px] max-[765px]:pt-[10px] md:pt-[50px] lg:pt-[20px]">
-        <Header
-          onFilterClick={handleFilterClick}
-          onSortClick={handleSortClick}
-          isReversed={isReversed}
-          onNewProjectClick={handleNewProjectClick}
-          onSearch={handleSearch}
-          projects={allProjects}
-          // Only show new project button if user is Project Owner
-          showNewProjectButton={userRole === "Project Owner"}
-        />
-
-        <ProjectList
-          projects={filteredProjects}
-          filter={filter}
-          isMobile={isMobile}
-        />
-      </div>
-
-      <FilterPopup
-        isVisible={isFilterPopupVisible}
-        onClose={() => setIsFilterPopupVisible(false)}
-        onFilterChange={setFilter}
-        currentFilter={filter}
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Sidebar */}
+      <DocumentSidebar
+        isOpen={isSidebarOpen}
+        onToggle={toggleSidebar}
+        isMobile={isMobile}
+        active={'documents'}
       />
 
-      {isProjectPopupVisible && (
-        <ProjectDetailsPopup
-          onClose={() => setIsProjectPopupVisible(false)}
-          onSubmit={handleNewProjectSubmit}
-          onRefresh={refreshProjects}
-          isLoading={loading}
-          defaultClient={userInfo?.username || ""}
-          clientId={userInfo?.user_id || ""}
-        />
-      )}
+      {/* Main Content Area */}
+      <div className={`
+        flex-1 flex flex-col overflow-y-auto min-h-screen
+        pt-[150px] max-[600px]:pt-[150px] max-[765px]:pt-[10px] md:pt-[50px] lg:pt-[20px]
+        transition-all duration-300 ease-in-out
+        ${!isMobile && isSidebarOpen ? 'ml-2' : 'ml-0'}
+      `}>
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <Header
+            onFilterClick={handleFilterClick}
+            onSortClick={handleSortClick}
+            isReversed={isReversed}
+            onNewProjectClick={handleNewProjectClick}
+            onSearch={handleSearch}
+            projects={allProjects}
+            showNewProjectButton={userRole === "Project Owner"}
+          />
+
+          <ProjectList
+            projects={sortedProjects}
+            filter={filter}
+            isMobile={isMobile}
+          />
+
+          <FilterPopup
+            isVisible={isFilterPopupVisible}
+            onClose={() => setIsFilterPopupVisible(false)}
+            onFilterChange={setFilter}
+            currentFilter={filter}
+          />
+
+          {isProjectPopupVisible && (
+            <ProjectDetailsPopup
+              onClose={() => setIsProjectPopupVisible(false)}
+              onSubmit={handleNewProjectSubmit}
+              onRefresh={refreshProjects}
+              isLoading={loading}
+              defaultClient={userInfo?.username || ""}
+              clientId={userInfo?.user_id || ""}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
