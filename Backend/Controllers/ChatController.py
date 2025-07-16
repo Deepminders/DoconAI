@@ -16,12 +16,11 @@ from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_google_community import GoogleSearchAPIWrapper
 from Config.db import chat_collection, session_collection, search_cache_collection
 from dotenv import load_dotenv
-
-load_dotenv(dotenv_path=os.path.join("Controllers", ".env"))
-os.environ["SERPAPI_API_KEY"] = os.getenv("SERPAPI_API_KEY")
-
+GOOGLE_CSE_ID = "d72d0c92f115c4d7b"  # Replace with your actual CSE ID
+GOOGLE_API_KEY = "AIzaSyAqXNdisEfTfLGxAvV6YRGZnM5s_0q3xyA"
+SERPAPI_API_KEY = "4c99224275812d62f41822a85daad444ebf91a13"
 # ---------------- Load Embeddings + FAISS ----------------
-print("GOOGLE_API_KEY:", os.getenv("GOOGLE_API_KEY"))
+print(GOOGLE_API_KEY, GOOGLE_CSE_ID, SERPAPI_API_KEY)
 EMBEDDING_MODEL = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 VECTOR_DB_PATH = "embeddings/index.faiss"
 CHUNKS_PATH = "embeddings/doc_chunks.pkl"
@@ -64,7 +63,7 @@ Answer:
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-flash",
     temperature=0.5,
-    google_api_key=os.getenv("GOOGLE_API_KEY")
+    google_api_key=GOOGLE_API_KEY
 )
 
 qa_chain = ConversationalRetrievalChain.from_llm(
@@ -75,8 +74,8 @@ qa_chain = ConversationalRetrievalChain.from_llm(
 )
 
 search_tool = GoogleSearchAPIWrapper(k=5,
-    google_api_key=os.getenv("GOOGLE_API_KEY"),
-    google_cse_id=os.getenv("GOOGLE_CSE_ID"),
+    google_api_key=GOOGLE_API_KEY,
+    google_cse_id=GOOGLE_CSE_ID,
 )
 
 def is_meaningful_message(msg: str) -> bool:
@@ -123,10 +122,9 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
 
     try:
         retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
-        docs = await asyncio.to_thread(retriever.get_relevant_documents, user_message)
+        docs = await retriever.ainvoke(user_message)
 
         if docs:
-            # Run RAG first
             result = await asyncio.to_thread(qa_chain.invoke, {
                 "question": user_message,
                 "chat_history": [(msg["role"], msg["content"]) for msg in history[::-1]]
@@ -135,12 +133,29 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
             tier = "documents"
             retrieved_doc_summaries = [doc.page_content[:200].replace("\n", " ") for doc in docs]
 
-            # Check for vague RAG answer to fallback
             vague_phrases = [
                 "the provided text does not",
                 "does not contain information",
                 "cannot find",
-                "no information available"
+                "no information available",
+                "no jokes",
+                "not included",
+                "no content",
+                "not available",
+                "sorry",
+                "not found",
+                "not specified",
+                "not mentioned",
+                "not provided",
+                "not in the text",
+                "not in the provided text",
+                "not in the documents",
+                "not in the provided documents",
+                "not in the context",
+                "not in the context provided",
+                "not in the context of the question",
+                "not in the context of the provided text",
+                "not in the context of the documents",
             ]
             if any(phrase in reply.lower() for phrase in vague_phrases):
                 print("[DEBUG] RAG response vague, trying Google Search fallback.")
@@ -155,28 +170,24 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
                     tier = "google_search_live"
                     retrieved_doc_summaries = snippets[:5]
 
-                    # Cache this search answer
                     await search_cache_collection.insert_one({
                         "query": user_message,
                         "summary": reply,
                         "timestamp": datetime.now(timezone.utc)
                     })
                 else:
-                    # No snippets found, fallback to general knowledge
                     fallback_prompt = f"""You are a helpful assistant. Answer the following question using your general knowledge. Avoid saying 'provided text'.\n\nQuestion: {user_message}"""
                     response = await asyncio.to_thread(llm.invoke, fallback_prompt)
                     reply = response.content.strip()
                     tier = "general_knowledge"
                     retrieved_doc_summaries = []
         else:
-            # No docs found - try cache first
             cached = await search_cache_collection.find_one({"query": user_message})
             if cached:
                 reply = cached["summary"]
                 tier = "google_search_cached"
                 retrieved_doc_summaries = []
             else:
-                # Try live Google search
                 search_results = search_tool.results(user_message, num_results=5)
                 snippets = [r.get("snippet", "") for r in search_results if "snippet" in r]
 
@@ -194,15 +205,13 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
                         "timestamp": datetime.now(timezone.utc)
                     })
                 else:
-                    # No snippets found, fallback to general knowledge
                     fallback_prompt = f"""You are a helpful assistant. Answer the following question using your general knowledge. Avoid saying 'provided text'.\n\nQuestion: {user_message}"""
                     response = await asyncio.to_thread(llm.invoke, fallback_prompt)
                     reply = response.content.strip()
                     tier = "general_knowledge"
                     retrieved_doc_summaries = []
 
-        # Save chat messages and system tier metadata (your existing saving logic)
-        await store_chat_messages(chat_collection, user_id, session_id, user_message, reply)
+        await store_chat_messages(chat_collection, user_id, session_id, user_message, reply, tier)
 
         await session_collection.update_one(
             {"session_id": session_id},
@@ -214,16 +223,16 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 async def store_chat_messages(
     collection: AsyncIOMotorCollection,
     user_id: str,
     session_id: str,
     user_msg: str,
-    assistant_msg: str
+    assistant_msg: str,
+    tier: str = None 
 ):
     now = datetime.now(timezone.utc)
-    await collection.insert_many([
+    messages = [
         {
             "user_id": user_id,
             "session_id": session_id,
@@ -238,4 +247,8 @@ async def store_chat_messages(
             "content": assistant_msg,
             "created_time": now
         }
-    ])
+    ]
+    if tier:
+        messages[1]["tier"] = tier
+
+    await collection.insert_many(messages)

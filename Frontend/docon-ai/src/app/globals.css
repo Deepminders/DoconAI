@@ -184,3 +184,22 @@ body {
 .animate-pulse-slow {
   animation: pulse-slow 8s ease-in-out infinite;
 }
+
+/* Custom scrollbar style for WebKit browsers */
+textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: white;
+  border-radius: 5px;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 5px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background-color:white;
+}

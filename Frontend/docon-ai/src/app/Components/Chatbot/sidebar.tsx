@@ -29,39 +29,53 @@ export default function Sidebar({
   selectedChat,
   setSelectedChat,
 }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [loadingSessions, setLoadingSessions] = useState(true);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-
+  
+  const [token, setToken] = useState<string | null>(null);
   // 🔁 Fetch sessions
   useEffect(() => {
-    const fetchSessions = async () => {
-      if (!token) return;
+  if (typeof window !== "undefined") {
+    const t = localStorage.getItem("token");
+    setToken(t);
+  }
+}, []);
 
-      try {
-        const res = await fetch("http://localhost:8000/chatbot/sessions", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
+useEffect(() => {
+  const fetchSessions = async () => {
+    if (!token) return;
 
-        // ✅ Defensive check
-        if (Array.isArray(data)) {
-          setChatSessions(data);
-        } else {
-          console.warn("Unexpected response format for sessions:", data);
-          setChatSessions([]);
-        }
-      } catch (err) {
-        console.error("Error fetching chat sessions:", err);
+    setLoadingSessions(true);
+    try {
+      const res = await fetch("http://localhost:8000/chatbot/sessions", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+
+      if (Array.isArray(data)) {
+        setChatSessions(data);
+      } else {
+        console.warn("Unexpected response format for sessions:", data);
         setChatSessions([]);
       }
-    };
+    } catch (err) {
+      console.error("Error fetching chat sessions:", err);
+      setChatSessions([]);
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
 
+  if (token) {
     fetchSessions();
-  }, [token, setChatSessions]);
+  }
+}, [token, setChatSessions]);
 
+  // ✅ Auto-load most recent session if none selected
+  
   // ➕ Start New Chat
   const handleNewChat = () => {
     setSessionId(null);
@@ -71,6 +85,8 @@ export default function Sidebar({
 
   // 🕘 Load chat history
   const handleSelectSession = async (sessionId: string) => {
+    if (!sessionId || !token) return;
+
     setSelectedChat(sessionId);
     setSessionId(sessionId);
 
@@ -80,6 +96,13 @@ export default function Sidebar({
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (!res.ok) {
+        console.warn("Failed to fetch chat history:", res.status);
+        setChatLog([]);
+        return;
+      }
+
       const history = await res.json();
       setChatLog(Array.isArray(history) ? history : []);
     } catch (error) {
@@ -147,7 +170,10 @@ export default function Sidebar({
           <h3 className="text-white text-sm font-semibold opacity-60 px-1 mb-2 tracking-wide">
             Previous Chats
           </h3>
-          {Array.isArray(chatSessions) && chatSessions.length > 0 ? (
+
+          {loadingSessions ? (
+            <p className="text-white text-sm px-2 italic opacity-50">Loading...</p>
+          ) : Array.isArray(chatSessions) && chatSessions.length > 0 ? (
             chatSessions.map((session) => (
               <p
                 key={session.session_id}
