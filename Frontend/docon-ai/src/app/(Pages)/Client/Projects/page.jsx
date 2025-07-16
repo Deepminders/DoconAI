@@ -7,6 +7,14 @@ import ProjectDetailsPopup from '../../../Components/Projects/ProjectDetailsPopu
 import ProjectList from '../../../Components/Projects/ProjectList';
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 
+// Helper to get token from localStorage (or cookies if you use them)
+const getToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("token");
+  }
+  return null;
+};
+
 const parseDate = (dateString) => {
   if (!dateString) return new Date(0);
   try {
@@ -40,6 +48,8 @@ export default function ProjectsDashboard() {
   const [isFilterPopupVisible, setIsFilterPopupVisible] = useState(false);
   const [isProjectPopupVisible, setIsProjectPopupVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
 
   useEffect(() => {
@@ -74,7 +84,7 @@ export default function ProjectsDashboard() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/project/getproject');
+      const response = await fetch('http://127.0.0.1:8000/projects/getproject');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setAllProjects(data);
@@ -126,7 +136,7 @@ export default function ProjectsDashboard() {
   const handleNewProjectSubmit = async (projectData) => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/project/addproject', {
+      const response = await fetch('http://127.0.0.1:8000/projects/addproject', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,13 +158,27 @@ export default function ProjectsDashboard() {
   };
 
   const filteredProjects = useMemo(() => {
-    if (loading || !allProjects.length) return [];
-    return filter === "All Projects"
-      ? allProjects
-      : allProjects.filter(project =>
-        mapStatusToFilter(project.projectStatus) === filter
+    if (loading || !allProjects.length || !userInfo?.user_id) return [];
+    // Only projects for this user
+    let projects = allProjects.filter(
+      project => project.client_id === userInfo.user_id
+    );
+    // Status filter
+    if (filter !== "All Projects") {
+      projects = projects.filter(
+        project => mapStatusToFilter(project.projectStatus) === filter
       );
-  }, [allProjects, filter, loading]);
+    }
+    // Search filter
+    if (searchTerm) {
+      projects = projects.filter(
+        project =>
+          project.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          project.projectLead?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return projects;
+  }, [allProjects, loading, userInfo, filter, searchTerm]);
 
   const sortedProjects = useMemo(() => {
     return [...filteredProjects].sort((a, b) => {
@@ -164,13 +188,24 @@ export default function ProjectsDashboard() {
     });
   }, [filteredProjects, isReversed]);
 
-  // Filter projects based on search term
-  const searchFilteredProjects = useMemo(() => {
-    return sortedProjects.filter(project =>
-      project.projectName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.projectLead?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [sortedProjects, searchTerm]);
+  // Fetch user info from token
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`);
+        if (!res.ok) throw new Error("Failed to fetch user info");
+        const user = await res.json();
+        setUserRole(user?.user_role || null);
+        setUserInfo(user); // Save the full user object
+      } catch (err) {
+        setUserRole(null);
+        setUserInfo(null);
+      }
+    };
+    fetchUserInfo();
+  }, []);
 
   if (loading) return (
     <div className="flex h-screen">
@@ -216,30 +251,29 @@ export default function ProjectsDashboard() {
 
         {/* Main Content Area */}
         <div className={`
-                                flex-1 flex flex-col
-                                transition-all duration-300 ease-in-out
-                                ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}
-                                lg:-ml-75
-                                min-h-screen
-                              `}>
-
+          flex-1 flex flex-col
+          transition-all duration-300 ease-in-out
+          ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}
+          lg:-ml-75
+          min-h-screen
+        `}>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto pt-[150px] max-[600px]:pt-[150px] max-[765px]:pt-[10px] md:pt-[50px] lg:pt-[20px]">
-       
-
         <Header
           onFilterClick={handleFilterClick}
           onSortClick={handleSortClick}
           isReversed={isReversed}
           onNewProjectClick={handleNewProjectClick}
           onSearch={handleSearch}
-          projects={allProjects} // Pass actual projects data
+          projects={allProjects}
+          // Only show new project button if user is Project Owner
+          showNewProjectButton={userRole === "Project Owner"}
         />
 
         <ProjectList
-          projects={searchFilteredProjects}
+          projects={filteredProjects}
           filter={filter}
           isMobile={isMobile}
         />
@@ -258,6 +292,8 @@ export default function ProjectsDashboard() {
           onSubmit={handleNewProjectSubmit}
           onRefresh={refreshProjects}
           isLoading={loading}
+          defaultClient={userInfo?.username || ""}
+          clientId={userInfo?.user_id || ""}
         />
       )}
     </div>

@@ -12,6 +12,7 @@ import {
   FileDiff,
   Users,
 } from 'lucide-react';
+
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -178,6 +179,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
           )}
         </nav>
 
+
         {/* Footer */}
         <div className="absolute bottom-4 left-4 right-4">
           <div className="bg-sky-800 rounded-lg p-3">
@@ -190,6 +192,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
       </div>
     </>
   );
+
 }
 
 // Sidebar Item Component

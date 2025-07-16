@@ -20,7 +20,7 @@ const UserManagement = ({
 
       try {
         setLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/project/staff-by-project/${projectId}`);
+        const response = await fetch(`http://127.0.0.1:8000/projects/staff-by-project/${projectId}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -47,7 +47,7 @@ const handleRemoveFromProject = async (staffId) => {
     setError(null);
 
     const response = await fetch(
-      `http://127.0.0.1:8000/project/staff/${staffId}/remove-project`,
+      `http://127.0.0.1:8000/projects/staff/${staffId}/remove-project`,
       {
         method: 'PATCH',
         headers: {

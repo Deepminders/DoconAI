@@ -9,12 +9,12 @@ export default function UploadDocument({ onUpload }) {
   const [uploadStep, setUploadStep] = useState('initial');
   const [classificationData, setClassificationData] = useState(null);
   const [confirmedCategory, setConfirmedCategory] = useState('');
-  
+
   // Project selection state
   const [userProjects, setUserProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [isProjectsLoading, setIsProjectsLoading] = useState(false);
-  
+
   // User state from token
   const [user, setUser] = useState({
     user_id: '',
@@ -27,36 +27,62 @@ export default function UploadDocument({ onUpload }) {
 
   const fileInputRef = useRef(null);
   const docNameRef = useRef(null);
-  
+
   const notify = useNotifications();
 
   // Fetch user's assigned projects
-  const fetchUserProjects = async (userId) => {
+  const fetchUserProjects = async (userId, userRole) => {
     setIsProjectsLoading(true);
     try {
-      console.log('📡 Fetching projects for user:', userId);
-      const response = await fetch(`http://127.0.0.1:8000/staff/user/${userId}/projects`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user projects');
-      }
-      
-      const data = await response.json();
-      console.log('✅ User projects data:', data);
-      
-      if (data.status === 'success') {
-        setUserProjects(data.projects || []);
-        
-        // Auto-select if only one project
-        if (data.projects && data.projects.length === 1) {
-          setSelectedProjectId(data.projects[0].project_id);
-          console.log('🎯 Auto-selected single project:', data.projects[0].project_name);
+      console.log('📡 Fetching projects for user:', userId, userRole);
+      if (userRole != 'Project Manager' && userRole != 'Project Owner') {
+        const response = await fetch(`http://127.0.0.1:8000/staff/user/${userId}/projects`);
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch user projects');
         }
-        
-        notify.info(`Found ${data.count} assigned projects`, {
-          title: 'Projects Loaded',
-          duration: 2000
-        });
+
+        const data = await response.json();
+        console.log('✅ User projects data:', data);
+
+        if (data.status === 'success') {
+          setUserProjects(data.projects || []);
+
+          // Auto-select if only one project
+          if (data.projects && data.projects.length === 1) {
+            setSelectedProjectId(data.projects[0].project_id);
+            console.log('🎯 Auto-selected single project:', data.projects[0].project_name);
+          }
+
+          notify.info(`Found ${data.count} assigned projects`, {
+            title: 'Projects Loaded',
+            duration: 2000
+          });
+        }
+      }
+      else {
+        const response = await fetch(`http://127.0.0.1:8000/staff/owner/${userId}/projects`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user projects');
+        }
+
+        const data = await response.json();
+        console.log('✅ User projects data:', data);
+
+        if (data.status === 'success') {
+          setUserProjects(data.projects || []);
+
+          // Auto-select if only one project
+          if (data.projects && data.projects.length === 1) {
+            setSelectedProjectId(data.projects[0].project_id);
+            console.log('🎯 Auto-selected single project:', data.projects[0].project_name);
+          }
+
+          notify.info(`Found ${data.count} assigned projects`, {
+            title: 'Projects Loaded',
+            duration: 2000
+          });
+        }
       }
     } catch (error) {
       console.error('❌ Error fetching projects:', error);
@@ -97,10 +123,10 @@ export default function UploadDocument({ onUpload }) {
       console.log('👤 Upload user name:', userData.first_name);
 
       setUser(userData);
-      
+
       // Fetch user's projects after getting user data
-      await fetchUserProjects(userData.user_id);
-      
+      await fetchUserProjects(userData.user_id, userData.user_role);
+
     } catch (error) {
       console.error('❌ Error fetching user data for upload:', error);
       notify.error('Failed to authenticate user. Please login again.', {
@@ -117,10 +143,10 @@ export default function UploadDocument({ onUpload }) {
 
   const handleFileSelection = (file) => {
     const allowedTypes = [
-        'application/pdf', 
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     ];
     const allowedExtensions = ['.pdf', '.docx', '.xls', '.xlsx'];
     const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
@@ -140,14 +166,14 @@ export default function UploadDocument({ onUpload }) {
     if (file) handleFileSelection(file);
   };
 
-  const handleDragOver = (e) => { 
-    e.preventDefault(); 
-    setIsDragging(true); 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
   };
 
-  const handleDragLeave = (e) => { 
-    e.preventDefault(); 
-    setIsDragging(false); 
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
   };
 
   const handleDrop = (e) => {
@@ -178,12 +204,12 @@ export default function UploadDocument({ onUpload }) {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/doc/classify', { 
-        method: 'POST', 
-        body: formData 
+      const response = await fetch('http://127.0.0.1:8000/api/doc/classify', {
+        method: 'POST',
+        body: formData
       });
-      if (!response.ok) { 
-        throw new Error('Document classification failed'); 
+      if (!response.ok) {
+        throw new Error('Document classification failed');
       }
       const data = await response.json();
       setClassificationData(data);
@@ -227,21 +253,21 @@ export default function UploadDocument({ onUpload }) {
     console.log('📤 Uploading document with user_id:', user.user_id, 'project_id:', selectedProjectId);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/doc/upload', { 
-        method: 'POST', 
-        body: formData 
+      const response = await fetch('http://127.0.0.1:8000/api/doc/upload', {
+        method: 'POST',
+        body: formData
       });
-      if (!response.ok) { 
-        throw new Error('Final file upload failed'); 
+      if (!response.ok) {
+        throw new Error('Final file upload failed');
       }
       const data = await response.json();
       console.log('✅ Upload successful:', data);
-      
+
       const selectedProject = userProjects.find(p => p.project_id === selectedProjectId);
-      notify.success(`Document uploaded to "${selectedProject?.project_name}" project successfully!`, { 
-        title: 'Upload Successful' 
+      notify.success(`Document uploaded to "${selectedProject?.project_name}" project successfully!`, {
+        title: 'Upload Successful'
       });
-      
+
       if (onUpload) onUpload();
       clearFile();
     } catch (error) {
@@ -258,8 +284,8 @@ export default function UploadDocument({ onUpload }) {
     setClassificationData(null);
     setConfirmedCategory('');
     setUploadStep('initial');
-    if(fileInputRef.current) fileInputRef.current.value = "";
-    if(docNameRef.current) docNameRef.current.value = "";
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (docNameRef.current) docNameRef.current.value = "";
   };
 
   // Show loading while user data is being fetched
@@ -288,7 +314,7 @@ export default function UploadDocument({ onUpload }) {
       <div className="flex flex-col items-center justify-center p-8 bg-yellow-50 border border-yellow-200 rounded-lg">
         <p className="text-yellow-600 font-medium mb-2">No Projects Assigned</p>
         <p className="text-yellow-500 text-sm">You need to be assigned to at least one project to upload documents.</p>
-        <button 
+        <button
           onClick={() => fetchUserProjects(user.user_id)}
           className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors"
         >
@@ -341,29 +367,27 @@ export default function UploadDocument({ onUpload }) {
           )}
         </div>
 
-        <div 
-          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
-            isDragging ? 'border-blue-500 bg-blue-50' : 'border-sky-900'
-          }`} 
-          onDragOver={handleDragOver} 
-          onDragLeave={handleDragLeave} 
+        <div
+          className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-sky-900'
+            }`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           <p className="text-sky-900 mb-4">Drag & drop a PDF, DOCX, or Excel file</p>
-          <input 
-            type="file" 
-            className="hidden" 
-            accept=".pdf,.docx,.xls,.xlsx" 
-            ref={fileInputRef} 
-            onChange={handleFileInputChange} 
-            id="fileInput" 
-            disabled={isLoading || !selectedProjectId} 
+          <input
+            type="file"
+            className="hidden"
+            accept=".pdf,.docx,.xls,.xlsx"
+            ref={fileInputRef}
+            onChange={handleFileInputChange}
+            id="fileInput"
+            disabled={isLoading || !selectedProjectId}
           />
-          <label 
-            htmlFor="fileInput" 
-            className={`bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer transition-all duration-200 ${
-              isLoading || !selectedProjectId ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+          <label
+            htmlFor="fileInput"
+            className={`bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer transition-all duration-200 ${isLoading || !selectedProjectId ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
           >
             Choose File
           </label>
@@ -371,16 +395,16 @@ export default function UploadDocument({ onUpload }) {
             <p className="text-sm text-red-500 mt-2">Please select a project first</p>
           )}
         </div>
-        
+
         {selectedFile && (
           <>
             <div className="mt-4">
-              <input 
-                type="text" 
-                className="w-full border border-sky-900 rounded-lg p-2 placeholder:text-sky-900 placeholder:opacity-30" 
-                placeholder="Enter Document Name (optional)" 
-                ref={docNameRef} 
-                defaultValue={selectedFile.name.replace(/\.[^/.]+$/, "")} 
+              <input
+                type="text"
+                className="w-full border border-sky-900 rounded-lg p-2 placeholder:text-sky-900 placeholder:opacity-30"
+                placeholder="Enter Document Name (optional)"
+                ref={docNameRef}
+                defaultValue={selectedFile.name.replace(/\.[^/.]+$/, "")}
               />
             </div>
             {uploadStep === 'confirming' && classificationData && (
@@ -389,9 +413,9 @@ export default function UploadDocument({ onUpload }) {
                 <p className="text-sm text-gray-600 mb-2">
                   Predicted Category: <span className="font-bold">{classificationData.predicted_category}</span>
                 </p>
-                <select 
-                  className="w-full border border-sky-900 rounded-lg p-2" 
-                  value={confirmedCategory} 
+                <select
+                  className="w-full border border-sky-900 rounded-lg p-2"
+                  value={confirmedCategory}
                   onChange={(e) => setConfirmedCategory(e.target.value)}
                 >
                   <option value="">Select a category</option>
@@ -411,9 +435,9 @@ export default function UploadDocument({ onUpload }) {
             )}
             <div className="mt-4 flex space-x-2">
               {uploadStep === 'initial' && (
-                <button 
-                  className="flex-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-all duration-200 py-2" 
-                  onClick={handleClassify} 
+                <button
+                  className="flex-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 transition-all duration-200 py-2"
+                  onClick={handleClassify}
                   disabled={isLoading || !selectedProjectId}
                 >
                   {isLoading ? (
@@ -427,9 +451,9 @@ export default function UploadDocument({ onUpload }) {
                 </button>
               )}
               {uploadStep === 'confirming' && (
-                <button 
-                  className="flex-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-all duration-200 py-2" 
-                  onClick={handleConfirmUpload} 
+                <button
+                  className="flex-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-all duration-200 py-2"
+                  onClick={handleConfirmUpload}
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -442,9 +466,9 @@ export default function UploadDocument({ onUpload }) {
                   )}
                 </button>
               )}
-              <button 
-                className="flex-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-all duration-200 py-2" 
-                onClick={clearFile} 
+              <button
+                className="flex-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-all duration-200 py-2"
+                onClick={clearFile}
                 disabled={isLoading}
               >
                 Clear
