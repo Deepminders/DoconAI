@@ -182,8 +182,8 @@ export default function ProjectsDashboard() {
 
   const sortedProjects = useMemo(() => {
     return [...filteredProjects].sort((a, b) => {
-      const dateA = parseDate(a.updatedAt || a.endDate || a.startDate);
-      const dateB = parseDate(b.updatedAt || b.endDate || b.startDate);
+      const dateA = parseDate(a.startDate);
+      const dateB = parseDate(b.startDate);
       return isReversed ? dateA - dateB : dateB - dateA;
     });
   }, [filteredProjects, isReversed]);
