@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-import { Book, BoxIcon, Home, LayoutDashboardIcon, Library, LibraryBig, MessageCircle, Menu,FileText,X,FileStack } from 'lucide-react';
-=======
 'use client';
 
 import {
@@ -15,7 +12,7 @@ import {
   FileDiff,
   Users,
 } from 'lucide-react';
->>>>>>> dev
+
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -182,65 +179,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
           )}
         </nav>
 
-<<<<<<< HEAD
-                {/* Navigation Menu */}
-                <nav className="space-y-2">
-                  
-                    <SidebarItem 
-                        icon={<LayoutDashboardIcon size={24} />} 
-                        label="Dashboard" 
-                        isActive={activeStatus === 'dashboard'?true:false}
-                        route="/Client/Dashboard"
-                        onClick={onToggle}
-                    />
-                    <SidebarItem 
-                        icon={<LibraryBig size={24} />} 
-                        label="Documents" 
-                        isActive={activeStatus === 'library'?true:false}
-                        route="/Client/DocLibrary"
-                        onClick={onToggle}
-                    />
-                    <SidebarItem 
-                        icon={<FileText size={24} />} 
-                        label="Projects" 
-                        isActive={activeStatus === 'projects'?true:false}
-                        route="/Client/Projects"
-                        onClick={onToggle}
-                    />
-                    <SidebarItem 
-                        icon={<MessageCircle size={24} />} 
-                        label="Docon ChatBot" 
-                        isActive={activeStatus === 'chat'?true:false}
-                        route="/Client/Chatbot"
-                        onClick={onToggle}
-                    />
-                     <SidebarItem 
-                        icon={<Book size={24} />} 
-                        label="User Management" 
-                        isActive={activeStatus === 'users'}
-                        route="/Client/UserManagement"
-                        onClick={onToggle}
-    />
-    <SidebarItem 
-                        icon={<FileStack size={24} />} 
-                        label="Document Comparator" 
-                        isActive={activeStatus === 'documentComparator'?true:false}
-                        route="/Client/DocumentComparator"
-                        onClick={onToggle}
-                    />
-                </nav>
 
-                {/* Footer */}
-                <div className="absolute bottom-4 left-4 right-4">
-                    <div className="bg-sky-800 rounded-lg p-3">
-                        <p className="text-sm text-sky-200">Welcome back!</p>
-                        <p className="text-xs text-sky-300 mt-1">Manage your documents efficiently</p>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
-=======
         {/* Footer */}
         <div className="absolute bottom-4 left-4 right-4">
           <div className="bg-sky-800 rounded-lg p-3">
@@ -253,7 +192,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
       </div>
     </>
   );
->>>>>>> dev
+
 }
 
 // Sidebar Item Component

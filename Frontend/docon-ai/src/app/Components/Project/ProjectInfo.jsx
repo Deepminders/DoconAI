@@ -30,7 +30,7 @@ const ProjectInfo = ({
         setError(null);
         
         // Replace with your actual FastAPI backend URL
-          const response = await fetch(`http://localhost:8000/project/findProject/${projectId}`);
+          const response = await fetch(`http://localhost:8000/projects/findProject/${projectId}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

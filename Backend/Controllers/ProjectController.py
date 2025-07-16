@@ -10,7 +10,6 @@ import json
 
 
 async def get_projects() -> dict:
-
     project_cursor = project_collection.find()
     return await getAllProject(project_cursor)
 

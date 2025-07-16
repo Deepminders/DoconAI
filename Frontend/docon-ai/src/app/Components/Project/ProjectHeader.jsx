@@ -45,7 +45,7 @@ const ProjectHeader = ({
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`http://localhost:8000/project/findProject/${projectId}`);
+        const response = await fetch(`http://localhost:8000/projects/findProject/${projectId}`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -145,7 +145,7 @@ const ProjectHeader = ({
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://127.0.0.1:8000/project/${editData.projectId}`, {
+      const response = await fetch(`http://127.0.0.1:8000/projects/${editData.projectId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

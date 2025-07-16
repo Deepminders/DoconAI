@@ -30,16 +30,9 @@ async def get_project_route():
     return await get_projects()
 
 
-@routerproject.post("/{owner_id}/add")
-async def create_project(
-    owner_id: str,
-    project: ProjectModel,
-    user=Depends(UserController.get_current_user)
-):
-    if user["user_role"].lower() != "project owner":
-        raise HTTPException(status_code=403, detail="Only Project Owners can add projects")
-    return await add_project(project, owner_id)
-
+@routerproject.post("/addproject")
+async def add_project_route(project: ProjectModel):
+    return await add_project(project)
 
 
 @routerproject.get("/by-owner/{owner_id}")
