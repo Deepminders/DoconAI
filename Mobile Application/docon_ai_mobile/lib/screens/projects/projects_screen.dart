@@ -66,7 +66,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     });
 
     try {
-      final result = await AuthService.getUserProjects(currentUser!.userId);
+      final result = await AuthService.getUserProjects(currentUser!.userId, currentUser!.userRole);
 
       if (result['success']) {
         setState(() {

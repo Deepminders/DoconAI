@@ -102,39 +102,102 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
+                const SizedBox(height: 50),
                 
-                // Logo/Brand Section
+                // Professional Logo/Brand Section
                 Center(
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryBlue.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppTheme.primaryBlue,
+                              AppTheme.primaryBlue.withOpacity(0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withOpacity(0.3),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withOpacity(0.1),
+                              blurRadius: 48,
+                              offset: const Offset(0, 16),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.lock_outline,
-                      color: AppTheme.white,
-                      size: 40,
-                    ),
+                        child: const Icon(
+                          Icons.smart_toy_outlined,
+                          color: AppTheme.white,
+                          size: 48,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Project Name
+                      Text(
+                        'DoCon AI',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryBlue,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Tagline
+                      Text(
+                        'Intelligent Document Solutions',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppTheme.greyText.withOpacity(0.8),
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 50),
+                
+                // Professional Header
+                Center(
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Welcome Back',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primaryBlue,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sign in to access your dashboard',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppTheme.greyText.withOpacity(0.8),
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 
                 const SizedBox(height: 40),
-                
-                // Header
-                const AuthHeader(
-                  title: 'Welcome Back',
-                  subtitle: 'Sign in to your account to continue',
-                ),
                 
                 // Username Field
                 CustomTextField(
@@ -190,40 +253,60 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 // Login Button
                 CustomButton(
-                  text: 'Log In',
+                  text: 'Sign In',
                   onPressed: _handleLogin,
                   isLoading: _isLoading,
                 ),
                 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 
-                // Divider
+                // Professional Divider
                 Row(
                   children: [
                     Expanded(
-                      child: Divider(
-                        color: AppTheme.greyText.withOpacity(0.3),
+                      child: Container(
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              AppTheme.greyText.withOpacity(0.3),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
                         'OR',
                         style: TextStyle(
                           color: AppTheme.greyText.withOpacity(0.6),
                           fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                     Expanded(
-                      child: Divider(
-                        color: AppTheme.greyText.withOpacity(0.3),
+                      child: Container(
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.transparent,
+                              AppTheme.greyText.withOpacity(0.3),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
                 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 
                 // Sign Up Button
                 CustomButton(
@@ -240,6 +323,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 
                 const SizedBox(height: 40),
+                
+                // Professional Footer
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        '© 2024 DoCon AI. All rights reserved.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.greyText.withOpacity(0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Powered by Advanced AI Technology',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppTheme.greyText.withOpacity(0.5),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
               ],
             ),
           ),
