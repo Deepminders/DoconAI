@@ -19,3 +19,5 @@ class NewSessionRequest(BaseModel):
 
 class SessionIDResponse(BaseModel):
     session_id: str
+class RenameRequest(BaseModel):
+    title: str

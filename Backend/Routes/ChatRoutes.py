@@ -3,11 +3,12 @@ from fastapi import APIRouter, HTTPException, UploadFile, File
 #import tempfile
 from datetime import datetime,timezone
 from Config.db import session_collection
-from Models.Chatbotmodel import ChatRequest, ChatResponse, NewSessionRequest, SessionIDResponse
+from Models.Chatbotmodel import ChatRequest, ChatResponse, NewSessionRequest, SessionIDResponse, RenameRequest
 from Models.UserModel import UserModel
 from Controllers.ChatController import handle_chat  # NEW: Import RAG logic
 from Controllers.UserController import get_current_user
 from bson import ObjectId
+
 import traceback
 from fastapi import Depends
 router = APIRouter(prefix="/chatbot", tags=["Chatbot"])
@@ -75,7 +76,13 @@ async def get_chat_history(session_id: str, current_user: UserModel = Depends(ge
     messages_cursor = chat_collection.find({"session_id": session_id, "user_id": user_id}).sort("created_time", 1)
     history = []
     async for msg in messages_cursor:
-        history.append({"role": msg["role"], "content": msg["content"]})
+        message = {
+            "role": msg["role"],
+            "content": msg["content"]
+        }
+        if msg["role"] == "assistant" and "tier" in msg:
+            message["tier"] = msg["tier"]
+        history.append(message)
     return history
 
 
@@ -128,3 +135,27 @@ async def get_chat_history(user_id: str, session_id: str):
         temp_audio.flush()
         result = model.transcribe(temp_audio.name)
         return {"text": result["text"]}
+
+@router.delete("/delete-session/{session_id}")
+async def delete_session(session_id: str, current_user: UserModel = Depends(get_current_user)):
+    user_id = str(current_user["_id"])
+    session = await session_collection.find_one({"session_id": session_id, "user_id": user_id})
+    if not session:
+        raise HTTPException(status_code=403, detail="Unauthorized to delete this session.")
+
+    await chat_collection.delete_many({"session_id": session_id, "user_id": user_id})
+    await session_collection.delete_one({"session_id": session_id, "user_id": user_id})
+    return {"message": "Session deleted successfully"}
+
+@router.put("/rename-session/{session_id}")
+async def rename_session(session_id: str, req: RenameRequest, current_user: UserModel = Depends(get_current_user)):
+    user_id = str(current_user["_id"])
+    session = await session_collection.find_one({"session_id": session_id, "user_id": user_id})
+    if not session:
+        raise HTTPException(status_code=403, detail="Unauthorized to rename this session.")
+    
+    await session_collection.update_one(
+        {"session_id": session_id},
+        {"$set": {"title": req.title.strip() or "Untitled"}}
+    )
+    return {"message": "Session renamed successfully"}

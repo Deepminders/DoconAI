@@ -5,6 +5,7 @@ import ChatInput from "../../../Components/Chatbot/ChatInput";
 import ChatMessages from "../../../Components/Chatbot/ChatMessages";
 import UserProfileMenu from "../../../Components/Common/UserProfileMenu";
 
+
 interface Session {
   session_id: string;
   title: string;
@@ -16,6 +17,7 @@ export default function ChatPage() {
   const [chatSessions, setChatSessions] = useState<Session[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false); // ✅ Add loading state
 
   // Load token from localStorage on mount
   useEffect(() => {
@@ -29,7 +31,6 @@ export default function ChatPage() {
 
     const fetchSessions = async () => {
       try {
-        // Clean up empty sessions first
         await fetch(`http://localhost:8000/chatbot/delete-empty-sessions`, {
           method: "DELETE",
           headers: {
@@ -37,7 +38,6 @@ export default function ChatPage() {
           },
         });
 
-        // Fetch valid sessions
         const res = await fetch(`http://localhost:8000/chatbot/sessions`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -81,7 +81,6 @@ export default function ChatPage() {
     fetchChatHistory();
   }, [selectedChat, token]);
 
-  // Add new session to the top and select it
   const handleUpdateSessions = (newSessionId: string) => {
     setChatSessions((prev) => [
       { session_id: newSessionId, title: "Untitled" },
@@ -111,7 +110,7 @@ export default function ChatPage() {
           <>
             <div className="flex-1 overflow-y-auto px-4 py-6">
               <div className="max-w-3xl mx-auto w-full">
-                <ChatMessages messages={chatLog} />
+                <ChatMessages messages={chatLog} isLoading={isLoading} /> {/* ✅ Pass isLoading */}
               </div>
             </div>
 
@@ -123,6 +122,7 @@ export default function ChatPage() {
                   sessionId={sessionId}
                   setSessionId={setSessionId}
                   updateSessions={handleUpdateSessions}
+                  setIsLoading={setIsLoading} // ✅ Pass down to control loading animation
                 />
               </div>
             </div>
@@ -141,6 +141,7 @@ export default function ChatPage() {
                 sessionId={sessionId}
                 setSessionId={setSessionId}
                 updateSessions={handleUpdateSessions}
+                setIsLoading={setIsLoading} // ✅ Even for first message
               />
             </div>
           </div>
