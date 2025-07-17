@@ -31,7 +31,7 @@ const ProjectsList = ({ projects, filter, isMobile, loading = false, error = nul
   // Handle empty state (responsive)
   if (!projects || projects.length === 0) {
     return (
-      <div className="mt-[660px] sm:mt-[180px] md:mt-[160px] lg:mt-[140px] lg:ml-60 p-3 sm:p-4 transition-all duration-300">
+      <div className="mt-[660px] sm:mt-[180px] md:mt-[160px] lg:mt-[140px] lg:ml-1 p-3 sm:p-4 transition-all duration-300">
         {/* Responsive Centered Blue Header */}
         <div className="flex items-center justify-center mb-6 sm:mb-8">
           <div className="flex-1 h-0.5 bg-blue-600"></div>
@@ -56,11 +56,14 @@ const ProjectsList = ({ projects, filter, isMobile, loading = false, error = nul
   }
 
   return (
-    <div className="mt-[320px] sm:mt-[180px] md:mt-[200px] lg:mt-[140px] lg:ml-60 p-3 sm:p-4 transition-all duration-300">
+    <div className="mt-[320px] sm:mt-[180px] md:mt-[200px] lg:mt-[140px] transition-all duration-300">
       {/* Responsive Centered Blue Header with Project Count */}
       <div className="flex items-center justify-center mb-6 sm:mb-8">
         <div className="flex-1 h-0.5 bg-blue-600"></div>
-        <h1 className="px-3 sm:px-6 text-lg sm:text-xl md:text-2xl font-bold text-blue-600 bg-white text-center whitespace-nowrap">
+        <h1
+          className="px-3 sm:px-6 text-lg sm:text-xl md:text-2xl font-bold text-blue-600 text-center whitespace-nowrap"
+          style={{ backgroundColor: "rgba(249,250,251,1)" }}
+        >
           {filter} ({projects.length})
         </h1>
         <div className="flex-1 h-0.5 bg-blue-600"></div>
@@ -69,7 +72,7 @@ const ProjectsList = ({ projects, filter, isMobile, loading = false, error = nul
       <div className="overflow-x-auto">
         {/* Desktop Header (Large screens) */}
         <div className="hidden lg:flex text-gray-500 border-b-2 border-blue-600 mb-4">
-          {['Project Name', 'Status', 'Project Lead', 'Start Date', 'End Date', 'Last Updated'].map((heading, index) => (
+          {['Project Name', 'Status', 'Project Lead', 'Start Date', 'End Date'].map((heading, index) => (
             <div key={`heading-${index}`} className="flex-1 py-2 px-4 text-left font-light text-sm xl:text-base">
               {heading}
             </div>
@@ -114,9 +117,6 @@ const ProjectsList = ({ projects, filter, isMobile, loading = false, error = nul
             <p className="text-xs sm:text-sm text-gray-500">
               Showing {projects.length} project{projects.length !== 1 ? 's' : ''}
             </p>
-            <div className="text-xs text-gray-400">
-              Last updated: {new Date().toLocaleDateString()}
-            </div>
           </div>
         </div>
       </div>

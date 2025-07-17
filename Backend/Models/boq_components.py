@@ -46,7 +46,7 @@ class BOQComponents:
         # Initialize Groq LLM
         self.llm = ChatGroq(
             api_key=groq_api_key,
-            model_name="qwen-qwq-32b",
+            model_name="meta-llama/llama-4-scout-17b-16e-instruct",
             temperature=0.3,
             max_tokens=2000,
         )
