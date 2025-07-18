@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, HTTPException, UploadFile, File
 #import whisper
 #import tempfile
@@ -8,7 +9,6 @@ from Models.UserModel import UserModel
 from Controllers.ChatController import handle_chat  # NEW: Import RAG logic
 from Controllers.UserController import get_current_user
 from bson import ObjectId
-
 import traceback
 from fastapi import Depends
 router = APIRouter(prefix="/chatbot", tags=["Chatbot"])
@@ -39,12 +39,16 @@ async def chat(
     try:
         user_id = str(current_user["_id"]) if isinstance(current_user["_id"], ObjectId) else current_user["_id"]
 
-        reply = await handle_chat(
+        result = await handle_chat(
             user_id,
             chat_request.session_id,
             chat_request.message
         )
-        return ChatResponse(reply=reply)
+        
+        reply = result["reply"]
+        tier = result["tier"]
+
+        return ChatResponse(reply=reply, tier=tier)
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Chatbot failed: {str(e)}")

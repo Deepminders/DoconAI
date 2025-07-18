@@ -86,14 +86,15 @@ def is_meaningful_message(msg: str) -> bool:
         all(not normalized.startswith(greet) for greet in trivial_starts)
     )
 
-async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
+async def handle_chat(user_id: str, session_id: str, user_message: str) -> dict:
     greetings = ["hi", "hello", "hey", "how are you", "good morning", "good afternoon", "good evening"]
     normalized_msg = user_message.lower().strip()
 
     if normalized_msg in greetings:
         reply = "Hello! How can I assist you with your construction project today?"
         await store_chat_messages(chat_collection, user_id, session_id, user_message, reply)
-        return reply
+        return {"reply": reply, "tier": "greeting"}  # ✅ Match expected structure
+
 
     history = await chat_collection.find(
         {"user_id": user_id, "session_id": session_id}
@@ -218,7 +219,7 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> str:
             {"$set": {"last_response_tier": tier, "last_response_time": datetime.now(timezone.utc)}}
         )
 
-        return reply
+        return {"reply": reply, "tier": tier}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

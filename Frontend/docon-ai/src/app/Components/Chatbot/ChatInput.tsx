@@ -87,7 +87,10 @@ export default function ChatInput({
       }
 
       const data = await res.json();
-      setChatLog((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      setChatLog((prev) => [
+  ...prev,
+  { role: "assistant", content: data.reply, tier: data.tier },
+]);
       setMessage("");
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
