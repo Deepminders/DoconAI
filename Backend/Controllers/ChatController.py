@@ -93,7 +93,7 @@ async def handle_chat(user_id: str, session_id: str, user_message: str) -> dict:
     if normalized_msg in greetings:
         reply = "Hello! How can I assist you with your construction project today?"
         await store_chat_messages(chat_collection, user_id, session_id, user_message, reply)
-        return {"reply": reply, "tier": "greeting"}  # ✅ Match expected structure
+        return {"reply": reply, "tier": "DoCon AI"}  # ✅ Match expected structure
 
 
     history = await chat_collection.find(

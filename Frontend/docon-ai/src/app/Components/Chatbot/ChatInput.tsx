@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowUp, Mic } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
+import VoiceRecorder from "./VoiceRecorder";
 
 interface ChatInputProps {
   chatLog: any[];
@@ -116,14 +117,7 @@ export default function ChatInput({
       />
 
       <div className="flex justify-end space-x-2">
-        <button
-          type="button"
-          onClick={() => alert("Voice input not implemented yet")}
-          className="bg-gray-500 hover:bg-gray-300 p-2 rounded-full flex items-center justify-center"
-          title="Voice input"
-        >
-          <Mic className="w-5 h-5" />
-        </button>
+        <VoiceRecorder setMessage={setMessage} />
 
         <button
           type="submit"
