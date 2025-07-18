@@ -12,6 +12,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+    tier: Optional[str] = None
 
 class NewSessionRequest(BaseModel):
     title: Optional[str] = None
