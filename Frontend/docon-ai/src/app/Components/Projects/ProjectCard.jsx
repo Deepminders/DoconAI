@@ -4,7 +4,7 @@ import {
   Calendar,
   User,
   Clock,
-  ArrowRight,
+  CircleArrowRight,
   Building2,
   CheckCircle2,
   AlertCircle,
@@ -157,7 +157,7 @@ const ProjectCard = memo(({ project, isMobile }) => {
                 Updated {getTimeAgo(updatedAt || createdAt)}
               </span>
             </div>
-            <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-transform duration-200" />
+            <CircleArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-transform duration-200" />
           </div>
         </div>
       </div>
@@ -175,8 +175,9 @@ const ProjectCard = memo(({ project, isMobile }) => {
         focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1
         transition-all duration-200 ease-in-out cursor-pointer"
     >
-      <div className="grid grid-cols-12 gap-4 items-center p-4">
-        <div className="col-span-3 flex items-center space-x-3 min-w-0">
+      <div className="grid grid-cols-5 gap-4 items-center p-4">
+        {/* Project Name */}
+        <div className="flex items-center space-x-3 min-w-0">
           <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
             <Building2 className="h-5 w-5 text-blue-700" />
           </div>
@@ -190,35 +191,33 @@ const ProjectCard = memo(({ project, isMobile }) => {
           </div>
         </div>
 
-        <div className="col-span-2">
+        {/* Status */}
+        <div>
           <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
             <StatusIcon className={`h-3.5 w-3.5 ${statusConfig.iconColor}`} />
             <span>{projectStatus}</span>
           </div>
         </div>
 
-        <div className="col-span-2 flex items-center space-x-2 min-w-0">
+        {/* Project Lead */}
+        <div className="flex items-center space-x-2 min-w-0">
           <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
           <span className="text-sm text-gray-700 truncate">{projectLead}</span>
         </div>
 
-        <div className="col-span-2 flex items-center space-x-2">
+        {/* Start Date */}
+        <div className="flex items-center space-x-2">
           <Calendar className="h-4 w-4 text-green-600" />
           <span className="text-sm text-gray-700 font-medium">{formatProjectDate(startDate)}</span>
         </div>
 
-        <div className="col-span-2 flex items-center space-x-2">
-          <Calendar className="h-4 w-4 text-red-600" />
-          <span className="text-sm text-gray-700 font-medium">{formatProjectDate(endDate)}</span>
-        </div>
-
-        <div className="col-span-1 flex items-center justify-end">
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-gray-500">{getTimeAgo(updatedAt || createdAt)}</span>
-            <div className="p-2 bg-gray-100 rounded-full group-hover:bg-blue-100 transition-colors">
-              <ArrowRight className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
-            </div>
-          </div>
+        {/* End Date + Arrow */}
+        <div className="flex items-center space-x-2 justify-between">
+          <span className="flex items-center">
+            <Calendar className="h-4 w-4 text-red-600" />
+            <span className="text-sm text-gray-700 font-medium ml-1">{formatProjectDate(endDate)}</span>
+          </span>
+          <CircleArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 transition-colors ml-2" />
         </div>
       </div>
     </div>

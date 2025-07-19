@@ -12,6 +12,7 @@ from langchain_community.document_loaders import PyPDFLoader
 import pandas as pd
 import pytesseract
 from PIL import Image
+from docx import Document
 import pytesseract
 import json
 import time
@@ -63,11 +64,13 @@ def create_vector_store(document_name: str):
         pages = loader.load()
         text = "\n".join([page.page_content for page in pages])
         print(f"Loaded {len(pages)} pages from PDF.")
+
     elif ext in [".txt", ".md"]:
         print("Loading plain text document...")
         with open(doc_path, "r", encoding="utf-8") as f:
             text = f.read()
         print("Loaded text document.")
+
     elif ext in [".xlsx", ".xls"]:
         print("Loading Excel document...")
         df = pd.read_excel(doc_path, sheet_name=None)
@@ -76,6 +79,13 @@ def create_vector_store(document_name: str):
             text += f"\nSheet: {sheet_name}\n"
             text += sheet.to_string(index=False)
         print(f"Loaded Excel document with {len(df)} sheets.")
+
+    elif ext == ".docx":
+        print("Loading Word document...")
+        doc = Document(doc_path)
+        text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+        print(f"Loaded Word document with {len(doc.paragraphs)} paragraphs.")
+
     else:
         raise ValueError(f"Unsupported file type: {ext}")
 
@@ -240,6 +250,10 @@ def extract_numbers_from_excel(path):
         all_numbers.extend(nums)
     return all_numbers
 
+def extract_numbers_from_docx(path):
+    doc = Document(path)
+    text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+    return extract_numbers_from_text(text)
 
 def numeric_cost_compare(file1, file2):
     """
@@ -258,11 +272,15 @@ def numeric_cost_compare(file1, file2):
             for page in doc:
                 text += page.get_text()
             return extract_numbers_from_text(text)
+
         elif path.endswith('.xlsx') or path.endswith('.xls'):
-            return extract_numbers_from_excel(path)
+                return extract_numbers_from_excel(path)
+
+        elif path.endswith('.docx'):
+            return extract_numbers_from_docx(path)
+
         else:
             raise ValueError(f"Unsupported file type for: {path}")
-
     nums1 = extract_numbers(path1)
     nums2 = extract_numbers(path2)
 

@@ -4,6 +4,8 @@ import Sidebar from "../../../Components/Chatbot/sidebar";
 import ChatInput from "../../../Components/Chatbot/ChatInput";
 import ChatMessages from "../../../Components/Chatbot/ChatMessages";
 import UserProfileMenu from "../../../Components/Common/UserProfileMenu";
+
+
 interface Session {
   session_id: string;
   title: string;
@@ -14,37 +16,80 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [chatSessions, setChatSessions] = useState<Session[]>([]);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const userId = "6818345c2304d86da0d35376"; // Replace with actual auth value
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false); // ✅ Add loading state
 
-  // Load sessions once on mount
+  // Load token from localStorage on mount
   useEffect(() => {
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) setToken(storedToken);
+  }, []);
+
+  // Fetch sessions (with auth) once token is available
+  useEffect(() => {
+    if (!token) return;
+
     const fetchSessions = async () => {
       try {
-      // Clean up empty sessions first
-      await fetch(`http://localhost:8000/chatbot/delete-empty-sessions/${userId}`, {
-        method: "DELETE",
-      });
+        await fetch(`http://localhost:8000/chatbot/delete-empty-sessions`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      // Then fetch valid sessions
-      const res = await fetch(`http://localhost:8000/chatbot/sessions/${userId}`);
-      const data = await res.json();
-      setChatSessions(data);
+        const res = await fetch(`http://localhost:8000/chatbot/sessions`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        setChatSessions(data);
       } catch (error) {
         console.error("Failed to fetch sessions:", error);
       }
     };
-    fetchSessions();
-  }, [userId]);
 
-  const hasMessages = chatLog.length > 0;
+    fetchSessions();
+  }, [token]);
+
+  // Fetch chat history when selectedChat changes
+  useEffect(() => {
+    if (!token || !selectedChat) {
+      setChatLog([]);
+      setSessionId(null);
+      return;
+    }
+
+    const fetchChatHistory = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/chatbot/history/${selectedChat}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const history = await res.json();
+        setChatLog(history);
+        setSessionId(selectedChat);
+      } catch (error) {
+        console.error("Failed to fetch chat history:", error);
+      }
+    };
+
+    fetchChatHistory();
+  }, [selectedChat, token]);
 
   const handleUpdateSessions = (newSessionId: string) => {
     setChatSessions((prev) => [
       { session_id: newSessionId, title: "Untitled" },
-      ...prev,
+      ...prev.filter((s) => s.session_id !== newSessionId),
     ]);
     setSelectedChat(newSessionId);
   };
+
+  const hasMessages = chatLog.length > 0;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-gray-100">
@@ -52,7 +97,6 @@ export default function ChatPage() {
         <UserProfileMenu />
       </div>
       <Sidebar
-      
         setSessionId={setSessionId}
         setChatLog={setChatLog}
         setChatSessions={setChatSessions}
@@ -66,7 +110,7 @@ export default function ChatPage() {
           <>
             <div className="flex-1 overflow-y-auto px-4 py-6">
               <div className="max-w-3xl mx-auto w-full">
-                <ChatMessages messages={chatLog} />
+                <ChatMessages messages={chatLog} isLoading={isLoading} /> {/* ✅ Pass isLoading */}
               </div>
             </div>
 
@@ -77,8 +121,8 @@ export default function ChatPage() {
                   setChatLog={setChatLog}
                   sessionId={sessionId}
                   setSessionId={setSessionId}
-                  userId={userId}
                   updateSessions={handleUpdateSessions}
+                  setIsLoading={setIsLoading} // ✅ Pass down to control loading animation
                 />
               </div>
             </div>
@@ -96,8 +140,8 @@ export default function ChatPage() {
                 setChatLog={setChatLog}
                 sessionId={sessionId}
                 setSessionId={setSessionId}
-                userId={userId}
                 updateSessions={handleUpdateSessions}
+                setIsLoading={setIsLoading} // ✅ Even for first message
               />
             </div>
           </div>

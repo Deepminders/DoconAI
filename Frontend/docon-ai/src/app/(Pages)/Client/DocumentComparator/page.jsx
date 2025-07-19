@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 import "../../../CSS/documentcomparator/comparator.css";
+import UserProfileMenu from "../../../Components/Common/UserProfileMenu";
+import { toast } from "react-toastify";
 
 export default function Home() {
   const [file, setFile] = useState(null);
@@ -107,17 +109,22 @@ const toggleSidebar = () => {
   const doc2Options = uploadedDocs.filter((d) => d !== doc1);
 
   return (
-
+    
      <div className="flex h-screen overflow-hidden">
+      
+
       <DocumentSidebar
         isOpen={isSidebarOpen}
         onToggle={toggleSidebar}
         isMobile={isMobile}
         active={'documentComparator'}
       />
-       <main className={`flex-1 overflow-y-auto p-8 transition-all duration-300 ease-in-out ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}`}>
-         
-      <h1 className="mb-4">Document Comparator</h1>
+       
+      <main className={`flex-1 overflow-y-auto p-8 transition-all duration-300 ease-in-out ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}`}>
+              <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl text-gray-900">User Management</h1>
+          <UserProfileMenu />
+        </div>
 
       {/* Upload Section */}
       <div className="mb-4 p-4 border rounded">

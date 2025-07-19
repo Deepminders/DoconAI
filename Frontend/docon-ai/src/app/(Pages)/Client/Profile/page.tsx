@@ -3,6 +3,7 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 import UserProfileMenu from '../../../Components/Common/UserProfileMenu';
+import { useNotifications} from '../../../Components/Common/NotificationSystem';
 
 export default function EditProfile() {
   const [originalData, setOriginalData] = useState({
@@ -24,7 +25,7 @@ export default function EditProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false); // New state for image upload loading
-
+  const notifications = useNotifications();
   useEffect(() => {
   async function fetchUser() {
     setIsLoading(true);
@@ -32,7 +33,7 @@ export default function EditProfile() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        setError("Authentication required. Please log in.");
+        notifications.error("Authentication required. Please log in.");
         setIsLoading(false);
         return;
       }
@@ -122,7 +123,7 @@ export default function EditProfile() {
     const file = e.target.files[0];
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("Authentication required. Please log in.");
+      notifications.error("Authentication required. Please log in.");
       return;
     }
 
@@ -150,61 +151,74 @@ export default function EditProfile() {
       const fullImageUrl = `http://localhost:8000${data.profile_image_url}`;
       setOriginalData(prev => ({ ...prev, profile_image_url: fullImageUrl }));
     setFormData(prev => ({ ...prev, profile_image_url: fullImageUrl }));
-      alert("Profile picture updated successfully!");
+      notifications.success("Profile picture updated successfully!");
+
     } catch (err: any) {
-      alert(`Error uploading image: ${err.message || 'An unexpected error occurred.'}`);
+     notifications.error(err.message || 'An unexpected error occurred.');
     } finally {
       setUploadingImage(false);
     }
   };
 
   // Form submit (same as before)
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const payload = {
-      company_name: formData.company,
-      first_name: formData.firstname,
-      last_name: formData.lastname,
-      email: formData.email,
-      username: formData.username,
-      phone_number: formData.phone,
-      gender: formData.gender,
+const handleSubmit = async () => {
+  try {
+    const updatePayload = {
+      company_name: formData.company || '',
+      first_name: formData.firstname || '',
+      last_name: formData.lastname || '',
+      email: formData.email || '',
+      phone_number: formData.phone || '',
+      gender: formData.gender || '',
       password: formData.password || undefined,
     };
 
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Authentication required. Please log in.");
-        return;
-      }
+    const token = localStorage.getItem('token'); // Adjust if using cookies
+    const response = await fetch(`http://localhost:8000/user/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(updatePayload),
+    });
 
-      const response = await fetch('http://localhost:8000/user/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
+    if (!response.ok) throw new Error('Failed to update profile');
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update profile');
-      }
+    // ✅ Make a fresh GET call to retrieve the updated profile
+    const profileRes = await fetch(`http://localhost:8000/user/profile`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      const updatedUser = await response.json();
-      console.log("User from backend:", updatedUser);
-      console.log("Raw profile_image_url from backend:", updatedUser.profile_image_url);
-      setOriginalData(updatedUser);
-      setFormData(prev => ({ ...prev, password: '' }));
-      setIsEdited(false);
-      alert('Profile updated successfully! 🎉');
-    } catch (err: any) {
-      alert(`Error updating profile: ${err.message || 'An unexpected error occurred.'}`);
-    }
-  };
+    if (!profileRes.ok) throw new Error('Failed to fetch updated profile');
+
+    const updatedProfile = await profileRes.json();
+
+    const formatted = {
+      company: updatedProfile.company || '',
+      firstname: updatedProfile.firstname || '',
+      lastname: updatedProfile.lastname || '',
+      email: updatedProfile.email || '',
+      username: updatedProfile.username || '',
+      phone: updatedProfile.phone || '',
+      gender: updatedProfile.gender || '',
+      user_role: updatedProfile.user_role || '',
+      profile_image_url: updatedProfile.profile_image_url || '',
+    };
+
+    setOriginalData(formatted);
+    setFormData({ ...formatted, password: '' });
+    setIsEdited(false);
+    notifications.success('Profile updated successfully! 🎉');
+  } catch (error) {
+    console.error(error);
+    notifications.error('Error updating profile.');
+  }
+};
+
   const backendURL = "http://localhost:8000";
   const getProfileImage = () => {
   const url = originalData.profile_image_url;
