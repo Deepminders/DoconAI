@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, MessageCircle, Globe, Users, XCircle } from 'lucide-react'; // Added XCircle for error
 // Assuming Header and Footer paths are correct relative to this file
-import Header from '../../../Components/Common/Header'; 
-import Footer from '../../../Components/Common/Footer'; 
+// import Header from '../../../Components/Common/Header'; 
+// import Footer from '../../../Components/Common/Footer'; 
 
 // Placeholder for Header and Footer components if they are not available in this environment
 const Header = () => (
