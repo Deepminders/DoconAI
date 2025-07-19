@@ -20,8 +20,8 @@ import {
   Layers,
   Brain
 } from 'lucide-react';
-import Header from '../../../Components/common/Header';
-import Footer from '../../../Components/common/Footer';
+import Header from '../../../Components/Common/Header';
+import Footer from '../../../Components/Common/Footer';
 
 const ServicesPage = () => {
   const [isVisible, setIsVisible] = useState(false);

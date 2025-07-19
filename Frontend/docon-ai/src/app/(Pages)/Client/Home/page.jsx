@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, CheckCircle, ArrowRight, QrCode, FileText, Brain, Zap } from 'lucide-react';
-import Header from '../../../Components/common/Header';
-import Footer from '../../../Components/common/Footer';
+import Header from '../../../Components/Common/Header';
+import Footer from '../../../Components/Common/Footer';
 import { redirect } from 'next/navigation';
 
 const LandingPage = () => {
