@@ -487,7 +487,7 @@ Future<void> _loadDashboardData() async {
     });
 
     try {
-      final result = await AuthService.getUserProjects(currentUser!.userId);
+      final result = await AuthService.getUserProjects(currentUser!.userId, currentUser!.userRole);
       
       if (result['success']) {
         setState(() {

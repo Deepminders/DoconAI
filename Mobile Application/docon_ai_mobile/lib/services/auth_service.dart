@@ -148,8 +148,9 @@ class AuthService {
   }
 
   // Get user projects
-  static Future<Map<String, dynamic>> getUserProjects(String userId) async {
-    try {
+  static Future<Map<String, dynamic>> getUserProjects(String userId, String userRole) async {
+    if(userRole != "Project Owner"){
+      try {
       final response = await http.get(
         Uri.parse('$baseUrl/staff/user/$userId/projects'),
         headers: {
@@ -176,6 +177,36 @@ class AuthService {
         'success': false,
         'message': 'Network error: ${error.toString()}',
       };
+    }
+    }else{
+      try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/staff/owner/$userId/projects'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'projects': data['projects'] ?? [],
+          'count': data['count'] ?? 0,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['detail'] ?? 'Failed to fetch projects',
+        };
+      }
+    } catch (error) {
+      return {
+        'success': false,
+        'message': 'Network error: ${error.toString()}',
+      };
+    }
     }
   }
 
