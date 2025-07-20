@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import UsersTable from "./UserTable";
 
 const UserManagement = ({
@@ -10,72 +10,36 @@ const UserManagement = ({
   onAssignUser,
   projectId
 }) => {
-  const [projectStaff, setProjectStaff] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchProjectStaff = async () => {
-      if (!projectId) return;
+  const handleRemoveFromProject = async (staffId) => {
+    try {
+      if (!projectId) throw new Error("Project ID is missing");
+      if (!staffId) throw new Error("Staff ID is missing");
 
-      try {
-        setLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/projects/staff-by-project/${projectId}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+      setLoading(true);
+      setError(null);
+
+      // Call the onDeleteUser function passed from parent
+      if (onDeleteUser) {
+        // Create a user object that matches what the parent expects
+        const userToDelete = users.find(user => user.id === staffId);
+        if (userToDelete) {
+          onDeleteUser(userToDelete);
         }
-
-        const data = await response.json();
-        setProjectStaff(data.staff || []);
-      } catch (err) {
-        console.error("Failed to fetch project staff:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchProjectStaff();
-  }, [projectId]);
-
-const handleRemoveFromProject = async (staffId) => {
-  try {
-    if (!projectId) throw new Error("Project ID is missing");
-    if (!staffId) throw new Error("Staff ID is missing");
-
-    setLoading(true);
-    setError(null);
-
-    const response = await fetch(
-      `http://127.0.0.1:8000/projects/staff/${staffId}/remove-project`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'accept': 'application/json',
-        },
-        body: JSON.stringify({ project_id: projectId }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `Failed to remove staff from project`);
+    } catch (err) {
+      console.error("Removal failed:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Update local state to remove the user
-    setProjectStaff(prev => prev.filter(user => user._id !== staffId));
-
-  } catch (err) {
-    console.error("Removal failed:", err);
-    setError(err.message);
-    // You might want to show this error to the user
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const displayUsers = projectId ? projectStaff : users;
+  // Use the users prop directly - this contains the assigned staff data
+  const displayUsers = users || [];
 
   return (
     <>

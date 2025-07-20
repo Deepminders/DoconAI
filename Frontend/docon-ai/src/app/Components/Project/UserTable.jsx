@@ -23,20 +23,8 @@ const UsersTable = ({
       return `invalid-${Math.random().toString(36).substr(2, 9)}`;
     }
 
-    // Use staff_id as the primary identifier
-    return (
-      // "user_id"=user.staff_id ||
-      // user._id ||
-      // user.id ||
-      // `temp-${Math.random().toString(36).substr(2, 9)}`,
-      // "user_role"=user.user_role,
-      // "staff_fname"=user.first_fname
-      {
-        "user_id": user.user_id || user.staff_id || user.id,
-        "user_role": user.user_role,
-        "staff_fname": user.first_fname
-      }
-    );
+    // Return the actual user ID as string
+    return user.id || user.staff_id || user._id || `temp-${Math.random().toString(36).substr(2, 9)}`;
   };
 
   const handleAssign = async (userId, role) => {
@@ -45,10 +33,10 @@ const UsersTable = ({
     try {
       await onAssignUser(userId, role);
       setIsAssignModalOpen(false);
-      toast.success("User assigned successfully");
+      // toast.success("User assigned successfully");
     } catch (err) {
       setError(err.message || "Failed to assign user");
-      toast.error(err.message || "Failed to assign user");
+      // toast.error(err.message || "Failed to assign user");
     } finally {
       setIsAssigning(false);
     }
@@ -64,7 +52,6 @@ const UsersTable = ({
         <span className="flex-[2] border-t-3 border-sky-700 ml-4"></span>
       </h1>
 
-      <StaffModalWithTrigger projectid={projectId} />
       {/* Error message display */}
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>
@@ -84,7 +71,7 @@ const UsersTable = ({
                 Email
               </th>
               <th className="py-3 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {isProjectView ? "Actions" : "Actions"}
+                Actions
               </th>
             </tr>
           </thead>
@@ -102,15 +89,13 @@ const UsersTable = ({
               }
 
               return (
-                users.map((user) => {
-                  <UserRow
-                    key={userId}
-                    user={user}
-                    onRemoveFromProject={onRemoveFromProject}
-                    isProjectView={isProjectView}
-                    projectId={projectId}
-                  />
-                })
+                <UserRow
+                  key={userId}
+                  user={user}
+                  onRemoveFromProject={onRemoveFromProject}
+                  isProjectView={isProjectView}
+                  projectId={projectId}
+                />
               );
             })}
           </tbody>

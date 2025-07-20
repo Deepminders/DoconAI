@@ -109,9 +109,12 @@ async def assign_project(s_id:str, p_id:str) -> dict:
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
+        # Convert project ID to ObjectId for consistent storage
+        project_obj_id = ObjectId(p_id)
+
         result = await staff_collection.update_one(
             {"_id": ObjectId(s_id)},
-            {"$addToSet": {"assigned_projects": p_id}}  # Using $addToSet to avoid duplicates
+            {"$addToSet": {"assigned_projects": project_obj_id}}  # Store as ObjectId
         )
 
         if result.modified_count == 0:
@@ -264,50 +267,61 @@ async def get_assigned_staff_project(project_id: str):
             raise HTTPException(status_code=400, detail="Invalid project ID format.")
 
         # Query staff_collection:
-        # Find staff documents where:
-        # 1. 'assigned_projects' field exists (implicitly handled by $in)
-        # 2. 'assigned_projects' array contains the specific project_obj_id
+        # Find staff documents where 'assigned_projects' contains the specific ObjectId
         cursor = staff_collection.find(
             {"assigned_projects": {"$in": [project_obj_id]}}
         )
 
         # Convert cursor to a list of staff documents
         assigned_staff_documents = await cursor.to_list(length=None)
-
         # Format staff details for response
         formatted_staff_list = []
         for staff_member in assigned_staff_documents:
-            staff_id_str = str(staff_member["_id"]) # Convert ObjectId to string
-
-            # Handle datetime objects if they exist in staff_collection documents
-            # (e.g., 'createdAt', 'updatedAt' if your staff docs have them)
-            created_at = staff_member.get("createdAt")
-            if isinstance(created_at, datetime.datetime):
-                created_at = created_at.isoformat()
-
-            updated_at = staff_member.get("updatedAt")
-            if isinstance(updated_at, datetime.datetime):
-                updated_at = updated_at.isoformat()
+            staff_id_str = str(staff_member["_id"])  # Convert ObjectId to string
 
             formatted_staff_list.append({
-                "id": staff_id_str, # Use 'id' for frontend consistency
-                "first_name": staff_member.get("first_name", ""),
-                "last_name": staff_member.get("last_name", ""),
-                "email": staff_member.get("email", ""),
-                "user_role": staff_member.get("user_role", ""), # Assuming staff docs have this
-                # Add any other relevant fields from staff_collection that the frontend needs
-                "createdAt": created_at,
-                "updatedAt": updated_at,
+            "id": staff_id_str,  # Use 'id' for frontend consistency
+            "first_name": staff_member.get("first_name", ""),
+            "last_name": staff_member.get("last_name", ""),
+            "role": staff_member.get("role", ""),
+            "email": staff_member.get("email", ""),
             })
 
-        return JSONResponse({
+        return {
             "status": "success",
             "staff_members": formatted_staff_list,
             "count": len(formatted_staff_list)
-        })
+        }
 
     except HTTPException as e:
         raise e
     except Exception as e:
         print(f"Error fetching assigned staff for project {project_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch assigned staff: {str(e)}")
+
+async def remove_project_from_staff(s_id: str, p_id: str) -> dict:
+    """
+    Remove a project from staff member's assigned_projects array.
+    """
+    try:
+        # Validate ObjectIds
+        staff_oid = ObjectId(s_id)
+        project_oid = ObjectId(p_id)
+
+        # Update staff document to remove the project (ObjectId format)
+        result = await staff_collection.update_one(
+            {"_id": staff_oid},
+            {"$pull": {"assigned_projects": project_oid}}  # Remove ObjectId
+        )
+
+        if result.modified_count == 0:
+            raise HTTPException(status_code=400, detail="Project not found in staff's assigned projects")
+
+        return {
+            "Message": "Project removed from staff successfully",
+            "Staff ID": str(s_id),
+            "Project ID": str(p_id)
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing project from staff: {str(e)}")
