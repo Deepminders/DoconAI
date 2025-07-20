@@ -15,11 +15,21 @@ from PIL import Image
 from docx import Document
 import pytesseract
 import json
-import time
+import datetime
 from google.genai.errors import ClientError
+
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
+try:
+    import openpyxl  # for XLSX
+except ImportError:
+    openpyxl = None
+
+try:
+    import xlrd  # for XLS (if needed)
+except ImportError:
+    xlrd = None
 
 # Load environment variables from .env file
 load_dotenv()
@@ -327,9 +337,59 @@ def numeric_cost_compare(file1, file2):
 def extract_metadata(document_name: str):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     doc_path = os.path.join(base_dir, document_directory, document_name)
-    doc = fitz.open(doc_path)
-    meta = doc.metadata
-    return meta
+    ext = os.path.splitext(document_name)[1].lower()
+
+    if ext == ".pdf":
+        doc = fitz.open(doc_path)
+        return doc.metadata
+
+    elif ext == ".docx":
+        doc = Document(doc_path)
+        cp = doc.core_properties
+        return {
+            "title": cp.title,
+            "author": cp.author,
+            "category": cp.category,
+            "comments": cp.comments,
+            "created": cp.created.isoformat() if cp.created else None,
+            "identifier": cp.identifier,
+            "keywords": cp.keywords,
+            "last_modified_by": cp.last_modified_by,
+            "last_printed": cp.last_printed.isoformat() if cp.last_printed else None,
+            "modified": cp.modified.isoformat() if cp.modified else None,
+            "subject": cp.subject,
+            "version": cp.version,
+        }
+
+    elif ext == ".xlsx":
+        if openpyxl is None:
+            raise ImportError("openpyxl not installed for .xlsx files")
+        wb = openpyxl.load_workbook(doc_path, read_only=True)
+        props = wb.properties
+        return {
+            "title": props.title,
+            "creator": props.creator,
+            "created": props.created.isoformat() if props.created else None,
+            "modified": props.modified.isoformat() if props.modified else None,
+            "last_modified_by": props.lastModifiedBy,
+            "category": props.category,
+            "description": props.description,
+            "keywords": props.keywords,
+            "subject": props.subject,
+            "version": props.version,
+        }
+
+    elif ext == ".xls":
+        if xlrd is None:
+            raise ImportError("xlrd not installed for .xls files")
+        wb = xlrd.open_workbook(doc_path)
+        return {
+            "file_path": doc_path,
+            "number_sheets": wb.nsheets,
+        }
+
+    else:
+        raise ValueError(f"Unsupported file extension: {ext}")
 
 def timestamp_author_compare(doc1, doc2):
     meta1 = extract_metadata(f"{doc1}")
@@ -404,8 +464,6 @@ def smart_comparison(doc1, doc2):
     "- Do not add any extra text outside the JSON. Each section must be a list of clear bullet points. Don't add bold words or formatting.\n"
     "- Ensure the JSON is valid and parsable."
 )
-
-
 
 
     response = llm.models.generate_content(

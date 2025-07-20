@@ -1,8 +1,8 @@
 from fastapi import APIRouter, UploadFile, File, Form
 from Controllers import comparator_controller
 
-router = APIRouter()
 
+router = APIRouter(prefix="/Compare",tags=["compare_documents"])
 
 @router.post("/upload")
 def upload_files(file: UploadFile = File(...)):

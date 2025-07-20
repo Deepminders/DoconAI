@@ -67,6 +67,8 @@ const ProjectPage = () => {
   // Staff Assignment Modal State
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [staffList, setStaffList] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredStaff, setFilteredStaff] = useState([]);
 
   // Document States
   const [selectedDocs, setSelectedDocs] = useState([]);
@@ -419,32 +421,56 @@ const ProjectPage = () => {
   const StaffAssignmentModal = () => {
     if (!showStaffModal) return null;
 
+useEffect(() => {
+  if (!staffList || staffList.length === 0) {
+    setFilteredStaff([]);
+    return;
+  }
+
+  const filtered = staffList.filter((staff) => {
+    const fullName = `${staff.first_name} ${staff.last_name}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase());
+  });
+
+  setFilteredStaff(filtered);
+}, [searchTerm, staffList]);
+
+
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-xl shadow-lg p-6 w-96">
           <h2 className="text-xl font-bold mb-4">Select Staff Member</h2>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {staffList && staffList.length > 0 ? (
-              staffList.map((staff) => (
-                <div
-                  key={staff.id}
-                  className="flex items-center justify-between border-b pb-2"
-                >
-                  <span className="font-medium">
-                    {staff.first_name} {staff.last_name}
-                  </span>
-                  <button
-                    onClick={() => handleAddStaff(staff)}
-                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                  >
-                    Add
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p>No staff members found.</p>
-            )}
-          </div>
+
+          <input
+  type="text"
+  placeholder="Search by name"
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
+/>
+
+  <div className="space-y-2 max-h-64 overflow-y-auto">
+  {filteredStaff && filteredStaff.length > 0 ? (
+    filteredStaff.map((staff) => (
+      <div
+        key={staff.id}
+        className="flex items-center justify-between border-b pb-2"
+      >
+        <span className="font-medium">
+          {staff.first_name} {staff.last_name}
+        </span>
+        <button
+          onClick={() => handleAddStaff(staff)}
+          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+        >
+          Add
+        </button>
+      </div>
+            ))
+          ) : (
+            <p>No staff members found.</p>
+          )}
+        </div>
           <button
             onClick={() => setShowStaffModal(false)}
             className="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded"
