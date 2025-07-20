@@ -28,7 +28,7 @@ export default function DocumentSidebar({ isOpen, onToggle, isMobile }) {
       if (!token) return;
 
       try {
-        const res = await fetch('http://localhost:8000/user/profile', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

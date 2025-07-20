@@ -36,7 +36,7 @@ const FinanceBOQCostPredictor = ({ projectId }) => {
     useEffect(() => {
         if (!projectId) return;
         setLoading(true);
-        fetch(`http://localhost:8000/api/doc/ProjectDocs/${projectId}`)
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/ProjectDocs/${projectId}`)
             .then((res) => res.json())
             .then((data) => {
                 const mappedDocs = (data.documents || []).map((doc) => ({
@@ -72,7 +72,7 @@ const FinanceBOQCostPredictor = ({ projectId }) => {
             const predictionPromises = financeBOQDocs.map(async (doc) => {
                 try {
                     const res = await fetch(
-                        `http://127.0.0.1:8000/api/doc/download_direct/${doc.document_id}`
+                        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/download_direct/${doc.document_id}`
                     );
                     if (!res.ok) throw new Error("Download failed");
                     const blob = await res.blob();
@@ -85,7 +85,7 @@ const FinanceBOQCostPredictor = ({ projectId }) => {
                     formData.append("files", blob, filename);
 
                     const predictRes = await fetch(
-                        "http://127.0.0.1:8000/api/cost/boq/process",
+                        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/cost/boq/process`,
                         {
                             method: "POST",
                             body: formData,

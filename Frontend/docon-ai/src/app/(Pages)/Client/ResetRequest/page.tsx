@@ -15,7 +15,7 @@ export default function ResetRequestPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8000/user/request-reset', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/request-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email_or_username: input }),

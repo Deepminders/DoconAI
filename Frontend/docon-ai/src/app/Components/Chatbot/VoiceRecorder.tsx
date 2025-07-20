@@ -50,7 +50,7 @@ export default function VoiceRecorder({ setMessage }: VoiceRecorderProps) {
     const formData = new FormData();
     formData.append("file", blob, "recording.webm"); // ensure .webm extension matches what you send
 
-    const res = await fetch("http://localhost:8000/chatbot/voice-to-text", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/voice-to-text`, {
       method: "POST",
       body: formData,
     });

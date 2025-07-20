@@ -31,14 +31,14 @@ export default function ChatPage() {
 
     const fetchSessions = async () => {
       try {
-        await fetch(`http://localhost:8000/chatbot/delete-empty-sessions`, {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/delete-empty-sessions`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        const res = await fetch(`http://localhost:8000/chatbot/sessions`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/sessions`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -64,7 +64,7 @@ export default function ChatPage() {
 
     const fetchChatHistory = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/chatbot/history/${selectedChat}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/history/${selectedChat}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

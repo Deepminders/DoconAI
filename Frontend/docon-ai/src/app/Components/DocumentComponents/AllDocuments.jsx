@@ -64,7 +64,7 @@ export default function AllDocuments() {
 
     try {
       console.log('📄 Summarizing document:', doc.document_id);
-      const response = await fetch(`http://127.0.0.1:8000/api/doc/summarize/${doc.document_id}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/summarize/${doc.document_id}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -138,7 +138,7 @@ export default function AllDocuments() {
       }
 
       console.log('📡 Making request to decode endpoint...');
-      const response = await fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`);
 
       console.log('📥 Response status:', response.status);
       console.log('📥 Response ok:', response.ok);
@@ -197,7 +197,7 @@ export default function AllDocuments() {
     setError(null);
     try {
       console.log('📡 Fetching project documents for user:', user.user_id);
-      const response = await fetch(`http://127.0.0.1:8000/api/doc/user/${user.user_id}/project-documents`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/user/${user.user_id}/project-documents`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -234,7 +234,7 @@ export default function AllDocuments() {
     setError(null);
     try {
       console.log('📡 Fetching own documents for user:', user.user_id);
-      const response = await fetch(`http://127.0.0.1:8000/api/doc/user/${user.user_id}/documents`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/user/${user.user_id}/documents`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -353,7 +353,7 @@ export default function AllDocuments() {
     try {
       console.log('📋 Getting document info for:', doc.document_id);
       // Use your existing route
-      const response = await fetch(`http://127.0.0.1:8000/api/doc/info/${doc.document_id}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/info/${doc.document_id}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -470,7 +470,7 @@ export default function AllDocuments() {
   const handleDocumentUpdate = useCallback(async (updatedDocumentId = null) => {
     if (updatedDocumentId) {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/doc/info/${updatedDocumentId}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/info/${updatedDocumentId}`);
         if (response.ok) {
           const data = await response.json();
           const updatedDoc = data.document;

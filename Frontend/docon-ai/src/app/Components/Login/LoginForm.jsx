@@ -28,9 +28,9 @@ export default function LoginForm() {
     const formData = new URLSearchParams();
     formData.append('username', loginData.identifier);  // still uses 'username' key
     formData.append('password', loginData.password);
-
+    console.log(process.env.NEXT_PUBLIC_BACKEND_URL);
     try {
-      const response = await fetch('http://localhost:8000/user/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

@@ -36,7 +36,7 @@ export default function UploadDocument({ onUpload }) {
     try {
       console.log('📡 Fetching projects for user:', userId, userRole);
       if (userRole != 'Project Manager' && userRole != 'Project Owner') {
-        const response = await fetch(`http://127.0.0.1:8000/staff/user/${userId}/projects`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/user/${userId}/projects`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch user projects');
@@ -61,7 +61,7 @@ export default function UploadDocument({ onUpload }) {
         }
       }
       else {
-        const response = await fetch(`http://127.0.0.1:8000/staff/owner/${userId}/projects`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/owner/${userId}/projects`);
         if (!response.ok) {
           throw new Error('Failed to fetch user projects');
         }
@@ -107,7 +107,7 @@ export default function UploadDocument({ onUpload }) {
       }
 
       console.log('📡 Making request to decode endpoint for upload...');
-      const response = await fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`);
 
       console.log('📥 Upload token decode response status:', response.status);
 
@@ -204,7 +204,7 @@ export default function UploadDocument({ onUpload }) {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/doc/classify', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/classify`, {
         method: 'POST',
         body: formData
       });
@@ -253,7 +253,7 @@ export default function UploadDocument({ onUpload }) {
     console.log('📤 Uploading document with user_id:', user.user_id, 'project_id:', selectedProjectId);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/doc/upload', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/upload`, {
         method: 'POST',
         body: formData
       });

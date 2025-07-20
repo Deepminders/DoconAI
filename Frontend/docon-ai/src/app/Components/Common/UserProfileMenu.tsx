@@ -18,7 +18,7 @@ export default function UserProfileMenu() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const res = await fetch("http://localhost:8000/user/profile", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -31,7 +31,7 @@ export default function UserProfileMenu() {
         setUserName(`${data.firstname || ""} ${data.lastname || ""}`.trim());
         setUserRole(data.user_role || "");
         if (data.profile_image_url) {
-          setProfileImageUrl(`http://localhost:8000${data.profile_image_url}`);
+          setProfileImageUrl(`${process.env.NEXT_PUBLIC_BACKEND_URL}${data.profile_image_url}`);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);

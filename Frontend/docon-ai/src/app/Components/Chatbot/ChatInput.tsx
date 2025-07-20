@@ -48,7 +48,7 @@ export default function ChatInput({
       if (setIsLoading) setIsLoading(true); // ✅ Start loading
 
       if (!currentSessionId) {
-        const res = await fetch("http://localhost:8000/chatbot/start-session", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/start-session`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -70,7 +70,7 @@ export default function ChatInput({
 
       setChatLog((prev) => [...prev, { role: "user", content: message }]);
 
-      const res = await fetch("http://localhost:8000/chatbot/chat", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -22,7 +22,7 @@ const Header = ({
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
-    fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`)
       .then(res => res.json())
       .then(user => setUserInfo({
         username: user?.username || '',

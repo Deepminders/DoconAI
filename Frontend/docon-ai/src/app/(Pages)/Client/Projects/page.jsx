@@ -85,7 +85,7 @@ export default function ProjectsDashboard() {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/projects/getproject');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/getproject`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setAllProjects(data);
@@ -137,7 +137,7 @@ export default function ProjectsDashboard() {
   const handleNewProjectSubmit = async (projectData) => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/projects/addproject', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/addproject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -195,7 +195,7 @@ export default function ProjectsDashboard() {
       const token = getToken();
       if (!token) return;
       try {
-        const res = await fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`);
         if (!res.ok) throw new Error("Failed to fetch user info");
         const user = await res.json();
         setUserRole(user?.user_role || null);
@@ -217,7 +217,7 @@ export default function ProjectsDashboard() {
 
       if (projects.length === 0) {
         // Fetch assigned projects if none owned
-        fetch(`http://127.0.0.1:8000/staff/user/${userInfo.user_id}/projects`)
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/user/${userInfo.user_id}/projects`)
           .then(res => res.json())
           .then(data => {
             // Map API response to your frontend format

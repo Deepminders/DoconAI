@@ -10,7 +10,7 @@ export default function StaffModalWithTrigger({ projectid }) {
   const notify = useNotifications();
   useEffect(() => {
     const fetchStaff = async () => {
-      const res = await axios.get("http://localhost:8000/staff/getstaff");
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/getstaff`);
       console.log("Fetched staff:", res.data);
       setStaffList(res.data);
     };
@@ -22,7 +22,7 @@ export default function StaffModalWithTrigger({ projectid }) {
     try {
       const staffId = staff.id || staff._id;
       const response = await axios.put(
-        `http://localhost:8000/staff/assignProject/${staffId}/${projectid}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/assignProject/${staffId}/${projectid}`
       );
     } catch (error) {
       console.error("Error assigning project:", error);

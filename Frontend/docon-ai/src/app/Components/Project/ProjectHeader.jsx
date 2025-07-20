@@ -2,6 +2,7 @@
 
 import { ChevronDown, Bell, HelpCircle, PenLine, LogOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { router } from "next/navigation";
 import Image from "next/image";
 
 const ProjectHeader = ({
@@ -45,7 +46,7 @@ const ProjectHeader = ({
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`http://localhost:8000/projects/findProject/${projectId}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/findProject/${projectId}`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -105,7 +106,7 @@ const ProjectHeader = ({
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
-    fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`)
       .then(res => res.json())
       .then(user => {
         setUser(user || {});
@@ -135,7 +136,7 @@ const ProjectHeader = ({
   // Logout handler
   const handleLogout = () => {
     localStorage.removeItem("token");
-    window.location.href = "http://localhost:3000/Client/Home";
+    router.push("/login");
   };
 
   // Get project name and status with fallbacks
@@ -145,7 +146,7 @@ const ProjectHeader = ({
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://127.0.0.1:8000/projects/${editData.projectId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/${editData.projectId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

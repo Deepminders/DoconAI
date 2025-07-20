@@ -8,7 +8,7 @@ import { Modal, Button, Form } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8000';
+const NEXT_PUBLIC_BACKEND_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}`;
 
 const Staff = () => {
   const [staffList, setStaffList] = useState([]);
@@ -38,7 +38,7 @@ const Staff = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${BASE_URL}/staff/delete/${id}`, {
+      const res = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/staff/delete/${id}`, {
         method: 'DELETE',
       });
 
@@ -77,7 +77,7 @@ const Staff = () => {
     }
 
     try {
-      const res = await axios.put(`${BASE_URL}/staff/assignProject/${selectedStaffId}/${selectedProject}`);
+      const res = await axios.put(`${NEXT_PUBLIC_BACKEND_URL}/staff/assignProject/${selectedStaffId}/${selectedProject}`);
       if (res.status === 200) {
         toast.success("Project assigned successfully!");
         setStaffList(prevList =>
@@ -104,7 +104,7 @@ const Staff = () => {
   useEffect(() => {
     const getAllStaff = async () => {
       try {
-        const res = await fetch(`${BASE_URL}/staff/getStaff`);
+        const res = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/staff/getStaff`);
         if (!res.ok) throw new Error('Failed to fetch staff data');
         const data = await res.json();
         setStaffList(data);
@@ -118,7 +118,7 @@ const Staff = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/staff/projects`);
+        const res = await axios.get(`${NEXT_PUBLIC_BACKEND_URL}/staff/projects`);
         setProjects(res.data);
       } catch (error) {
         console.error("Failed to fetch projects", error);
@@ -190,7 +190,7 @@ const Staff = () => {
                     <td>
                       <div className="staff-info">
                         <img
-                          src={`${BASE_URL}${staff.staff_image_url}` || '/images/default-avatar.png'}
+                          src={`${NEXT_PUBLIC_BACKEND_URL}${staff.staff_image_url}` || '/images/default-avatar.png'}
                           alt={`${staff.staff_fname}`}
                           className="staff-avatar"
                         />

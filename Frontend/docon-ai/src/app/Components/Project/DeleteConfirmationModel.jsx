@@ -18,7 +18,7 @@ const DeleteConfirmationModel = ({
     setError(null);
     
     try {
-      const response = await fetch(`http://127.0.0.1:8000/projects/${projectId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/${projectId}`, {
         method: 'DELETE',
       });
 

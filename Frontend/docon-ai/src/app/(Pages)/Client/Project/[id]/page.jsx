@@ -96,7 +96,7 @@ const ProjectPage = () => {
   useEffect(() => {
     const fetchStaff = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/staff/getstaff");
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/getstaff`);
         console.log("Fetched staff:", response.data);
         setStaffList(response.data);
       } catch (error) {
@@ -112,7 +112,7 @@ const ProjectPage = () => {
     async function fetchProject() {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/projects/getproject/${id}`
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/getproject/${id}`
         );
         const data = await response.json();
         setProjectData(data);
@@ -130,7 +130,7 @@ const ProjectPage = () => {
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    fetch(`http://127.0.0.1:8000/api/doc/ProjectDocs/${id}`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/ProjectDocs/${id}`)
       .then((res) => res.json())
       .then((data) => {
         const mappedDocs = (data.documents || []).map((doc) => ({
@@ -195,7 +195,7 @@ const ProjectPage = () => {
     const token =
       typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (!token) return;
-    fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`)
       .then((res) => res.json())
       .then((user) => {
         setUserInfo({
@@ -240,7 +240,7 @@ const ProjectPage = () => {
     try {
       const staffId = staff.id || staff._id;
       const response = await axios.put(
-        `http://localhost:8000/staff/assignProject/${staffId}/${id}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/staff/assignProject/${staffId}/${id}`
       );
       console.log("Staff assigned successfully:", response.data);
       
@@ -275,7 +275,7 @@ const ProjectPage = () => {
     // Delete each selected document by document_id (integer)
     await Promise.all(
       selectedDocs.map(async (docId) => {
-        await fetch(`http://localhost:8000/api/doc/delete/${docId}`, {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/delete/${docId}`, {
           method: "DELETE",
         });
       })

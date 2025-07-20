@@ -38,7 +38,7 @@ export default function EditProfile() {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/user/profile', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/profile`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ export default function EditProfile() {
 
       const user = await response.json();
 
-      const backendURL = "http://localhost:8000";
+      const backendURL = `${process.env.NEXT_PUBLIC_BACKEND_URL}`;
       const fullProfileImageUrl = user.profile_image_url
         ? user.profile_image_url.startsWith('http')
           ? user.profile_image_url
@@ -132,7 +132,7 @@ export default function EditProfile() {
 
     try {
       setUploadingImage(true);
-      const response = await fetch('http://localhost:8000/user/upload-profile-picture', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/upload-profile-picture`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -148,7 +148,7 @@ export default function EditProfile() {
       const data = await response.json();
 
       // Update originalData with new profile image url
-      const fullImageUrl = `http://localhost:8000${data.profile_image_url}`;
+      const fullImageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${data.profile_image_url}`;
       setOriginalData(prev => ({ ...prev, profile_image_url: fullImageUrl }));
     setFormData(prev => ({ ...prev, profile_image_url: fullImageUrl }));
       notifications.success("Profile picture updated successfully!");
@@ -174,7 +174,7 @@ const handleSubmit = async () => {
     };
 
     const token = localStorage.getItem('token'); // Adjust if using cookies
-    const response = await fetch(`http://localhost:8000/user/profile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -186,7 +186,7 @@ const handleSubmit = async () => {
     if (!response.ok) throw new Error('Failed to update profile');
 
     // ✅ Make a fresh GET call to retrieve the updated profile
-    const profileRes = await fetch(`http://localhost:8000/user/profile`, {
+    const profileRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/profile`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -219,7 +219,7 @@ const handleSubmit = async () => {
   }
 };
 
-  const backendURL = "http://localhost:8000";
+  const backendURL = `${process.env.NEXT_PUBLIC_BACKEND_URL}`;
   const getProfileImage = () => {
   const url = originalData.profile_image_url;
   if (

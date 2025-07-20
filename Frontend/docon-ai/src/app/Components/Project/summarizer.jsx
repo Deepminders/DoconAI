@@ -31,7 +31,7 @@ const ReportGenerator = ({ onClose, projectId }) => {
   useEffect(() => {
     if (!projectId) return;
     setLoadingDocs(true);
-    fetch(`http://localhost:8000/api/doc/ProjectDocs/${projectId}`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/ProjectDocs/${projectId}`)
       .then(res => res.json())
       .then(data => setAvailableDocs(data.documents || []))
       .catch(() => setAvailableDocs([]))
@@ -71,7 +71,7 @@ const ReportGenerator = ({ onClose, projectId }) => {
 
     for (const docId of checkedDocs) {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/doc/download_direct/${docId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/download_direct/${docId}`);
         if (!res.ok) throw new Error('Failed to download document');
         const blob = await res.blob();
         const docInfo = availableDocs.find(d => d.document_id === docId);
@@ -90,7 +90,7 @@ const ReportGenerator = ({ onClose, projectId }) => {
     }
 
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/projects';
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`;
 
       const vectorRes = await fetch(`${API_BASE}/generate-vector-store`, {
         method: 'POST',

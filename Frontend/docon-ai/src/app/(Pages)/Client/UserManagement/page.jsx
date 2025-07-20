@@ -28,7 +28,7 @@ export default function UserManagementPage() {
   const fetchUsers = async () => {
     try {
       const token = getToken();
-      const res = await fetch('http://localhost:8000/user/list-users', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/list-users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         }
@@ -58,7 +58,7 @@ export default function UserManagementPage() {
     }
     try {
       const token = getToken();
-      const res = await fetch('http://localhost:8000/user/add-staff', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/add-staff`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -48,7 +48,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
       try {
         const token = localStorage.getItem('token')
         if (token) {
-          const response = await fetch(`http://127.0.0.1:8000/user/decode-token?token=${token}`)
+          const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/decode-token?token=${token}`)
           if (response.ok) {
             const userData = await response.json()
             setUser(userData)
@@ -209,7 +209,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
     formData.append('file', selectedFile)
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/doc/classify', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/classify`, {
         method: 'POST',
         body: formData
       })
@@ -338,7 +338,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
           submitFormData.append('new_name', formData.document_name.trim())
         }
 
-        apiUrl = `http://127.0.0.1:8000/api/doc/update/${formData.document_id}/file`
+        apiUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/update/${formData.document_id}/file`
 
       } else {
         // For info mode: PUT /update/{docid}
@@ -352,7 +352,7 @@ const UpdateDocument = ({ selectedDocument, onClose, onUpdate }) => {
           submitFormData.append('new_category', formData.document_category)
         }
 
-        apiUrl = `http://127.0.0.1:8000/api/doc/update/${formData.document_id}`
+        apiUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/update/${formData.document_id}`
       }
 
       // Make the API call

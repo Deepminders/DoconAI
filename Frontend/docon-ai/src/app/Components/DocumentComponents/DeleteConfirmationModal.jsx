@@ -29,7 +29,7 @@ const DeleteConfirmationModal = ({ document, isOpen, onClose, onDelete }) => {
     setIsDeleting(true);
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/doc/delete/${document.document_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/doc/delete/${document.document_id}`, {
         method: 'DELETE'
       });
 

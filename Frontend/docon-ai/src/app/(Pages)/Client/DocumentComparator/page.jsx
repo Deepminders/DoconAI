@@ -42,7 +42,7 @@ const toggleSidebar = () => {
 
   const fetchDocuments = async () => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/document-list");
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/document-list`);
       setUploadedDocs(res.data.documents || []);
     } catch (error) {
       console.error("Failed to fetch documents", error);
@@ -59,7 +59,7 @@ const toggleSidebar = () => {
     formData.append("file", file);
 
     try {
-      await axios.post("http://127.0.0.1:8000/upload", formData);
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/upload`, formData);
       alert("File uploaded successfully.");
       setFile(null);
       fetchDocuments(); // <-- Fetch documents after upload
@@ -95,7 +95,7 @@ const toggleSidebar = () => {
     }
 
     try {
-      const res = await axios.post("http://127.0.0.1:8000/compare", formData);
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/compare`, formData);
       setResult(JSON.stringify(res.data.result, null, 2));
     } catch (error) {
       console.error("Compare failed", error);

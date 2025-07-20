@@ -35,7 +35,7 @@ export default function ForceResetPasswordPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8000/user/force-reset-password', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/user/force-reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

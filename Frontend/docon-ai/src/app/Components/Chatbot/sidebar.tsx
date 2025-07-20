@@ -54,7 +54,7 @@ export default function Sidebar({
 
       setLoadingSessions(true);
       try {
-        const res = await fetch("http://localhost:8000/chatbot/sessions", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/sessions`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -109,7 +109,7 @@ export default function Sidebar({
 
     try {
       const res = await fetch(
-        `http://localhost:8000/chatbot/history/${sessionId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/history/${sessionId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -137,7 +137,7 @@ export default function Sidebar({
     if (!newTitle?.trim()) return;
 
     try {
-      await fetch(`http://localhost:8000/chatbot/rename-session/${sessionId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/rename-session/${sessionId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -161,7 +161,7 @@ export default function Sidebar({
   // 🗑️ Delete session
   const handleDelete = async (sessionId: string) => {
     try {
-      await fetch(`http://localhost:8000/chatbot/delete-session/${sessionId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/chatbot/delete-session/${sessionId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
