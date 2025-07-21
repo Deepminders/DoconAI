@@ -193,11 +193,20 @@ async def delete_user(user_id: str):
 async def generatepssword(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
-async def authenticate_user(username: str, password: str):
-    user = await user_collection.find_one({"username": username})
+async def authenticate_user(identifier: str, password: str):
+    # Try finding user by username or email
+    user = await user_collection.find_one({
+        "$or": [
+            {"username": identifier},
+            {"email": identifier}
+        ]
+    })
+
     if not user or not verify_password(password, user["password"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
+    
     return user
+
 
 async def addprojectmanager(uname: str):
     existing_user = await user_collection.find_one({"username": uname})

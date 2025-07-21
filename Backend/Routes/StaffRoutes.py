@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from bson import ObjectId
+from Controllers.ProjectController import remove_project_from_staff
 from Controllers.StaffController import add_staff,get_staff,find_staff,delete_staff,update_staff,assign_project,get_project,fetchUserProjects,fetchOwnerProjects,get_assigned_staff_project
 from Models.StaffModel import StaffModel
 from Controllers import UserController
@@ -29,7 +30,7 @@ async def delete_staff_route(id:str):
 
 @router.put("/assignProject/{s_id}/{p_id}")
 async def assign_project_route(s_id:str,p_id:str):
-    return await assign_project(ObjectId(s_id),ObjectId(p_id))
+    return await assign_project(s_id,p_id)
 
 @router.get("/projects/")
 async def get_project_route():
@@ -89,4 +90,8 @@ async def get_owner_projects(user_id: str):
 
 @router.get("/projects/{project_id}/assigned-staff")
 async def get_assigned_staff_for_project(project_id: str):
-    return get_assigned_staff_project(project_id)
+    return await get_assigned_staff_project(project_id)
+
+@router.put("/unassignProject/{s_id}/{p_id}")
+async def unassign_project_route(s_id:str, p_id:str):
+    return await remove_project_from_staff(s_id, p_id)

@@ -1,10 +1,16 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import DocumentSidebar from '../../../Components/DocumentComponents/DocumentSidebar';
 import "../../../CSS/documentcomparator/comparator.css";
+import UserProfileMenu from "../../../Components/Common/UserProfileMenu";
+import { useNotifications } from '../../../Components/Common/NotificationSystem';
+
+
 
 export default function Home() {
+  const notify = useNotifications();
+  const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [doc1, setDoc1] = useState("");
   const [doc2, setDoc2] = useState("");
@@ -17,6 +23,7 @@ export default function Home() {
   const [uploadedDocs, setUploadedDocs] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [showResults, setShowResults] = useState(true);
 
   useEffect(() => {
   const checkScreenSize = () => {
@@ -40,7 +47,7 @@ const toggleSidebar = () => {
 
   const fetchDocuments = async () => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/document-list");
+      const res = await axios.get("http://127.0.0.1:8000/Compare/document-list");
       setUploadedDocs(res.data.documents || []);
     } catch (error) {
       console.error("Failed to fetch documents", error);
@@ -49,7 +56,7 @@ const toggleSidebar = () => {
 
   const handleUpload = async () => {
     if (!file) {
-      alert("Please select a file to upload.");
+      notify.error("Please select a file to upload.");
       return;
     }
     setUploading(true);
@@ -57,13 +64,18 @@ const toggleSidebar = () => {
     formData.append("file", file);
 
     try {
-      await axios.post("http://127.0.0.1:8000/upload", formData);
-      alert("File uploaded successfully.");
+      await axios.post("http://127.0.0.1:8000/Compare/upload", formData);
+      notify.success("File uploaded successfully.");
       setFile(null);
+      if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // ✅ clear file input field
+    }
       fetchDocuments(); // <-- Fetch documents after upload
     } catch (error) {
       console.error("Upload failed", error);
-      alert("Upload failed.");
+      notify.error("File upload failed. Please try again.");
+      if (fileInputRef.current) {
+      fileInputRef.current.value = "";}
     } finally {
       setUploading(false);
     }
@@ -71,7 +83,7 @@ const toggleSidebar = () => {
 
   const handleCompare = async () => {
     if (!doc1 || !doc2) {
-      alert("Please select two documents.");
+      notify.error("Please select both documents to compare.");
       return;
     }
 
@@ -85,7 +97,7 @@ const toggleSidebar = () => {
 
     if (comparisonType === "text") {
       if (!topic) {
-        alert("Please enter a topic for text-based comparison.");
+        notify.error("Please enter a topic for text-based comparison.");
         setComparing(false);
         return;
       }
@@ -93,11 +105,11 @@ const toggleSidebar = () => {
     }
 
     try {
-      const res = await axios.post("http://127.0.0.1:8000/compare", formData);
+      const res = await axios.post("http://127.0.0.1:8000/Compare/compare", formData);
       setResult(JSON.stringify(res.data.result, null, 2));
     } catch (error) {
       console.error("Compare failed", error);
-      alert("Comparison failed.");
+      notify.error("Comparison failed. Please try again.");
     } finally {
       setComparing(false); // Hide scanner
     }
@@ -107,17 +119,22 @@ const toggleSidebar = () => {
   const doc2Options = uploadedDocs.filter((d) => d !== doc1);
 
   return (
-
+    
      <div className="flex h-screen overflow-hidden">
+      
+
       <DocumentSidebar
         isOpen={isSidebarOpen}
         onToggle={toggleSidebar}
         isMobile={isMobile}
         active={'documentComparator'}
       />
-       <main className={`flex-1 overflow-y-auto p-8 transition-all duration-300 ease-in-out ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}`}>
-         
-      <h1 className="mb-4">Document Comparator</h1>
+       
+      <main className={`flex-1 overflow-y-auto p-8 transition-all duration-300 ease-in-out ${!isMobile && isSidebarOpen ? 'ml-60' : 'ml-0'}`}>
+              <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl text-gray-900">Document Comparator</h1>
+          <UserProfileMenu />
+        </div>
 
       {/* Upload Section */}
       <div className="mb-4 p-4 border rounded">
@@ -128,6 +145,7 @@ const toggleSidebar = () => {
             className="form-control"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
             disabled={uploading}
+            ref={fileInputRef}
           />
           <button className="btn btn-success" onClick={handleUpload} disabled={uploading && !file}>
             {uploading ? "Uploading..." : "Upload"}
@@ -209,6 +227,7 @@ const toggleSidebar = () => {
       <div className="p-4 border rounded">
         <h2 className="h5 mb-2">Comparison Result:</h2>
         <div className="result-box">
+          
           {comparing ? (
             <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
               <span className="spinner-border text-primary" role="status" aria-hidden="true"></span>
@@ -276,7 +295,19 @@ const toggleSidebar = () => {
                     <strong>Summary:</strong>
                     {renderList(parsed.summary)}
                   </div>
+                    <div>
+                <div className="text-end mb-3 mt-2">
+                  <button className="btn btn-danger btn-sm px-4 py-2 rounded shadow custom-close-btn"
+                  onClick={() => {
+                      setShowResults(false);
+                      setResult("");
+                    }}
+                  >
+                    <i className="bi bi-x-lg"></i> Close
+                  </button>
                 </div>
+              </div>
+              </div>
               );
             })()
           ) : (

@@ -238,3 +238,7 @@ h2 {
 .d-flex {
   display: flex;
 }
+
+.custom-close-btn {
+  background-color: #c82333;
+}

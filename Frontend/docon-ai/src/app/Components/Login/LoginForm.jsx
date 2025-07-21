@@ -6,7 +6,7 @@ import { useNotifications } from '../Common/NotificationSystem';
 
 export default function LoginForm() {
   const [loginData, setLoginData] = useState({
-    username: '',
+    identifier: '',
     password: '',
   });
   const router = useRouter();
@@ -20,13 +20,13 @@ export default function LoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loginData.username.trim() === '' || loginData.password.trim() === '') {
-      warning('Please fill in both Username and Password!');
+    if (loginData.identifier.trim() === '' || loginData.password.trim() === '') {
+      warning('Please fill in both Email/Username and Password!');
       return;
     }
 
     const formData = new URLSearchParams();
-    formData.append('username', loginData.username);
+    formData.append('username', loginData.identifier);  // still uses 'username' key
     formData.append('password', loginData.password);
 
     try {
@@ -48,7 +48,7 @@ export default function LoginForm() {
             router.push('/Client/ForceResetPassword');
         } else {
             router.push('/Client/Dashboard');
-      }
+        }
       } else {
         error(data.detail || 'Login failed');
       }
@@ -63,15 +63,15 @@ export default function LoginForm() {
       <Header />
       <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="username" className="block text-sm font-medium text-gray-900">
-            Username
+          <label htmlFor="identifier" className="block text-sm font-medium text-gray-900">
+            Email or Username
           </label>
           <input
             type="text"
-            id="username"
-            value={loginData.username}
+            id="identifier"
+            value={loginData.identifier}
             onChange={handleChange}
-            placeholder="Enter your username"
+            placeholder="Enter your email or username"
             className="w-full mt-1 px-4 py-2 border rounded-md 
               text-gray-800 placeholder-gray-400 
               focus:ring-blue-500 focus:border-blue-500"

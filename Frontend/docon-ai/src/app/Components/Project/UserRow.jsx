@@ -11,20 +11,18 @@ const UserRow = ({
   const [isVisible, setIsVisible] = useState(true);
 
   const userData = {
-    id: user.user_id || user._id || user.id,
-    name: user.first_name || `${user.staff_fname || ''} ${user.staff_lname || ''}`.trim(),
+    id: user.id || user.user_id || user._id,
+    name: user.first_name && user.last_name 
+      ? `${user.first_name} ${user.last_name}` 
+      : user.name || `${user.staff_fname || ''} ${user.staff_lname || ''}`.trim(),
     email: user.email || user.staff_email,
     role: user.role || user.staff_role,
   };
 
-  const handleRemove = async () => {
-    try {
-      setIsVisible(false); // Hide the row immediately
-      await onRemoveFromProject(userData.id, projectId);
-    } catch (error) {
-      setIsVisible(true); // Show the row again if there's an error
-      alert(`Failed to remove user: ${error.message}`);
-    }
+  const handleRemove = () => {
+    // Don't hide the row immediately - let the modal handle the confirmation
+    // Only call the onRemoveFromProject to trigger the modal
+    onRemoveFromProject(userData.id, projectId);
   };
 
   if (!isVisible) {

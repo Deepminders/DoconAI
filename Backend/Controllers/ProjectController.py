@@ -199,20 +199,20 @@ async def get_staff_by_project(project_id: str):
 # Ensure this is your MongoDB collection object
 
 
-async def remove_project_from_staff(staff_id: str, request: RemoveProjectRequest):
+async def remove_project_from_staff(staff_id: str, project_id: str):
     """
     Remove a project from staff member's assigned_projects array.
     """
     try:
         # Validate ObjectIds
-        if not ObjectId.is_valid(staff_id) or not ObjectId.is_valid(request.project_id):
+        if not ObjectId.is_valid(staff_id) or not ObjectId.is_valid(project_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ID format"
             )
 
         # Convert to ObjectId
         staff_oid = ObjectId(staff_id)
-        project_oid = ObjectId(request.project_id)
+        project_oid = ObjectId(project_id)
 
         # Check staff exists
         staff = await staff_collection.find_one({"_id": staff_oid})
@@ -229,26 +229,14 @@ async def remove_project_from_staff(staff_id: str, request: RemoveProjectRequest
             )
 
         # Perform the update
-        result = await staff_collection.update_one(
+        await staff_collection.update_one(
             {"_id": staff_oid}, {"$pull": {"assigned_projects": project_oid}}
         )
 
-        # Return updated document
-        updated_staff = await staff_collection.find_one({"_id": staff_oid})
-        if updated_staff:
-            updated_staff["_id"] = str(updated_staff["_id"])
-            updated_staff["assigned_projects"] = [
-                str(pid) for pid in updated_staff.get("assigned_projects", [])
-            ]
-        return updated_staff
+        return {
+            "message": "Project removed from staff member successfully",
+        }
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred: {str(e)}",
-        )
     except HTTPException:
         raise
     except Exception as e:
